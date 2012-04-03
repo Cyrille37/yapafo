@@ -1,0 +1,9 @@
+yapafo - Yet Another Php Api For Ospenstreetmap
+
+This library permit to access for read and write objects in the OpenStreetMap database.
+
+Here is the first commit, let us so time to make it better. And shure fork then tell us about new or better feature.
+
+TODO:
+- merge OSM_OAPI into OSM_API
+- remove the ZLog and replace with a external library
