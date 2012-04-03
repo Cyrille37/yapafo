@@ -21,7 +21,7 @@ spl_autoload_register(array('OSM_Api', 'autoload'));
  */
 class OSM_Api {
 	const VERSION = '0.1';
-	const USER_AGENT = 'OSMPhpLib';
+	const USER_AGENT = 'Yapafo';
 
 	const URL_DEV_UK = 'http://api06.dev.openstreetmap.org/api/0.6';
 	//deprecated: const OSMAPI_URL_PROD_PROXY_LETTUFE = 'http://beta.letuffe.org/api/0.6';
@@ -41,6 +41,7 @@ class OSM_Api {
 		'user' => null,
 		'password' => null,
 		'outputFolder' => null,
+		'appName' => '', // name for the application using the API
 		'log' => array('level' => OSM_ZLog::LEVEL_ERROR)
 	);
 	protected $_relations = array();
@@ -162,12 +163,18 @@ class OSM_Api {
 			'Content-type: application/x-www-form-urlencoded'
 		);
 
+		$userAgent = "";
+		if($this->_options['appName'] != "")
+		{
+			$userAgent .= $this->_options['appName'] . ' / ';
+		}
+		$userAgent .= self::USER_AGENT . ' ' . self::VERSION;
 		if ($data == null)
 		{
 			$opts = array('http' =>
 				array(
 					'method' => $method,
-					'user_agent' => self::USER_AGENT . ' ' . self::VERSION,
+					'user_agent' => $userAgent,
 					'header' => /* implode("\r\n", $headers) */$headers,
 				)
 			);
@@ -180,7 +187,7 @@ class OSM_Api {
 			$opts = array('http' =>
 				array(
 					'method' => $method,
-					'user_agent' => self::USER_AGENT . ' ' . self::VERSION,
+					'user_agent' => $userAgent,
 					//'header' => 'Content-type: application/x-www-form-urlencoded',
 					'header' => /* implode("\r\n", $headers) */$headers,
 					'content' => $postdata
