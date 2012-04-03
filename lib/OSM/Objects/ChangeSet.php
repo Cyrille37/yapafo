@@ -70,12 +70,12 @@ class OSM_Objects_ChangeSet {
 	 * @param string $comment
 	 * @return string 
 	 */
-	public static function getCreateXmlStr($comment) {
+	public static function getCreateXmlStr($comment,$generator) {
 
 		$xmlStr = "<?xml version='1.0' encoding=\"UTF-8\"?>\n" .
-			'<osm version="0.6" generator="' . OSM_Api::USER_AGENT . ' ' . OSM_Api::VERSION . '">'
+			'<osm version="0.6" generator="' . $generator . '">'
 			. "<changeset id='0' open='false'>"
-			. '<tag k="created_by" v="' . OSM_Api::USER_AGENT . ' ' . OSM_Api::VERSION . '/0.1"/>'
+			. '<tag k="created_by" v="' . $generator . '"/>'
 			. '<tag k="comment" v="' . str_replace('"', '\'', $comment) . '"/>'
 			. '</changeset></osm>';
 		return $xmlStr;
@@ -88,25 +88,25 @@ class OSM_Objects_ChangeSet {
 	 * If a diff is successfully applied a XML (content type text/xml) is returned in the following format.
 	 * @return string 
 	 */
-	public function getUploadXmlStr() {
+	public function getUploadXmlStr($generator) {
 
-		$xmlStr = '<osmChange version="0.6" generator="' . OSM_Api::USER_AGENT . ' ' . OSM_Api::VERSION . '">'."\n";
+		$xmlStr = '<osmChange version="0.6" generator="' . $generator . '">'."\n";
 
-		$xmlStr.= '<create version="0.3" generator="' . OSM_Api::USER_AGENT . ' ' . OSM_Api::VERSION . '">'."\n";
+		$xmlStr.= '<create version="0.3" generator="' . $generator . '">'."\n";
 		foreach ($this->_createdObjects as $id=>$obj)
 		{
 			$xmlStr.= $obj->asXmlStr();
 		}
 		$xmlStr.= '</create>'."\n";
 
-		$xmlStr.= '<modify version="0.3" generator="' . OSM_Api::USER_AGENT . ' ' . OSM_Api::VERSION . '">'."\n";
+		$xmlStr.= '<modify version="0.3" generator="' . $generator . '">'."\n";
 		foreach ($this->_modifiedObjects as $id=>$obj)
 		{
 			$xmlStr.= $obj->asXmlStr();			
 		}
 		$xmlStr.= '</modify>'."\n";
 
-		$xmlStr.= '<delete version="0.3" generator="' . OSM_Api::USER_AGENT . ' ' . OSM_Api::VERSION . '">'."\n";
+		$xmlStr.= '<delete version="0.3" generator="' . $generator . '">'."\n";
 		foreach ($this->_deleteObjects as $id=>$obj)
 		{
 			$xmlStr.= $obj->asXmlStr();			
