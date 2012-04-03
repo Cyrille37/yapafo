@@ -163,18 +163,12 @@ class OSM_Api {
 			'Content-type: application/x-www-form-urlencoded'
 		);
 
-		$userAgent = "";
-		if($this->_options['appName'] != "")
-		{
-			$userAgent .= $this->_options['appName'] . ' / ';
-		}
-		$userAgent .= self::USER_AGENT . ' ' . self::VERSION;
 		if ($data == null)
 		{
 			$opts = array('http' =>
 				array(
 					'method' => $method,
-					'user_agent' => $userAgent,
+					'user_agent' => $this->getUserAgent(),
 					'header' => /* implode("\r\n", $headers) */$headers,
 				)
 			);
@@ -187,7 +181,7 @@ class OSM_Api {
 			$opts = array('http' =>
 				array(
 					'method' => $method,
-					'user_agent' => $userAgent,
+					'user_agent' => $this->getUserAgent(),
 					//'header' => 'Content-type: application/x-www-form-urlencoded',
 					'header' => /* implode("\r\n", $headers) */$headers,
 					'content' => $postdata
@@ -499,7 +493,7 @@ class OSM_Api {
 		}
 		else
 		{
-			$result = $this->httpPut($relativeUrl, OSM_Objects_ChangeSet::getCreateXmlStr($comment));
+			$result = $this->httpPut($relativeUrl, OSM_Objects_ChangeSet::getCreateXmlStr($comment,$this->getUserAgent()));
 		}
 
 		OSM_ZLog::debug(__METHOD__, var_export($result, true));
@@ -526,7 +520,7 @@ class OSM_Api {
 
 		$relativeUrl = 'changeset/' . $changeSet->getId() . '/upload';
 
-		$xmlStr = $changeSet->getUploadXmlStr();
+		$xmlStr = $changeSet->getUploadXmlStr($this->getUserAgent());
 
 		if (OSM_ZLog::isDebug())
 			file_put_contents('debug.OSM_Api._uploadChangeSet.postdata.xml', $xmlStr);
@@ -744,6 +738,22 @@ class OSM_Api {
 		}
 
 		return $waysOrdered;
+	}
+	
+	/**
+	 * Return a string like "MyApp / Yapafo 0.1", based on the "appName" options and the library constants.
+	 * This appears as the editor's name in the changeset properties (key "crated_by") 
+	 * @return string user agent string
+	 */
+	protected function getUserAgent()
+	{
+		$userAgent = "";
+		if($this->_options['appName'] != "")
+		{
+			$userAgent .= $this->_options['appName'] . ' / ';
+		}
+		$userAgent .= self::USER_AGENT . ' ' . self::VERSION;
+		return $userAgent;
 	}
 
 }
