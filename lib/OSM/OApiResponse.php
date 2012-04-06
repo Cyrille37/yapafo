@@ -233,10 +233,10 @@ class OSM_OApiResponse {
 		//$selectedNodes = $xmlObj->xpath('/osm/node[tag/@k="ref:INSEE"][tag/@v="37001"]');
 
 		$xq = '' ;
-		foreach( $tags as $tag )
+		foreach( $tags as $k=>$v )
 		{
 			// 'member[@type="node"][@role="admin_centre"]'
-			$xq .= '[tag/@'.$tag['k'].'="'.$tag['v'].'"]';
+			$xq .= '[tag/@k="'.$k.'"][tag/@v="'.$v.'"]';
 		}
 		return $this->_xml->xpath('/osm/node'.$xq );
 	}
