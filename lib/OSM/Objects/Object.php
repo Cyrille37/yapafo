@@ -38,6 +38,7 @@ class OSM_Objects_Object implements OSM_Objects_IDirty {
 
 		if( $id!=null && $id!='' && $id!=0 )
 			$this->setId($id);
+		$this->setDirty();
 	}
 
 	public function getId() {
