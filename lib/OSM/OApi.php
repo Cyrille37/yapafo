@@ -3,10 +3,10 @@
 /**
  * OSM/OAPI.class.php
  */
-require_once ( __DIR__ . '/OAPIResponse.php');
+require_once ( __DIR__ . '/OApiResponse.php');
 
 /**
- * Description of OSM_OAPI
+ * Description of OSM_OApi
  *
  * Overpass API/Language Guide :
  * http://wiki.openstreetmap.org/wiki/Overpass_API
@@ -14,9 +14,10 @@ require_once ( __DIR__ . '/OAPIResponse.php');
  * 
  * @author cyrille
  */
-class OSM_OAPI {
+class OSM_OApi {
+
 	const VERSION = '0.2';
-	const USER_AGENT = 'OSM_OAPI-Php http://www.openstreetmap.org/user/Cyrille37';
+	const USER_AGENT = 'http://yapafo.net';
 
 	/**
 	 * Query form: http://api.openstreetmap.fr/query_form.html
@@ -66,7 +67,7 @@ class OSM_OAPI {
 	 *
 	 * @param string $xmlQuery
 	 * @param bool $forceNoCache
-	 * @return OSM_OAPIResponse 
+	 * @return OSM_OApiResponse 
 	 */
 	public function request($xmlQuery) {
 
@@ -78,7 +79,7 @@ class OSM_OAPI {
 		$opts = array('http' =>
 			array(
 				'method' => 'POST',
-				'user_agent' => OSM_OAPI::USER_AGENT . ' ' . OSM_OAPI::VERSION,
+				'user_agent' => OSM_OApi::USER_AGENT . ' ' . OSM_OApi::VERSION,
 				'header' => 'Content-type: application/x-www-form-urlencoded',
 				'content' => $postdata
 			)
@@ -89,7 +90,7 @@ class OSM_OAPI {
 
 		$this->_stats['loadedBytes'] += strlen($result);
 
-		$response = new OSM_OAPIResponse($result);
+		$response = new OSM_OApiResponse($result);
 		return $response;
 	}
 

@@ -5,13 +5,13 @@
  */
 
 /**
- * Description of OSM_OAPIResponse
+ * Description of OSM_OApiResponse
  *
  * Providess some accessors to the OAPI result. All stuff are SimpleXMLElement objects.
  * 
  * @author cyrille
  */
-class OSM_OAPIResponse {
+class OSM_OApiResponse {
 
 	public static $DEBUG = 0;
 	protected $_xml;
@@ -226,6 +226,21 @@ class OSM_OAPIResponse {
 		}
 		return $this->_nodes;
 	}
+
+	public function getNodesByTags( array $tags )
+	{
+		// Sélection d'éléments en fonction des attributs de leurs enfants :
+		//$selectedNodes = $xmlObj->xpath('/osm/node[tag/@k="ref:INSEE"][tag/@v="37001"]');
+
+		$xq = '' ;
+		foreach( $tags as $tag )
+		{
+			// 'member[@type="node"][@role="admin_centre"]'
+			$xq .= '[tag/@'.$tag['k'].'="'.$tag['v'].'"]';
+		}
+		return $this->_xml->xpath('/osm/node'.$xq );
+	}
+
 
 	/**
 	 * @param string $who
