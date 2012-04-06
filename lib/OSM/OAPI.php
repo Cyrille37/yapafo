@@ -15,7 +15,7 @@ require_once ( __DIR__ . '/OAPIResponse.php');
  * @author cyrille
  */
 class OSM_OAPI {
-	const VERSION = '0.1';
+	const VERSION = '0.2';
 	const USER_AGENT = 'OSM_OAPI-Php http://www.openstreetmap.org/user/Cyrille37';
 
 	/**
@@ -28,8 +28,7 @@ class OSM_OAPI {
 
 	protected $_options = array(
 		'url' => self::OAPI_URL_FR,
-		'debug' => false,
-		'cache' => null
+		'debug' => false
 	);
 
 	/**
@@ -37,19 +36,10 @@ class OSM_OAPI {
 	 */
 	protected $_stats = array(
 		'requestCount' => 0,
-		'loadedBytes' => 0,
-		'cacheHits' => 0
+		'loadedBytes' => 0
 	);
 
 	public function __construct($options = array()) {
-
-		if (!empty($options['cache']))
-		{
-			if (!method_exists($options['cache'], 'load'))
-				throw new Exception('Cache engine is not compatible, miss method load()');
-			if (!method_exists($options['cache'], 'save'))
-				throw new Exception('Cache engine is not compatible, miss method save()');
-		}
 
 		// Check that all options exist then override defaults
 		foreach ($options as $k => $v)
@@ -72,28 +62,17 @@ class OSM_OAPI {
 		return $this->_stats['loadedBytes'];
 	}
 
-	public function getStatsCacheHits() {
-		return $this->_stats['cacheHits'];
-	}
-
 	/**
 	 *
 	 * @param string $xmlQuery
 	 * @param bool $forceNoCache
 	 * @return OSM_OAPIResponse 
 	 */
-	public function request($xmlQuery, $forceNoCache=false) {
+	public function request($xmlQuery) {
 
 		$this->_dbg(__METHOD__, $xmlQuery);
 
 		$this->_stats['requestCount']++;
-
-		if (!$forceNoCache)
-		{
-			$result = $this->_cacheLoad(md5($xmlQuery));
-			if ($result != null)
-				return $result;
-		}
 
 		$postdata = http_build_query(array('data' => $xmlQuery));
 		$opts = array('http' =>
@@ -110,50 +89,21 @@ class OSM_OAPI {
 
 		$this->_stats['loadedBytes'] += strlen($result);
 
-		$this->_cacheSave(md5($xmlQuery), $result);
-
 		$response = new OSM_OAPIResponse($result);
 		return $response;
-	}
-
-	protected function _cacheLoad($key) {
-
-		if (!isset($this->_options['cache']))
-		{
-			$this->_dbg(__METHOD__, 'no cache engine set');
-			return null;
-		}
-		$res = $this->_options['cache']->load($key);
-
-		if ($res != null)
-			$this->_stats['cacheHits']++;
-
-		if ($this->_options['debug'])
-		{
-			if ($res == null)
-				$this->_dbg(__METHOD__, 'not found');
-			else
-				$this->_dbg(__METHOD__, 'got it');
-		}
-
-		return $res;
-	}
-
-	protected function _cacheSave($key, $value) {
-
-		if (!isset($this->_options['cache']))
-		{
-			$this->_dbg(__METHOD__, 'no cache engine set');
-			return null;
-		}
-		$this->_dbg(__METHOD__, 'save');
-		$this->_options['cache']->save($value, $key);
 	}
 
 	protected function _dbg($who, $str='') {
 		if ($this->_options['debug'])
 		{
-			echo '[dbg][' . $who . '] ' . $str . "\n";
+			if (PHP_SAPI === 'cli')
+			{
+				echo('[dbg][' . $who . '] ' . $str . "\n" );
+			}
+			else
+			{
+				error_log('[dbg][' . $who . '] ' . $str . "\n" );				
+			}
 		}
 	}
 
