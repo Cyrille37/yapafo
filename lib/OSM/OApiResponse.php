@@ -227,6 +227,12 @@ class OSM_OApiResponse {
 		return $this->_nodes;
 	}
 
+	/**
+	 * $tags is a array of Key=>Value.
+	 * 
+	 * @param array $tags
+	 * @return array
+	 */
 	public function getNodesByTags( array $tags )
 	{
 		// Sélection d'éléments en fonction des attributs de leurs enfants :
