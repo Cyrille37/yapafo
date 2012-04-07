@@ -20,7 +20,7 @@ spl_autoload_register(array('OSM_Api', 'autoload'));
  * @author cyrille
  */
 class OSM_Api {
-	const VERSION = '0.1';
+	const VERSION = '0.2';
 	const USER_AGENT = 'Yapafo';
 
 	const URL_DEV_UK = 'http://api06.dev.openstreetmap.org/api/0.6';
@@ -48,7 +48,29 @@ class OSM_Api {
 	protected $_ways = array();
 	protected $_nodes = array();
 	protected $_newIdCounter = -1;
+
+	/**
+	 * Store all xml Objects
+	 * @var SimpleXMLElement
+	 */
 	protected $_loadedXml = array();
+
+	/**
+	 * autoloader
+	 *
+	 * @todo Is it clean to get an autoloader ? Should coder get it in an another place ?
+	 * @param string $class Name of class
+	 * @return boolean
+	 */
+	public static function autoload($class) {
+		$file = __DIR__ . '/../' . str_replace('_', '/', $class) . '.php';
+		//echo 'autoload search for '.$file."\n";
+		if (file_exists($file))
+		{
+			return include_once $file;
+		}
+		return false;
+	}
 
 	/**
 	 * @param bool $devMode Opération sur BdD de dev ou de prod. Par défaut sur l'API de DEV pour éviter les erreurs.
@@ -83,23 +105,6 @@ class OSM_Api {
 	}
 
 	/**
-	 * autoloader
-	 *
-	 * @param string $class Name of class
-	 *
-	 * @return boolean
-	 */
-	public static function autoload($class) {
-		$file = __DIR__ . '/../' . str_replace('_', '/', $class) . '.php';
-		//echo 'autoload search for '.$file."\n";
-		if (file_exists($file))
-		{
-			return include_once $file;
-		}
-		return false;
-	}
-
-	/**
 	 * @param string $key
 	 * @return mixed
 	 */
@@ -121,8 +126,12 @@ class OSM_Api {
 		return $this;
 	}
 
-	public function getLastLoadedXml() {
+	public function getLastLoadedXmlObject() {
 		return $this->_loadedXml[count($this->_loadedXml) - 1];
+	}
+
+	public function getLastLoadedXmlString() {
+		return $this->_loadedXml[count($this->_loadedXml) - 1]->asXML();
 	}
 
 	public function httpGet($relativeUrl) {
@@ -197,8 +206,6 @@ class OSM_Api {
 			throw new OSM_HttpException($http_response_header);
 		}
 
-		$this->_loadedXml[] = $result;
-
 		return $result;
 	}
 
@@ -209,11 +216,11 @@ class OSM_Api {
 
 		OSM_ZLog::debug(__METHOD__, 'type: ', $type, ', id: ', $id, ', full: ', ($full ? 'true' : 'false'));
 
-		if (!preg_match('/\d*/', $id))
+		if (!preg_match('/\d+/', $id))
 		{
 			throw new OSM_Exception('Invalid object Id');
 		}
-
+		
 		switch ($type)
 		{
 			case self::OBJTYPE_RELATION:
@@ -235,7 +242,7 @@ class OSM_Api {
 				throw new OSM_Exception('Unknow object type "' . $type . '"');
 				break;
 		}
-
+		
 		// Query "full" on a "node" will cause a 404 not found
 		if ($type == self::OBJTYPE_NODE)
 			$full = false;
@@ -252,105 +259,207 @@ class OSM_Api {
 		if (OSM_ZLog::isDebug())
 			OSM_Zlog::debug(__METHOD__, print_r($result, true));
 
-		return $this->createObjectsfromXml($type, $result, $full);
-	}
-
-	/**
-	 * @param string $type OSM_Api::OBJTYPE_*
-	 * @param string $xmlStr
-	 * @param bool $fullObject
-	 * @return OSM_Objects_Object
-	 */
-	public function createObjectsfromXml($type, $xmlStr, $isfullObject) {
-
-		OSM_ZLog::debug(__METHOD__, 'type=', $type);
-
-		$object = null;
-		$xmlObj = simplexml_load_string($xmlStr);
+		//return $this->createObjectsfromXml($type, $result, $full);
+		$this->createObjectsfromXml($result);
 
 		switch ($type)
 		{
-			case OSM_Api::OBJTYPE_RELATION :
-				$relations = $xmlObj->xpath('/osm/relation');
-				if (count($relations) != 1)
-					throw new OSM_Exception('Only one relation should be present.');
-				$object = OSM_Objects_Relation::fromXmlObj($relations[0]);
-				$this->_relations[$object->getId()] = $object;
+			case self::OBJTYPE_RELATION:
+				return $this->_relations[$id];
 				break;
 
-			case OSM_Api::OBJTYPE_WAY :
-				$ways = $xmlObj->xpath('/osm/way');
-				if (count($ways) != 1)
-					throw new OSM_Exception('Only one way should be present.');
-				$object = OSM_Objects_Way::fromXmlObj($ways[0]);
-				$this->_ways[$object->getId()] = $object;
+			case self::OBJTYPE_WAY:
+				return $this->_ways[$id];
 				break;
 
-			case OSM_Api::OBJTYPE_NODE :
-				$nodes = $xmlObj->xpath('/osm/node');
-				if (count($nodes) != 1)
-					throw new OSM_Exception('Only one node should be present.');
-				$object = OSM_Objects_Node::fromXmlObj($nodes[0]);
-				$this->_nodes[$object->getId()] = $object;
+			case self::OBJTYPE_NODE:
+				return $this->_nodes[$id];
 				break;
-
-			default:
-				throw new OSM_Exception('Unknow OSM Object "' . $xmlObj->getName() . '"');
 		}
+	}
 
-		if ($isfullObject)
+	/**
+	 * Load or get a node by Id from loaded objects.
+	 * 
+	 * Use removeObject to force the reload of the object.
+	 * 
+	 * @param string $id
+	 * @return OSM_Objects_Node 
+	 */
+	public function getNode($id) {
+		return $this->getObject(self::OBJTYPE_NODE, $id);
+	}
+
+	/**
+	 * Load or get a way by Id from loaded objects.
+	 * 
+	 * Use removeObject to force the reload of the object.
+	 * 
+	 * @param string $id
+	 * @param bool $full With its nodes (true) or not (false=default)
+	 * @return OSM_Objects_Way 
+	 */
+	public function getWay($id, $full = false) {
+		return $this->getObject(self::OBJTYPE_WAY, $id, $full);
+	}
+
+	/**
+	 * Load or get a relation by Id from loaded objects.
+	 * 
+	 * Use removeObject to force the reload of the object.
+	 * 
+	 * @param string $id The relation Id
+	 * @param bool $full true for loading all relation's members
+	 * @return OSM_Objects_Relation 
+	 */
+	public function getRelation($id, $full = false) {
+		return $this->getObject(self::OBJTYPE_RELATION, $id, $full);
+	}
+
+	/**
+	 * Create objects and fill objects tables from a xml document (string).
+	 * 
+	 * @param string $xmlStr
+	 */
+	public function createObjectsfromXml($xmlStr) {
+
+		OSM_ZLog::debug(__METHOD__);
+
+		$xmlObj = simplexml_load_string($xmlStr);
+
+		$this->_loadedXml[] = $xmlObj;
+
+		// Take all others object
+		$objects = $xmlObj->xpath('/osm/*');
+		foreach ($objects as $obj)
 		{
-			// Take all others object
-			$subobjects = $xmlObj->xpath('/osm/*');
-			foreach ($subobjects as $sobj)
+			OSM_ZLog::debug(__METHOD__, 'subobjects type=', $obj->getName());
+			switch ($obj->getName())
 			{
-				if ($sobj->getName() == $type)
-					continue;
-				OSM_ZLog::debug(__METHOD__, 'subobjects type=', $sobj->getName());
-				switch ($sobj->getName())
-				{
-					case OSM_Api::OBJTYPE_WAY :
-						$w = OSM_Objects_Way::fromXmlObj($sobj);
-						$this->_ways[$w->getId()] = $w;
-						break;
+				case OSM_Api::OBJTYPE_RELATION :
+					$r = OSM_Objects_Relation::fromXmlObj($obj);
+					$this->_relations[$r->getId()] = $r;
+					break;
 
-					case OSM_Api::OBJTYPE_NODE :
-						$n = OSM_Objects_Node::fromXmlObj($sobj);
-						$this->_nodes[$n->getId()] = $n;
-						break;
+				case OSM_Api::OBJTYPE_WAY :
+					$w = OSM_Objects_Way::fromXmlObj($obj);
+					$this->_ways[$w->getId()] = $w;
+					break;
 
-					case 'note':
-					case 'meta':
-						break;
+				case OSM_Api::OBJTYPE_NODE :
+					$n = OSM_Objects_Node::fromXmlObj($obj);
+					$this->_nodes[$n->getId()] = $n;
+					break;
 
-					default:
-						throw new OSM_Exception('Object "' . $sobj->getName() . '" is not supported in subobjects (request full object)');
-				}
+				case 'note':
+				case 'meta':
+					break;
+
+				default:
+					throw new OSM_Exception('Object "' . $obj->getName() . '" is not supported in subobjects (request full object)');
 			}
 		}
-
-		return $object;
 	}
 
 	/**
 	 * Returns all loaded objects.
-	 * @return array List of objects
+	 * @return OSM_Objects_Object[] List of objects
 	 */
-	public function getObjects() {
-		$result = array();
-		foreach ($this->_nodes as $node)
-		{
-			$result[] = $node;
-		}
-		foreach ($this->_ways as $way)
-		{
-			$result[] = $way;
-		}
-		foreach ($this->_relations as $relation)
-		{
-			$result[] = $relation;
-		}
+	public function &getObjects() {
+
+		$result = array_merge(array_values($this->_relations), array_values($this->_ways), array_values($this->_nodes));
 		return $result;
+	}
+
+	/**
+	 * Returns all loaded relations
+	 * @return OSM_Objects_Relation[]
+	 */
+	public function getRelations() {
+		return $this->_relations;
+	}
+
+	/**
+	 * Returns all loaded ways
+	 * @return OSM_Objects_Way[]
+	 */
+	public function getWays() {
+		return $this->_ways;
+	}
+
+	/**
+	 * Returns all loaded nodes
+	 * @return OSM_Objects_Node[]
+	 */
+	public function getNodes() {
+		return $this->_nodes;
+	}
+
+	/**
+	 * Returns all loaded objects which are matching tags attributes
+	 * 
+	 * @param array $searchTags is a array of Key=>Value.
+	 * @return OSM_Objects_Object[]
+	 */
+	public function &getObjectsByTags(array $searchTags) {
+
+		$results = array_merge(
+			$this->getRelationsByTags($searchTags),
+			$this->getWaysByTags($searchTags),
+			$this->getNodesByTags($searchTags)
+			);
+		return $results;
+	}
+
+	/**
+	 * Returns all loaded nodes which are matching tags attributes
+	 * 
+	 * @param array $tags is a array of Key=>Value.
+	 * @return OSM_Objects_Node[]
+	 */
+	public function getRelationsByTags(array $searchTags) {
+
+		$results = array();
+		foreach ($this->_relations as $obj)
+		{
+			if ($obj->isMatchTags($searchTags))
+				$results[] = $obj;
+		}
+		return $results;
+	}
+
+	/**
+	 * Returns all loaded nodes which are matching tags attributes
+	 * 
+	 * @param array $tags is a array of Key=>Value.
+	 * @return OSM_Objects_Node[]
+	 */
+	public function getWaysByTags(array $searchTags) {
+
+		$results = array();
+		foreach ($this->_ways as $obj)
+		{
+			if ($obj->isMatchTags($searchTags))
+				$results[] = $obj;
+		}
+		return $results;
+	}
+
+	/**
+	 * Returns all loaded nodes which are matching tags attributes
+	 * 
+	 * @param array $tags is a array of Key=>Value.
+	 * @return OSM_Objects_Node[]
+	 */
+	public function getNodesByTags(array $searchTags) {
+
+		$results = array();
+		foreach ($this->_nodes as $obj)
+		{
+			if ($obj->isMatchTags($searchTags))
+				$results[] = $obj;
+		}
+		return $results;
 	}
 
 	/**
@@ -384,44 +493,15 @@ class OSM_Api {
 	}
 
 	/**
-	 * Reverts all changes in a given OSM Object.
-	 * The implementation is not really effective, as the object is downloaded again.
+	 * Reload a given OSM Object (reload the object).
+	 * 
 	 * @param string $type
 	 * @param int $id
 	 * @return OSM_Objects_Object the reverted object
 	 */
-	public function revertObject($type, $id) {
+	public function reloadObject($type, $id) {
 		$this->removeObject($type, $id);
-		return $this->getObject($type, $id);
-	}
-
-	/**
-	 *
-	 * @param string $id
-	 * @return OSM_Objects_Node 
-	 */
-	public function getNode($id) {
-		return $this->getObject(self::OBJTYPE_NODE, $id);
-	}
-
-	/**
-	 * @param string $id
-	 * @param bool $full
-	 * @return OSM_Objects_Way 
-	 */
-	public function getWay($id, $full = false) {
-		return $this->getObject(self::OBJTYPE_WAY, $id, $full);
-	}
-
-	/**
-	 * Retrieve a relation by Id.
-	 * 
-	 * @param string $id The relation Id
-	 * @param bool $full true for loading all relation's members
-	 * @return OSM_Objects_Relation 
-	 */
-	public function getRelation($id, $full = false) {
-		return $this->getObject(self::OBJTYPE_RELATION, $id, $full);
+		return $this->loadObject($type, $id);
 	}
 
 	/**
@@ -438,7 +518,6 @@ class OSM_Api {
 		$node->setLon($lon);
 		if (is_array($tags))
 			$node->addTags($tags);
-		$node->setDirty();
 		$this->_nodes[$node->getId()] = $node;
 		return $node;
 	}
@@ -456,7 +535,6 @@ class OSM_Api {
 			$way->addNodes($nodes);
 		if (is_array($tags))
 			$way->addTags($tags);
-		$way->setDirty();
 		return $way;
 	}
 
@@ -473,7 +551,6 @@ class OSM_Api {
 			$relation->addMembers($members);
 		if (is_array($tags))
 			$relation->addTags($tags);
-		$relation->setDirty();
 		return $relation;
 	}
 
@@ -493,7 +570,7 @@ class OSM_Api {
 		}
 		else
 		{
-			$result = $this->httpPut($relativeUrl, OSM_Objects_ChangeSet::getCreateXmlStr($comment,$this->getUserAgent()));
+			$result = $this->httpPut($relativeUrl, OSM_Objects_ChangeSet::getCreateXmlStr($comment, $this->getUserAgent()));
 		}
 
 		OSM_ZLog::debug(__METHOD__, var_export($result, true));
@@ -739,16 +816,15 @@ class OSM_Api {
 
 		return $waysOrdered;
 	}
-	
+
 	/**
 	 * Return a string like "MyApp / Yapafo 0.1", based on the "appName" options and the library constants.
 	 * This appears as the editor's name in the changeset properties (key "crated_by") 
 	 * @return string user agent string
 	 */
-	protected function getUserAgent()
-	{
+	protected function getUserAgent() {
 		$userAgent = "";
-		if($this->_options['appName'] != "")
+		if ($this->_options['appName'] != "")
 		{
 			$userAgent .= $this->_options['appName'] . ' / ';
 		}

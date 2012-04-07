@@ -138,7 +138,7 @@ class OSM_Objects_Object implements OSM_Objects_IDirty {
 		{
 			if (!empty($v) && $v != '*')
 			{
-				if ($this->_tags[$k]->getValue() == $v)
+				if ($this->_tags[$key]->getValue() == $v)
 					return true;
 				return null;
 			}
