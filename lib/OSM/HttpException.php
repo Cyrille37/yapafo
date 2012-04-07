@@ -13,13 +13,28 @@ class OSM_HttpException extends OSM_Exception {
 
 	public $http_response_header;
 
-	public function __construct($http_response_header) {
+	public function __construct($http_response_headerOrErrorMessage) {
 		parent::__construct();
-		$this->http_response_header = $http_response_header;
-		$this->message = $this->getHttpRaison();
+		
+		if(is_array($http_response_headerOrErrorMessage))
+		{
+			$this->http_response_header = $http_response_headerOrErrorMessage;
+			$this->message = $this->getHttpRaison();
+		}
+		else
+		{
+			$this->http_response_header = null ;
+			$this->message = $http_response_headerOrErrorMessage;
+		}
 	}
 
 	public function getHttpRaison() {
+		
+		if( $this->http_response_header == null )
+		{
+			return $this->message ;
+		}
+
 		if( ! isset($this->http_response_header[0]) )
 		{
 			return implode(',', $this->http_response_header );
@@ -28,11 +43,21 @@ class OSM_HttpException extends OSM_Exception {
 	}
 
 	public function getHttpCode() {
+		if( $this->http_response_header == null )
+		{
+			return 0 ;
+		}
 		$parts = explode(' ', $this->http_response_header[0]);
 		return $parts[1];
 	}
 
 	public function getApiError() {
+
+		if( $this->http_response_header == null )
+		{
+			return $this->message ;
+		}
+
 		/*
 		  [0] => HTTP/1.1 400 Bad Request
 		  [1] => Date: Tue, 17 Jan 2012 10:05:08 GMT

@@ -35,11 +35,13 @@ class OSM_Api {
 	protected $_url;
 	protected $_url4Write;
 	protected $_options = array(
-		'url' => null,
-		'url4Write' => null,
+		// simulation is set by default to avoid (protected against) unwanted write !
 		'simulation' => true,
+		'url' => OSM_Api::URL_PROD_FR,
+		'url4Write' => OSM_Api::URL_PROD_UK,
 		'user' => null,
 		'password' => null,
+		// to store every network communications (load/save) in a file.
 		'outputFolder' => null,
 		'appName' => '', // name for the application using the API
 		'log' => array('level' => OSM_ZLog::LEVEL_ERROR)
@@ -48,6 +50,11 @@ class OSM_Api {
 	protected $_ways = array();
 	protected $_nodes = array();
 	protected $_newIdCounter = -1;
+	/**
+	 * Works with $_options['outputFolder']. It's used to construct the filename.
+	 * @var int
+	 */
+	protected $_outputWriteCount = 0 ;
 
 	/**
 	 * Store all xml Objects
@@ -96,11 +103,14 @@ class OSM_Api {
 			throw new OSM_Exception('Url must be set');
 		}
 
-		if (empty($this->_options['url4Write']))
+		if (! empty($this->_options['outputFolder']))
 		{
-			$this->_options['url4Write'] = $this->_options['url'];
+			if( !file_exists($this->_options['outputFolder']))
+			{
+				throw new OSM_Exception('Option "outputFolder" is set, but the folder does not exists');
+			}
 		}
-
+		
 		OSM_ZLog::debug(__METHOD__, 'url: ' . $this->_options['url'] . ', url4Write: ' . $this->_options['url4Write']);
 	}
 
@@ -203,7 +213,15 @@ class OSM_Api {
 		$result = @file_get_contents($url, false, $context);
 		if ($result === false)
 		{
-			throw new OSM_HttpException($http_response_header);
+			$e = error_get_last();
+			if( isset($http_response_header) )
+			{
+				throw new OSM_HttpException($http_response_header);
+			}
+			else
+			{
+				throw new OSM_HttpException( $e['message'] );
+			}
 		}
 
 		return $result;
@@ -220,7 +238,7 @@ class OSM_Api {
 		{
 			throw new OSM_Exception('Invalid object Id');
 		}
-		
+
 		switch ($type)
 		{
 			case self::OBJTYPE_RELATION:
@@ -242,7 +260,7 @@ class OSM_Api {
 				throw new OSM_Exception('Unknow object type "' . $type . '"');
 				break;
 		}
-		
+
 		// Query "full" on a "node" will cause a 404 not found
 		if ($type == self::OBJTYPE_NODE)
 			$full = false;
@@ -253,7 +271,7 @@ class OSM_Api {
 
 		if ($this->_options['outputFolder'] != null)
 		{
-			file_put_contents($this->_options['outputFolder'] . DIRECTORY_SEPARATOR . __METHOD__ . '.' . $id . '.xml', $result);
+			file_put_contents( $this->_getOutputFilename(__METHOD__), $result);
 		}
 
 		if (OSM_ZLog::isDebug())
@@ -361,6 +379,45 @@ class OSM_Api {
 		}
 	}
 
+	public function hasObject($type, $id) {
+
+		switch ($type)
+		{
+			case self::OBJTYPE_RELATION:
+				if (array_key_exists($id, $this->_relations))
+					return true;
+				break;
+
+			case self::OBJTYPE_WAY:
+				if (array_key_exists($id, $this->_ways))
+					return true;
+				break;
+
+			case self::OBJTYPE_NODE:
+				if (array_key_exists($id, $this->_nodes))
+					return true;
+				break;
+				
+			default:
+				throw new OSM_Exception('Unknow object type "' . $type . '"');
+
+		}
+		return false;
+	}
+
+	public function hasNode($id)
+	{
+		return $this->hasObject(OSM_Api::OBJTYPE_NODE, $id);
+	}
+	public function hasWay($id)
+	{
+		return $this->hasObject(OSM_Api::OBJTYPE_WAY, $id);
+	}
+	public function hasRelation($id)
+	{
+		return $this->hasObject(OSM_Api::OBJTYPE_RELATION, $id);
+	}
+	
 	/**
 	 * Returns all loaded objects.
 	 * @return OSM_Objects_Object[] List of objects
@@ -404,10 +461,8 @@ class OSM_Api {
 	public function &getObjectsByTags(array $searchTags) {
 
 		$results = array_merge(
-			$this->getRelationsByTags($searchTags),
-			$this->getWaysByTags($searchTags),
-			$this->getNodesByTags($searchTags)
-			);
+			$this->getRelationsByTags($searchTags), $this->getWaysByTags($searchTags), $this->getNodesByTags($searchTags)
+		);
 		return $results;
 	}
 
@@ -554,6 +609,14 @@ class OSM_Api {
 		return $relation;
 	}
 
+	protected function _getOutputFilename($methodName )
+	{
+		return $this->_options['outputFolder'] .
+			DIRECTORY_SEPARATOR .__CLASS__
+			.'_'.sprintf('%04d',++$this->_outputWriteCount).'-'.time()
+			.'_'. $methodName . '.xml' ;
+	}
+
 	/**
 	 *
 	 * @param string $comment
@@ -606,7 +669,7 @@ class OSM_Api {
 		{
 			if ($this->_options['outputFolder'] != null)
 			{
-				file_put_contents($this->_options['outputFolder'] . DIRECTORY_SEPARATOR . __CLASS__ . '.simulation_uploadChangeSet_' . time() . '.xml', $xmlStr);
+				file_put_contents( $this->_getOutputFilename(__METHOD__), $xmlStr);
 			}
 			$result = 'Simulation, no call to Api';
 		}
@@ -621,6 +684,7 @@ class OSM_Api {
 	public function saveChanges($comment) {
 
 		OSM_ZLog::notice(__METHOD__, 'comment = "', $comment, '"');
+
 		if ($this->_options['simulation'])
 		{
 			OSM_ZLog::notice(__METHOD__, 'Simulation Mode, not saving' . ($this->_options['outputFolder'] != null ? ' but look inside folder ' . $this->_options['outputFolder'] : ''));

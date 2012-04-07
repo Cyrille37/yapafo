@@ -47,5 +47,11 @@ _assert(count($objects) == 2);
 $objects = $osmApi->getObjectsByTags(array('ref:INSEE' => '','place' => ''));
 _assert(count($objects) == 1);
 
+// test removeObject
+
+$osmApi->removeObject(OSM_Api::OBJTYPE_NODE, '691558211');
+$node = $osmApi->hasNode('691558211');
+_assert($node == null);
+
 $time_end = microtime(true);
 _wl('Test well done in ' . number_format($time_end - $time_start, 3) . ' second(s).');
