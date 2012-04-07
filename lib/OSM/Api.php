@@ -570,7 +570,7 @@ class OSM_Api {
 		return $this->loadObject($type, $id);
 	}
 
-	public function queryOApiGet( $xmlQuery )
+	public function queryOApi( $xmlQuery )
 	{
 		$postdata = http_build_query(array('data' => $xmlQuery));
 
