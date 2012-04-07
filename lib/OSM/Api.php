@@ -32,20 +32,34 @@ class OSM_Api {
 	const OBJTYPE_WAY = 'way';
 	const OBJTYPE_RELATION = 'relation';
 
-	protected $_url;
-	protected $_url4Write;
+	/**
+	 * Query form: http://api.openstreetmap.fr/query_form.html
+	 */
+	const OAPI_URL_FR = 'http://api.openstreetmap.fr/oapi/interpreter';
+	const OAPI_URL_RU = 'http://overpass.osm.rambler.ru/';
+	const OAPI_URL_LETUFFE = 'http://overpassapi.letuffe.org/api/interpreter';
+	const OAPI_URL_DE = 'http://www.overpass-api.de/api/interpreter';
+
 	protected $_options = array(
 		// simulation is set by default to avoid (protected against) unwanted write !
 		'simulation' => true,
-		'url' => OSM_Api::URL_PROD_FR,
-		'url4Write' => OSM_Api::URL_PROD_UK,
+		'url' => self::URL_PROD_FR,
+		'url4Write' => self::URL_PROD_UK,
 		'user' => null,
 		'password' => null,
 		// to store every network communications (load/save) in a file.
 		'outputFolder' => null,
 		'appName' => '', // name for the application using the API
-		'log' => array('level' => OSM_ZLog::LEVEL_ERROR)
+		'log' => array('level' => OSM_ZLog::LEVEL_ERROR),
+		'oapi_url' => self::OAPI_URL_FR
 	);
+
+	protected $_stats = array(
+		'requestCount'=>0,
+		'loadedBytes'=> 0
+		);
+	protected $_url;
+	protected $_url4Write;
 	protected $_relations = array();
 	protected $_ways = array();
 	protected $_nodes = array();
@@ -100,7 +114,12 @@ class OSM_Api {
 
 		if (empty($this->_options['url']))
 		{
-			throw new OSM_Exception('Url must be set');
+			throw new OSM_Exception('Option "url" must be set');
+		}
+
+		if (empty($this->_options['oapi_url']))
+		{
+			throw new OSM_Exception('Option "oapi_url" must be set');
 		}
 
 		if (! empty($this->_options['outputFolder']))
@@ -110,7 +129,7 @@ class OSM_Api {
 				throw new OSM_Exception('Option "outputFolder" is set, but the folder does not exists');
 			}
 		}
-		
+
 		OSM_ZLog::debug(__METHOD__, 'url: ' . $this->_options['url'] . ', url4Write: ' . $this->_options['url4Write']);
 	}
 
@@ -144,19 +163,7 @@ class OSM_Api {
 		return $this->_loadedXml[count($this->_loadedXml) - 1]->asXML();
 	}
 
-	public function httpGet($relativeUrl) {
-		return $this->_http($relativeUrl, null, 'GET');
-	}
-
-	public function httpPut($relativeUrl, $data = null) {
-		return $this->_http($relativeUrl, $data, 'PUT');
-	}
-
-	public function httpPost($relativeUrl, $data = null) {
-		return $this->_http($relativeUrl, $data, 'POST');
-	}
-
-	protected function _http($relativeUrl, $data=null, $method='GET') {
+	protected function _httpApi($relativeUrl, $data=null, $method='GET') {
 
 		$url = null;
 		switch ($method)
@@ -187,7 +194,7 @@ class OSM_Api {
 			$opts = array('http' =>
 				array(
 					'method' => $method,
-					'user_agent' => $this->getUserAgent(),
+					'user_agent' => $this->_getUserAgent(),
 					'header' => /* implode("\r\n", $headers) */$headers,
 				)
 			);
@@ -200,7 +207,7 @@ class OSM_Api {
 			$opts = array('http' =>
 				array(
 					'method' => $method,
-					'user_agent' => $this->getUserAgent(),
+					'user_agent' => $this->_getUserAgent(),
 					//'header' => 'Content-type: application/x-www-form-urlencoded',
 					'header' => /* implode("\r\n", $headers) */$headers,
 					'content' => $postdata
@@ -209,6 +216,8 @@ class OSM_Api {
 		}
 
 		$context = stream_context_create($opts);
+
+		$this->_stats['requestCount']++;
 
 		$result = @file_get_contents($url, false, $context);
 		if ($result === false)
@@ -223,6 +232,8 @@ class OSM_Api {
 				throw new OSM_HttpException( $e['message'] );
 			}
 		}
+
+		$this->_stats['loadedBytes'] += strlen($result);
 
 		return $result;
 	}
@@ -267,7 +278,7 @@ class OSM_Api {
 
 		$relativeUrl = $type . '/' . $id . ($full ? '/full' : '' );
 
-		$result = $this->httpGet($relativeUrl);
+		$result = $this->_httpApi($relativeUrl, null, 'GET');
 
 		if ($this->_options['outputFolder'] != null)
 		{
@@ -354,17 +365,17 @@ class OSM_Api {
 			OSM_ZLog::debug(__METHOD__, 'subobjects type=', $obj->getName());
 			switch ($obj->getName())
 			{
-				case OSM_Api::OBJTYPE_RELATION :
+				case self::OBJTYPE_RELATION :
 					$r = OSM_Objects_Relation::fromXmlObj($obj);
 					$this->_relations[$r->getId()] = $r;
 					break;
 
-				case OSM_Api::OBJTYPE_WAY :
+				case self::OBJTYPE_WAY :
 					$w = OSM_Objects_Way::fromXmlObj($obj);
 					$this->_ways[$w->getId()] = $w;
 					break;
 
-				case OSM_Api::OBJTYPE_NODE :
+				case self::OBJTYPE_NODE :
 					$n = OSM_Objects_Node::fromXmlObj($obj);
 					$this->_nodes[$n->getId()] = $n;
 					break;
@@ -407,15 +418,15 @@ class OSM_Api {
 
 	public function hasNode($id)
 	{
-		return $this->hasObject(OSM_Api::OBJTYPE_NODE, $id);
+		return $this->hasObject(self::OBJTYPE_NODE, $id);
 	}
 	public function hasWay($id)
 	{
-		return $this->hasObject(OSM_Api::OBJTYPE_WAY, $id);
+		return $this->hasObject(self::OBJTYPE_WAY, $id);
 	}
 	public function hasRelation($id)
 	{
-		return $this->hasObject(OSM_Api::OBJTYPE_RELATION, $id);
+		return $this->hasObject(self::OBJTYPE_RELATION, $id);
 	}
 	
 	/**
@@ -559,6 +570,41 @@ class OSM_Api {
 		return $this->loadObject($type, $id);
 	}
 
+	public function queryOApiGet( $xmlQuery )
+	{
+		$postdata = http_build_query(array('data' => $xmlQuery));
+
+		$opts = array('http' =>
+			array(
+				'method' => 'POST',
+				'user_agent' => $this->_getUserAgent(),
+				'header' => 'Content-type: application/x-www-form-urlencoded',
+				'content' => $postdata
+			)
+		);
+		$context = stream_context_create($opts);
+
+		$this->_stats['requestCount']++;
+
+		$result = @file_get_contents($this->_options['oapi_url'], false, $context);
+		if ($result === false)
+		{
+			$e = error_get_last();
+			if( isset($http_response_header) )
+			{
+				throw new OSM_HttpException($http_response_header);
+			}
+			else
+			{
+				throw new OSM_HttpException( $e['message'] );
+			}
+		}
+
+		$this->_stats['loadedBytes'] += strlen($result);
+
+		$this->createObjectsfromXml($result);
+	}
+
 	/**
 	 *
 	 * @param type $lat
@@ -609,14 +655,6 @@ class OSM_Api {
 		return $relation;
 	}
 
-	protected function _getOutputFilename($methodName )
-	{
-		return $this->_options['outputFolder'] .
-			DIRECTORY_SEPARATOR .__CLASS__
-			.'_'.sprintf('%04d',++$this->_outputWriteCount).'-'.time()
-			.'_'. $methodName . '.xml' ;
-	}
-
 	/**
 	 *
 	 * @param string $comment
@@ -633,7 +671,7 @@ class OSM_Api {
 		}
 		else
 		{
-			$result = $this->httpPut($relativeUrl, OSM_Objects_ChangeSet::getCreateXmlStr($comment, $this->getUserAgent()));
+			$result = $this->_httpApi($relativeUrl, OSM_Objects_ChangeSet::getCreateXmlStr($comment, $this->_getUserAgent()), 'PUT');
 		}
 
 		OSM_ZLog::debug(__METHOD__, var_export($result, true));
@@ -652,7 +690,7 @@ class OSM_Api {
 		}
 		else
 		{
-			$result = $this->httpPut($relativeUrl);
+			$result = $this->_httpApi($relativeUrl, null, 'PUT');
 		}
 	}
 
@@ -660,7 +698,7 @@ class OSM_Api {
 
 		$relativeUrl = 'changeset/' . $changeSet->getId() . '/upload';
 
-		$xmlStr = $changeSet->getUploadXmlStr($this->getUserAgent());
+		$xmlStr = $changeSet->getUploadXmlStr($this->_getUserAgent());
 
 		if (OSM_ZLog::isDebug())
 			file_put_contents('debug.OSM_Api._uploadChangeSet.postdata.xml', $xmlStr);
@@ -675,7 +713,7 @@ class OSM_Api {
 		}
 		else
 		{
-			$result = $this->httpPost($relativeUrl, $xmlStr);
+			$result = $this->_httpApi($relativeUrl, $xmlStr, 'POST');
 		}
 
 		OSM_ZLog::debug(__METHOD__, print_r($result, true));
@@ -826,7 +864,7 @@ class OSM_Api {
 	 */
 	public function getRelationWaysOrdered(OSM_Objects_Relation $relation) {
 
-		$membersWays = $relation->getMembersByType(OSM_Api::OBJTYPE_WAY);
+		$membersWays = $relation->getMembersByType(self::OBJTYPE_WAY);
 
 		$w1 = $membersWays[0];
 		if (!array_key_exists($w1->getRef(), $this->_ways))
@@ -880,13 +918,21 @@ class OSM_Api {
 
 		return $waysOrdered;
 	}
+	
+	public function getStatsRequestCount() {
+		return $this->_stats['requestCount'];
+	}
+
+	public function getStatsLoadedBytes() {
+		return $this->_stats['loadedBytes'];
+	}
 
 	/**
 	 * Return a string like "MyApp / Yapafo 0.1", based on the "appName" options and the library constants.
 	 * This appears as the editor's name in the changeset properties (key "crated_by") 
 	 * @return string user agent string
 	 */
-	protected function getUserAgent() {
+	protected function _getUserAgent() {
 		$userAgent = "";
 		if ($this->_options['appName'] != "")
 		{
@@ -894,6 +940,14 @@ class OSM_Api {
 		}
 		$userAgent .= self::USER_AGENT . ' ' . self::VERSION;
 		return $userAgent;
+	}
+
+	protected function _getOutputFilename($methodName )
+	{
+		return $this->_options['outputFolder'] .
+			DIRECTORY_SEPARATOR .__CLASS__
+			.'_'.sprintf('%04d',++$this->_outputWriteCount).'-'.time()
+			.'_'. $methodName . '.xml' ;
 	}
 
 }
