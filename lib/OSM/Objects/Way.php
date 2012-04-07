@@ -62,7 +62,7 @@ class OSM_Objects_Way extends OSM_Objects_Object implements OSM_Objects_IXml {
 		{
 			$xmlStr.= '<nd ref="' . $nodeRef . '" />' . "\n";
 		}
-		$xmlStr.= '</' . $xmlName . '/>';
+		$xmlStr.= '</' . $xmlName . '>';
 
 		return $xmlStr;
 	}
