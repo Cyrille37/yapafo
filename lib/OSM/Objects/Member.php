@@ -67,7 +67,7 @@ class OSM_Objects_Member implements OSM_Objects_IDirty, OSM_Objects_IXml {
 	 * @return string 
 	 */
 	public function asXmlStr() {
-		
+
 		$xmlStr = '<member type="' . $this->_type . '" ref="' . $this->_ref . '" role="' . $this->_role . '" />';
 		return $xmlStr;
 	}

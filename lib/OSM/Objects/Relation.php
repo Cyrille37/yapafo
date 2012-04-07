@@ -74,28 +74,37 @@ class OSM_Objects_Relation extends OSM_Objects_Object implements OSM_Objects_IXm
 	}
 
 	/**
-	 * @param OSM_Objects_Member $member
-	 * @return string 
+	 * Compute the member's key into the relation members collection.
+	 * 
+	 * @param string|OSM_Objects_Member $memberOrType
+	 * @param string $ref The member's ref. Should be null if $memberOrType instanceof OSM_Objects_Member .
+	 * @return string
 	 */
-	protected static function _memberKey(OSM_Objects_Member $member) {
-		return $member->getType() . $member->getRef();
+	protected static function _memberKey($memberOrType, $ref=null) {
+
+		if ($memberOrType instanceof OSM_Objects_Member)
+		{
+			if (!empty($ref))
+				throw new InvalidArgumentException('$ref must be empty');
+			return $memberOrType->getType() . $memberOrType->getRef();
+		}
+
+		if (empty($ref))
+			throw new InvalidArgumentException('$ref must not be empty');
+		if (!self::isValidMemberType($memberOrType))
+			throw new OSM_Exception('Invalid member type "' . $memberOrType . '"');
+		return $memberOrType . $ref;
 	}
 
-	/**
-	 * @param string $type
-	 * @param string $ref
-	 * @return string 
-	 */
-	protected static function _memberKey2($type, $ref) {
-		return $type . $ref;
-	}
+	public static function isValidMemberType($memberType) {
 
-	/**
-	 * @param OSM_Objects_Node $node
-	 * @return string 
-	 */
-	protected static function _memberKeyFromNode(OSM_Objects_Node $node) {
-		return OSM_Api::OBJTYPE_NODE . $node->getId();
+		switch ($memberType)
+		{
+			case OSM_Api::OBJTYPE_WAY:
+			case OSM_API::OBJTYPE_NODE:
+				return true;
+		}
+		return false;
 	}
 
 	public function isDirty() {
@@ -106,17 +115,6 @@ class OSM_Objects_Relation extends OSM_Objects_Object implements OSM_Objects_IXm
 			if ($m->isDirty())
 				return true;
 		return $this->_dirty;
-	}
-
-	public function isValidMemberType($memberType) {
-
-		switch ($memberType)
-		{
-			case OSM_Api::OBJTYPE_WAY:
-			case OSM_API::OBJTYPE_NODE:
-				return true;
-		}
-		return false;
 	}
 
 	public function hasMember(OSM_Objects_Member $member) {
@@ -140,7 +138,7 @@ class OSM_Objects_Relation extends OSM_Objects_Object implements OSM_Objects_IXm
 	 *
 	 * @return array
 	 */
-	public function getMembersByRole($role) {
+	public function findMembersByRole($role) {
 
 		$members = array();
 		foreach ($this->_members as $member)
@@ -152,10 +150,15 @@ class OSM_Objects_Relation extends OSM_Objects_Object implements OSM_Objects_IXm
 	}
 
 	/**
-	 *
+	 * Find members of a certain type.
+	 * @throws {@link InvalidArgumentException} if invalid type.
+	 * @param string $type
 	 * @return array
 	 */
-	public function getMembersByType($type) {
+	public function findMembersByType($type) {
+
+		if( ! self::isValidMemberType($type) )
+			throw new InvalidArgumentException ('Invalid type "'.$type.'"');
 
 		$members = array();
 		foreach ($this->_members as $member)
@@ -174,10 +177,7 @@ class OSM_Objects_Relation extends OSM_Objects_Object implements OSM_Objects_IXm
 	 */
 	public function getMember($memberType, $refId) {
 
-		if (!$this->isValidMemberType($memberType))
-			throw new Exception('Invalide member type "' . $memberType . '"');
-
-		$k = self::_memberKey2($memberType, $nodeId);
+		$k = self::_memberKey($memberType, $nodeId);
 		if (array_key_exists($k, $this->_members))
 		{
 			return $this->_members[$k];
@@ -192,12 +192,17 @@ class OSM_Objects_Relation extends OSM_Objects_Object implements OSM_Objects_IXm
 	 */
 	public function getMemberNode($nodeId) {
 
-		$k = self::_memberKey2(OSM_Api::OBJTYPE_NODE, $nodeId);
-		if (array_key_exists($k, $this->_members))
-		{
-			return $this->_members[$k];
-		}
-		return null;
+		return $this->getMemer(OSM_Api::OBJTYPE_NODE, $nodeId);
+	}
+	
+	/**
+	 *
+	 * @param string $nodeId
+	 * @return OSM_Objects_Member 
+	 */
+	public function getMemberWay($wayId) {
+
+		return $this->getMemer(OSM_Api::OBJTYPE_WAY, $nodeId);
 	}
 
 	/**

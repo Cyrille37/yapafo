@@ -892,7 +892,7 @@ class OSM_Api {
 	 */
 	public function getRelationWaysOrdered(OSM_Objects_Relation $relation) {
 
-		$membersWays = $relation->getMembersByType(self::OBJTYPE_WAY);
+		$membersWays = $relation->findMembersByType(self::OBJTYPE_WAY);
 
 		$w1 = $membersWays[0];
 		if (!array_key_exists($w1->getRef(), $this->_ways))
