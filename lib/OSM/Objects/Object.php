@@ -111,7 +111,7 @@ class OSM_Objects_Object implements OSM_Objects_IDirty {
 	 * 
 	 * @param array $searchTags Optionnal. If you want to filter the returned tags.
 	 * @return OSM_Objects_Tag[]
-	 * @see getTag()
+	 * @see findTag()
 	 */
 	public function findTags(array $searchTags=null) {
 

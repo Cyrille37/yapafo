@@ -135,10 +135,12 @@ class OSM_Objects_Relation extends OSM_Objects_Object implements OSM_Objects_IXm
 	}
 
 	/**
+	 * Find members of a certain role.
 	 *
-	 * @return array
+	 * @param string $role
+	 * @return OSM_Objects_Member[]
 	 */
-	public function findMembersByRole($role) {
+	public function &findMembersByRole($role) {
 
 		$members = array();
 		foreach ($this->_members as $member)
@@ -151,19 +153,41 @@ class OSM_Objects_Relation extends OSM_Objects_Object implements OSM_Objects_IXm
 
 	/**
 	 * Find members of a certain type.
-	 * @throws {@link InvalidArgumentException} if invalid type.
+	 * 
 	 * @param string $type
-	 * @return array
+	 * @return OSM_Objects_Member[]
+	 * @throws {@link InvalidArgumentException} if invalid type.
 	 */
-	public function findMembersByType($type) {
+	public function &findMembersByType($type) {
 
-		if( ! self::isValidMemberType($type) )
-			throw new InvalidArgumentException ('Invalid type "'.$type.'"');
+		if (!self::isValidMemberType($type))
+			throw new InvalidArgumentException('Invalid type "' . $type . '"');
 
 		$members = array();
 		foreach ($this->_members as $member)
 		{
 			if ($member->getType() == $type)
+				$members[] = $member;
+		}
+		return $members;
+	}
+
+	/**
+	 * Find members of a certain type and a certain role.
+	 * 
+	 * @param string $type
+	 * @param string $role 
+	 * @return OSM_Objects_Member[]
+	 * @throws {@link InvalidArgumentException} if invalid type.
+	 */
+	public function &findMembersByTypeAndRole($type, $role) {
+		if (!self::isValidMemberType($type))
+			throw new InvalidArgumentException('Invalid type "' . $type . '"');
+
+		$members = array();
+		foreach ($this->_members as $member)
+		{
+			if ($member->getType() == $type && $member->getRole() == $role )
 				$members[] = $member;
 		}
 		return $members;
@@ -194,7 +218,7 @@ class OSM_Objects_Relation extends OSM_Objects_Object implements OSM_Objects_IXm
 
 		return $this->getMemer(OSM_Api::OBJTYPE_NODE, $nodeId);
 	}
-	
+
 	/**
 	 *
 	 * @param string $nodeId

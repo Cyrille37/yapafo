@@ -490,12 +490,12 @@ class OSM_Api {
 	 * @param array $tags is a array of Key=>Value.
 	 * @return OSM_Objects_Node[]
 	 */
-	public function getRelationsByTags(array $searchTags) {
+	public function &getRelationsByTags(array $searchTags) {
 
 		$results = array();
 		foreach ($this->_relations as $obj)
 		{
-			if ($obj->isMatchTags($searchTags))
+			if ($obj->hasTags($searchTags))
 				$results[] = $obj;
 		}
 		return $results;
@@ -507,12 +507,12 @@ class OSM_Api {
 	 * @param array $tags is a array of Key=>Value.
 	 * @return OSM_Objects_Node[]
 	 */
-	public function getWaysByTags(array $searchTags) {
+	public function &getWaysByTags(array $searchTags) {
 
 		$results = array();
 		foreach ($this->_ways as $obj)
 		{
-			if ($obj->isMatchTags($searchTags))
+			if ($obj->hasTags($searchTags))
 				$results[] = $obj;
 		}
 		return $results;
@@ -524,12 +524,12 @@ class OSM_Api {
 	 * @param array $tags is a array of Key=>Value.
 	 * @return OSM_Objects_Node[]
 	 */
-	public function getNodesByTags(array $searchTags) {
+	public function &getNodesByTags(array $searchTags) {
 
 		$results = array();
 		foreach ($this->_nodes as $obj)
 		{
-			if ($obj->isMatchTags($searchTags))
+			if ($obj->hasTags($searchTags))
 				$results[] = $obj;
 		}
 		return $results;
