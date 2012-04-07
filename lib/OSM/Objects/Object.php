@@ -90,9 +90,15 @@ class OSM_Objects_Object implements OSM_Objects_IDirty {
 		return $this->_deleted;
 	}
 
-	public function isMatchTags(array $searchTags )
+	/**
+	 * Like findTags but return a bool instead of tags.
+	 * 
+	 * @param array $searchTags
+	 * @return bool
+	 */
+	public function hasTags(array $searchTags )
 	{
-		$resultTags = $this->getTags( $searchTags);
+		$resultTags = $this->findTags( $searchTags);
 		if( count($resultTags) == count($searchTags) )
 			return true ;
 		return false ;
@@ -107,7 +113,7 @@ class OSM_Objects_Object implements OSM_Objects_IDirty {
 	 * @return OSM_Objects_Tag[]
 	 * @see getTag()
 	 */
-	public function getTags(array $searchTags=null) {
+	public function findTags(array $searchTags=null) {
 
 		if ($searchTags == null)
 			return $this->_tags;
@@ -115,7 +121,7 @@ class OSM_Objects_Object implements OSM_Objects_IDirty {
 		$resultTags = array();
 		foreach ($searchTags as $k=>$v)
 		{
-			if( ($t=$this->getTag($k, $v))!=null )
+			if( ($t=$this->findTag($k, $v))!=null )
 			{
 				$resultTags[] = $t ;
 			}
@@ -132,14 +138,14 @@ class OSM_Objects_Object implements OSM_Objects_IDirty {
 	 * @param string $v Optional. If not provided or if an empty string or a '*' the value will not be tested.
 	 * @return OSM_Objects_Tag
 	 */
-	public function getTag($key, $v='') {
+	public function findTag($key, $v='') {
 
 		if (array_key_exists($key, $this->_tags))
 		{
 			if (!empty($v) && $v != '*')
 			{
 				if ($this->_tags[$key]->getValue() == $v)
-					return true;
+					return $this->_tags[$key];
 				return null;
 			}
 			return $this->_tags[$key];

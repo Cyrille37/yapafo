@@ -444,7 +444,7 @@ class OSM_Api {
 	 * @return OSM_Objects_Relation[]
 	 */
 	public function getRelations() {
-		return $this->_relations;
+		return array_values($this->_relations);
 	}
 
 	/**
@@ -452,7 +452,7 @@ class OSM_Api {
 	 * @return OSM_Objects_Way[]
 	 */
 	public function getWays() {
-		return $this->_ways;
+		return array_values($this->_ways);
 	}
 
 	/**
@@ -460,7 +460,7 @@ class OSM_Api {
 	 * @return OSM_Objects_Node[]
 	 */
 	public function getNodes() {
-		return $this->_nodes;
+		return array_values($this->_nodes);
 	}
 
 	/**
@@ -570,6 +570,10 @@ class OSM_Api {
 		return $this->loadObject($type, $id);
 	}
 
+	/**
+	 * Retreive objects with the Overpass-Api and fill objects tables with result.
+	 * @param string $xmlQuery 
+	 */
 	public function queryOApi( $xmlQuery )
 	{
 		$postdata = http_build_query(array('data' => $xmlQuery));
