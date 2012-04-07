@@ -6,26 +6,26 @@ $time_start = microtime(true);
 require_once (__DIR__ . '/tests_common.php');
 require_once (__DIR__ . '/../lib/OSM/Api.php');
 
-_wl('test OSM_Api with network');
+_wl('test "' . basename(__FILE__) . '');
 
 $osmApi = new OSM_Api();
 
-$xmlQuery = '
-<osm-script>
-<union>
- <query type="relation" into="qr">
-  <has-kv k="boundary" v="administrative"/>
-  <has-kv k="admin_level" v="8"/>
-  <has-kv k="ref:INSEE" v="37001"/>
- </query>
- <recurse type="relation-node" from="qr"/>
- <recurse type="relation-way" from="qr"/>
- <recurse type="way-node"/>
-</union>
-<print />
-</osm-script>
-';
-$osmApi->queryOApiGet($xmlQuery);
+$osmApi->getRelation('164211');
+
+// only the relation is loaded
+
+$relations = $osmApi->getRelations();
+_assert(count($relations) == 1);
+$ways = $osmApi->getWays();
+_assert(count($ways) == 0);
+$nodes = $osmApi->getNodes();
+_assert(count($nodes) == 0);
+$objects = $osmApi->getObjects();
+_assert(count($objects) == 1);
+
+// the relation and all its members are loaded
+
+$osmApi->getRelation('164211',true);
 
 // getRelations, getWays, getNodes
 
