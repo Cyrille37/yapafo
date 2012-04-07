@@ -36,7 +36,7 @@ class OSM_Objects_Object implements OSM_Objects_IDirty {
 	 */
 	public function __construct($id=null) {
 
-		if( $id!=null && $id!='' && $id!=0 )
+		if ($id != null && $id != '' && $id != 0)
 			$this->setId($id);
 		$this->setDirty();
 	}
@@ -90,22 +90,61 @@ class OSM_Objects_Object implements OSM_Objects_IDirty {
 		return $this->_deleted;
 	}
 
+	public function isMatchTags(array $searchTags )
+	{
+		$resultTags = $this->getTags( $searchTags);
+		if( count($resultTags) == count($searchTags) )
+			return true ;
+		return false ;
+	}
+
 	/**
+	 * Return all tags.
+	 * 
+	 * Returned tags could be selected
+	 * 
+	 * @param array $searchTags Optionnal. If you want to filter the returned tags.
+	 * @return OSM_Objects_Tag[]
+	 * @see getTag()
+	 */
+	public function getTags(array $searchTags=null) {
+
+		if ($searchTags == null)
+			return $this->_tags;
+
+		$resultTags = array();
+		foreach ($searchTags as $k=>$v)
+		{
+			if( ($t=$this->getTag($k, $v))!=null )
+			{
+				$resultTags[] = $t ;
+			}
+		}
+		return $resultTags ;
+	}
+
+	/**
+	 * Retreive a tag by Key.
+	 * 
+	 * A value could be provided to enforce the test.
+	 * 
 	 * @param string $key
+	 * @param string $v Optional. If not provided or if an empty string or a '*' the value will not be tested.
 	 * @return OSM_Objects_Tag
 	 */
-	public function getTag($key) {
+	public function getTag($key, $v='') {
 
 		if (array_key_exists($key, $this->_tags))
 		{
+			if (!empty($v) && $v != '*')
+			{
+				if ($this->_tags[$k]->getValue() == $v)
+					return true;
+				return null;
+			}
 			return $this->_tags[$key];
 		}
 		return null;
-	}
-
-	public function getTags()
-	{
-		return $this->_tags ;
 	}
 
 	public function setTag($key, $value) {
@@ -137,7 +176,7 @@ class OSM_Objects_Object implements OSM_Objects_IDirty {
 				throw new OSM_Exception('duplicate tag "' . $tag->getKey() . '"');
 			}
 		}
-		foreach( $tags as $tag )
+		foreach ($tags as $tag)
 		{
 			$this->addTag($tag);
 		}
