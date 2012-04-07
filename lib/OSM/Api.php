@@ -239,7 +239,14 @@ class OSM_Api {
 	}
 
 	/**
-	 * @return OSM_Objects_Object
+	 * Return the designated object.
+	 * 
+	 * Reuse the loaded one if exists and $full is not set.
+	 * 
+	 * @param type $type
+	 * @param type $id
+	 * @param boolean $full
+	 * @return OSM_Objects_Object 
 	 */
 	public function getObject($type, $id, $full = false) {
 
@@ -535,6 +542,7 @@ class OSM_Api {
 	 * @param int $id
 	 */
 	public function removeObject($type, $id) {
+		
 		switch ($type)
 		{
 			case self::OBJTYPE_RELATION:
@@ -559,19 +567,24 @@ class OSM_Api {
 	}
 
 	/**
-	 * Reload a given OSM Object (reload the object).
+	 * Reload a given OSM Object into the objects collection.
+	 * 
+	 * It remove the object before.
 	 * 
 	 * @param string $type
 	 * @param int $id
+	 * @param bool $full
 	 * @return OSM_Objects_Object the reverted object
 	 */
-	public function reloadObject($type, $id) {
+	public function reloadObject($type, $id, $full=false ) {
+		
 		$this->removeObject($type, $id);
-		return $this->loadObject($type, $id);
+		return $this->getObject($type, $id, $full);
 	}
 
 	/**
-	 * Retreive objects with the Overpass-Api and fill objects tables with result.
+	 * Retreive objects with the Overpass-Api and fill objects collection from result.
+	 * 
 	 * @param string $xmlQuery 
 	 */
 	public function queryOApi( $xmlQuery )
@@ -610,7 +623,8 @@ class OSM_Api {
 	}
 
 	/**
-	 *
+	 * Create and add a new node to the objects collection.
+	 * 
 	 * @param type $lat
 	 * @param type $lon
 	 * @param array $tags
@@ -628,7 +642,8 @@ class OSM_Api {
 	}
 
 	/**
-	 *
+	 * Create and add a new way to the objects collection.
+	 * 
 	 * @param array $nodes
 	 * @param array $tags
 	 * @return OSM_Objects_Way 
@@ -644,10 +659,11 @@ class OSM_Api {
 	}
 
 	/**
-	 *
+	 * Create and add a new relation to the objects collection.
+	 * 
 	 * @param array $members
 	 * @param array $tags
-	 * @return OSM_Objects_Relation 
+	 * @return OSM_Objects_Relation
 	 */
 	public function addNewRelation(array $members=null, array $tags=null) {
 
@@ -723,6 +739,14 @@ class OSM_Api {
 		OSM_ZLog::debug(__METHOD__, print_r($result, true));
 	}
 
+	/**
+	 * Save changes made to objects.
+	 * 
+	 * Objects stay dirties after save. You have to destroy/reload them to get them up-to-date (id, version, ...)
+	 * 
+	 * @param type $comment
+	 * @return bool true if has saved something, false if nothing to save.
+	 */
 	public function saveChanges($comment) {
 
 		OSM_ZLog::notice(__METHOD__, 'comment = "', $comment, '"');
