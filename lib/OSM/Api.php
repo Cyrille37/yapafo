@@ -566,6 +566,11 @@ class OSM_Api {
 		}
 	}
 
+	public function removeAllObjects()
+	{
+		$this->_relations = $this->_ways = $this->_nodes = array();
+	}
+
 	/**
 	 * Reload a given OSM Object into the objects collection.
 	 * 

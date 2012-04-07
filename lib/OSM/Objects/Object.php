@@ -113,7 +113,7 @@ class OSM_Objects_Object implements OSM_Objects_IDirty {
 	 * @return OSM_Objects_Tag[]
 	 * @see findTag()
 	 */
-	public function findTags(array $searchTags=null) {
+	public function &findTags(array $searchTags=null) {
 
 		if ($searchTags == null)
 			return $this->_tags;
@@ -121,7 +121,7 @@ class OSM_Objects_Object implements OSM_Objects_IDirty {
 		$resultTags = array();
 		foreach ($searchTags as $k=>$v)
 		{
-			if( ($t=$this->findTag($k, $v))!=null )
+			if( ($t=$this->getTag($k, $v))!=null )
 			{
 				$resultTags[] = $t ;
 			}
@@ -138,7 +138,7 @@ class OSM_Objects_Object implements OSM_Objects_IDirty {
 	 * @param string $v Optional. If not provided or if an empty string or a '*' the value will not be tested.
 	 * @return OSM_Objects_Tag
 	 */
-	public function findTag($key, $v='') {
+	public function getTag($key, $v='') {
 
 		if (array_key_exists($key, $this->_tags))
 		{
