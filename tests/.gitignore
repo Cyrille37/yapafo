@@ -1,0 +1,6 @@
+###############################
+# ignore tests generated files
+#
+
+test_OSM_OAuth.php.token
+

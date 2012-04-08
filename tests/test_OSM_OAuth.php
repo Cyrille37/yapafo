@@ -3,12 +3,19 @@
 /*
  * http://wiki.openstreetmap.org/wiki/OAuth
  * 
+ * Réglages:
+ * - $DEV=true pour utiliser le serveur de test api06.dev.openstreetmap.org
+ * - $DEV=false pour le serveur de prod www.openstreetmap.org
+ * 
  * Test en 2 phases.
  * 1. supprimé le fichier "*.token" (eg. tests/test_OSM_OAuth.php.token)
  * 2. lancer tests/test_OSM_OAuth.php et suivre les instructions
  * 3. relancer tests/test_OSM_OAuth.php qui va réutiliser le token obtenu (stocké dans "*.token" )
  *		en étape 2 pour accéder aux données de l'utilisateur.
  */
+
+$DEV = false ;
+
 $time_start = microtime(true);
 
 require_once (__DIR__ . '/tests_common.php');
@@ -29,7 +36,7 @@ require_once (__DIR__ . '/../lib/OSM/Api.php');
  * Nous supportons hamc-sha1 (recommandé) et texte brut en mode ssl.
  */
 $OAUTH_COMSUMERKEY = 'K0Fc6En9GulO9nBrJ6Bz7ltHcZRL9vD3kqDMaX8V';
-$OAUTH_COMSUMERSECRET = 'Rv7OOGCA2bKYcfw1Jlbg8nCXodHOCSAAHhY1XU4';
+$OAUTH_COMSUMERSECRET = 'HRv7OOGCA2bKYcfw1Jlbg8nCXodHOCSAAHhY1XU4';
 
 /**
  * Détails OAuth pour OAuth_essais01 (DEV)
@@ -50,15 +57,15 @@ $OAUTH_COMSUMERSECRET_DEV = 'VtJnCvwzdE8rVNeAukLAYd1YxqeWCQD3W4xLeU1Z';
 //
 //
 
-$DEV = true;
-
 if ($DEV)
 {
 	$oauth = new OSM_OAuth($OAUTH_COMSUMERKEY_DEV, $OAUTH_COMSUMERSECRET_DEV, true);
+	$apiUrl = 'http://api06.dev.openstreetmap.org/api/0.6';
 }
 else
 {
 	$oauth = new OSM_OAuth($OAUTH_COMSUMERKEY, $OAUTH_COMSUMERSECRET, false);
+	$apiUrl = 'http://www.openstreetmap.org/api/0.6';
 }
 
 $tokenFilename = __DIR__ . '/' . basename(__FILE__) . '.token';
@@ -73,7 +80,6 @@ if (file_exists($tokenFilename))
 
 	$oauth->setToken($authCredentials['token'], $authCredentials['tokenSecret']);
 
-	$apiUrl = 'http://api06.dev.openstreetmap.org/api/0.6';
 	$result = $oauth->http($apiUrl.'/user/details');
 	
 	echo 'User details: '.print_r($result, true)."\n";
