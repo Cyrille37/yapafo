@@ -54,3 +54,35 @@ $node = $osmApi->getNode('611571');
 $tags = $node->findTags(array($tagName=>$tagValue));
 _assert( count($tags)==1 );
 _assert( $node->hasTags(array($tagName=>$tagValue)) );
+
+// test a node's tag modification 
+
+$tagName = 'yapafo.net::test::modify' ;
+$tagValue = '1' ;
+
+$osmApi->removeAllObjects();
+$node = $osmApi->getNode('611571');
+
+if( ! $node->hasTags(array($tagName=>null)) )
+{
+	$node->addTag(new OSM_Objects_Tag($tagName, $tagValue));
+	$osmApi->saveChanges('A yapafo.net test');
+	$osmApi->removeAllObjects();
+	$node = $osmApi->getNode('611571');
+}
+else
+{
+	
+}
+$node->setTag($tagName, $tagValue+1 );
+_assert( $node->isDirty() );
+$osmApi->saveChanges('A yapafo.net test');
+_assert( $node->isDirty() );
+$osmApi->removeAllObjects();
+
+$node = $osmApi->getNode('611571');
+_assert( ! $node->isDirty() );
+_assert( $node->getTag($tagName, $tagValue+1)->getValue() == '2' );
+
+$time_end = microtime(true);
+_wl('Test well done in ' . number_format($time_end - $time_start, 3) . ' second(s).');

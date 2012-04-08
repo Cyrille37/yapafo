@@ -25,7 +25,7 @@ $xmlQuery = '
 <print />
 </osm-script>
 ';
-$osmApi->queryOApiGet($xmlQuery);
+$osmApi->queryOApi($xmlQuery);
 
 // getRelations, getWays, getNodes
 
