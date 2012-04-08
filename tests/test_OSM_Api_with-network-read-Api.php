@@ -2,9 +2,10 @@
 <?php
 
 $time_start = microtime(true);
-_wl('test "' . basename(__FILE__) . '');
 
 require_once (__DIR__ . '/tests_common.php');
+_wl('test "' . basename(__FILE__) . '');
+
 require_once (__DIR__ . '/../lib/OSM/Api.php');
 
 $osmApi = new OSM_Api();

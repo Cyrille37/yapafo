@@ -5,9 +5,10 @@
  * and open the template in the editor.
  */
 $time_start = microtime(true);
-_wl('test "' . basename(__FILE__) . '');
 
 require_once (__DIR__ . '/tests_common.php');
+_wl('test "' . basename(__FILE__) . '');
+
 require_once (__DIR__ . '/../lib/OSM/Api.php');
 
 require_once (__DIR__ . '/../../secrets.php');
