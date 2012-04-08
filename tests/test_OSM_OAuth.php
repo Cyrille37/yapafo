@@ -3,6 +3,11 @@
 /*
  * http://wiki.openstreetmap.org/wiki/OAuth
  * 
+ * Test en 2 phases.
+ * 1. supprimé le fichier "*.token" (eg. tests/test_OSM_OAuth.php.token)
+ * 2. lancer tests/test_OSM_OAuth.php et suivre les instructions
+ * 3. relancer tests/test_OSM_OAuth.php qui va réutiliser le token obtenu (stocké dans "*.token" )
+ *		en étape 2 pour accéder aux données de l'utilisateur.
  */
 $time_start = microtime(true);
 
@@ -20,7 +25,7 @@ require_once (__DIR__ . '/../lib/OSM/Api.php');
  * Secret de l'utilisateur : HRv7OOGCA2bKYcfw1Jlbg8nCXodHOCSAAHhY1XU4
  * 
  * Demande des permission suivantes de l'utilisateur :
- *	modifier la carte.
+ * 	modifier la carte.
  * Nous supportons hamc-sha1 (recommandé) et texte brut en mode ssl.
  */
 $OAUTH_COMSUMERKEY = 'K0Fc6En9GulO9nBrJ6Bz7ltHcZRL9vD3kqDMaX8V';
@@ -35,7 +40,7 @@ $OAUTH_COMSUMERSECRET = 'Rv7OOGCA2bKYcfw1Jlbg8nCXodHOCSAAHhY1XU4';
  * Secret de l'utilisateur : HRv7OOGCA2bKYcfw1Jlbg8nCXodHOCSAAHhY1XU4
  * 
  * Demande des permission suivantes de l'utilisateur :
- *	modifier la carte.
+ * 	modifier la carte.
  * Nous supportons hamc-sha1 (recommandé) et texte brut en mode ssl.
  */
 $OAUTH_COMSUMERKEY_DEV = 'T7qXv9xVzFFqhbIbygEnu0MB0uchtmTuaDbz6WcK';
@@ -45,24 +50,57 @@ $OAUTH_COMSUMERSECRET_DEV = 'VtJnCvwzdE8rVNeAukLAYd1YxqeWCQD3W4xLeU1Z';
 //
 //
 
-$DEV = true ;
+$DEV = true;
 
-if( $DEV )
+if ($DEV)
 {
-	$oauth = new OSM_OAuth($OAUTH_COMSUMERKEY_DEV,$OAUTH_COMSUMERSECRET_DEV,true);
+	$oauth = new OSM_OAuth($OAUTH_COMSUMERKEY_DEV, $OAUTH_COMSUMERSECRET_DEV, true);
 }
 else
 {
-	$oauth = new OSM_OAuth($OAUTH_COMSUMERKEY,$OAUTH_COMSUMERSECRET,false);
+	$oauth = new OSM_OAuth($OAUTH_COMSUMERKEY, $OAUTH_COMSUMERSECRET, false);
 }
 
-$authUrl = $oauth->requestAuthorizationUrl();
-echo 'Goto "'.$authUrl.'"'."\n";
-echo 'waiting you coming back ...'."\n";
-flush();
-$handle = fopen ("php://stdin","r");
-$line = fgets($handle);
+$tokenFilename = __DIR__ . '/' . basename(__FILE__) . '.token';
 
-$oauth->requestAccessToken();
+if (file_exists($tokenFilename))
+{
+	echo 'Reusing Authorization...' . "\n";
 
-echo 'done.'."\n";
+	$fp = fopen($tokenFilename, 'r');
+	eval('$authCredentials = ' . file_get_contents($tokenFilename) .';');
+	fclose($fp);
+
+	$oauth->setToken($authCredentials['token'], $authCredentials['tokenSecret']);
+
+	$apiUrl = 'http://api06.dev.openstreetmap.org/api/0.6';
+	$result = $oauth->http($apiUrl.'/user/details');
+	
+	echo 'User details: '.print_r($result, true)."\n";
+
+}
+else
+{
+	echo 'Requesting Authorization...' . "\n";
+
+	$authCredentials = $oauth->requestAuthorizationUrl();
+	$authUrl = $authCredentials['url'];
+
+	//echo 'Goto "' . $authUrl . '&callback=' . urlencode('http://osm7.openstreetmap.fr/~cgiquello/dummyCallback.php') . '"' . "\n";
+	echo 'Goto "' . $authUrl . '"' . "\n";
+	echo 'waiting you coming back ...' . "\n";
+	flush();
+	$handle = fopen("php://stdin", "r");
+	$line = fgets($handle);
+
+	echo 'Requesting an Access token.' . "\n";
+
+	$authCredentials = $oauth->requestAccessToken();
+
+	$fp = fopen($tokenFilename, 'w');
+	fwrite($fp, var_export($authCredentials, true));
+	fclose($fp);
+}
+
+
+echo 'done.' . "\n";

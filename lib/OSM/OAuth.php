@@ -6,7 +6,8 @@
  */
 
 /**
- * Class OSM_OAuth
+ * Class OSM_OAuth implement OAuth (Open Authorization)
+ * 
  * http://oauth.net/documentation/
  * http://tools.ietf.org/html/rfc5849
  * http://wiki.openstreetmap.org/wiki/OAuth
@@ -50,19 +51,14 @@ class OSM_OAuth {
 		}
 	}
 
-	public function requestAccessToken() {
-		$result = $this->_http($this->_accTokUrl);
-
-		parse_str($result, $tokenParts);
-		//echo 'requestAccessToken: '.print_r( $tokenParts ,true)."\n";
-
-		$this->_token = $tokenParts['oauth_token'];
-		$this->_tokenSecret = $tokenParts['oauth_token_secret'];
+	public function setToken($token, $tokenSecret) {
+		$this->_token = $token;
+		$this->_tokenSecret = $tokenSecret;
 	}
 
 	public function requestAuthorizationUrl() {
 
-		$result = $this->_http($this->_reqTokUrl);
+		$result = $this->http($this->_reqTokUrl);
 
 		parse_str($result, $tokenParts);
 		//echo 'requestAuthorizationUrl: '.print_r( $tokenParts ,true)."\n";
@@ -70,10 +66,30 @@ class OSM_OAuth {
 		$this->_token = $tokenParts['oauth_token'];
 		$this->_tokenSecret = $tokenParts['oauth_token_secret'];
 
-		return $this->_authkUrl . '?oauth_token=' . $this->_token;
+		return array(
+			'url' => $this->_authkUrl . '?oauth_token=' . $this->_token,
+			'token' => $this->_token,
+			'tokenSecret' => $this->_tokenSecret
+		);
 	}
 
-	protected function _http($url, $method ='GET', $params=null) {
+	public function requestAccessToken() {
+
+		$result = $this->http($this->_accTokUrl);
+
+		parse_str($result, $tokenParts);
+		//echo 'requestAccessToken: '.print_r( $tokenParts ,true)."\n";
+
+		$this->_token = $tokenParts['oauth_token'];
+		$this->_tokenSecret = $tokenParts['oauth_token_secret'];
+
+		return array(
+			'token' => $this->_token,
+			'tokenSecret' => $this->_tokenSecret
+		);
+	}
+
+	public function http($url, $method ='GET', $params=null) {
 
 		switch ($method)
 		{
@@ -188,8 +204,7 @@ class OSM_OAuth {
 		}
 		$concatenatedParams = $this->_encode(substr($concatenatedParams, 0, -1));
 
-		//$normalizedUrl = $this->_encode($this->_normalizeUrl($url));
-		$normalizedUrl = $this->_encode($url);
+		$normalizedUrl = $this->_encode($this->_normalizeUrl($url));
 
 		$signatureBaseString = $method . '&' . $normalizedUrl . '&' . $concatenatedParams;
 		return $this->signString($signatureBaseString);
