@@ -4,11 +4,12 @@
 $time_start = microtime(true);
 
 require_once (__DIR__ . '/tests_common.php');
-require_once (__DIR__ . '/../lib/OSM/OApi.php');
-require_once (__DIR__ . '/../lib/OSM/OApiResponse.php');
 
 $inputFile = 'compress.zlib://'.__DIR__ . '/OApiResult01.xml.gz';
 _wl('test "'.  basename(__FILE__).'" using file "'.$inputFile.'"');
+
+require_once (__DIR__ . '/../lib/OSM/OApi.php');
+require_once (__DIR__ . '/../lib/OSM/OApiResponse.php');
 
 $xml = file_get_contents($inputFile);
 $result = new OSM_OApiResponse($xml);
