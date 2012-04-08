@@ -363,7 +363,7 @@ class OSM_Api {
 
 		$xmlObj = simplexml_load_string($xmlStr);
 
-		$this->_loadedXml[] = $xmlObj;
+		$this->_loadedXml[] = $xmlStr ;
 
 		// Take all others object
 		$objects = $xmlObj->xpath('/osm/*');
@@ -542,7 +542,7 @@ class OSM_Api {
 	 * @param int $id
 	 */
 	public function removeObject($type, $id) {
-		
+
 		switch ($type)
 		{
 			case self::OBJTYPE_RELATION:
