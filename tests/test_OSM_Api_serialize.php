@@ -11,7 +11,6 @@ _wl('test "' . basename(__FILE__) . '');
 
 require_once (__DIR__ . '/../lib/OSM/Api.php');
 
-
 $osmApi = new OSM_Api();
 $node = $osmApi->getNode('611571');
 
