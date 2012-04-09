@@ -12,7 +12,7 @@
  * http://tools.ietf.org/html/rfc5849
  * http://wiki.openstreetmap.org/wiki/OAuth
  */
-class OSM_OAuth {
+class OSM_Auth_OAuth implements OSM_Auth_IAuthProvider {
 	const REQUEST_TOKEN_URL = 'http://www.openstreetmap.org/oauth/request_token';
 	const ACCESS_TOKEN_URL = 'http://www.openstreetmap.org/oauth/access_token';
 	const AUTHORIZE_TOKEN_URL = 'http://www.openstreetmap.org/oauth/authorize';
@@ -21,34 +21,37 @@ class OSM_OAuth {
 	const ACCESS_TOKEN_URL_DEV = 'http://api06.dev.openstreetmap.org/oauth/access_token';
 	const AUTHORIZE_TOKEN_URL_DEV = 'http://api06.dev.openstreetmap.org/oauth/authorize';
 
+	const PROTOCOL_VERSION = '1.0' ;
 	const SIGNATURE_METHOD = 'HMAC-SHA1';
 
-	protected $_reqTokUrl;
-	protected $_accTokUrl;
-	protected $_authkUrl;
+	protected $_options = array(
+		'requestTokenUrl' => self::REQUEST_TOKEN_URL,
+		'accessTokenUrl' => self::ACCESS_TOKEN_URL,
+		'authorizeUrl' => self::AUTHORIZE_TOKEN_URL
+	);
 	protected $_consKey;
 	protected $_consSec;
 	protected $_token;
 	protected $_tokenSecret;
 	protected $_timestamp;
 
-	public function __construct($consumerKey, $consumerSecret, $devMode=false) {
+	public function __construct($consumerKey, $consumerSecret, $options=array()) {
+
+		if (empty($consumerKey))
+			throw new OSM_Exception('Credential "consumerKey" must be set');
+		if (empty($consumerSecret))
+			throw new OSM_Exception('Credential "consumerSecret" must be set');
+
+		// Check that all options exist then override defaults
+		foreach ($options as $k => $v)
+		{
+			if (!array_key_exists($k, $this->_options))
+				throw new OSM_Exception('Unknow ' . __CLASS__ . ' option "' . $k . '"');
+			$this->_options[$k] = $v;
+		}
 
 		$this->_consKey = $consumerKey;
 		$this->_consSec = $consumerSecret;
-
-		if ($devMode)
-		{
-			$this->_reqTokUrl = self::REQUEST_TOKEN_URL_DEV;
-			$this->_accTokUrl = self::ACCESS_TOKEN_URL_DEV;
-			$this->_authkUrl = self::AUTHORIZE_TOKEN_URL_DEV;
-		}
-		else
-		{
-			$this->_reqTokUrl = self::REQUEST_TOKEN_URL;
-			$this->_accTokUrl = self::ACCESS_TOKEN_URL;
-			$this->_authkUrl = self::AUTHORIZE_TOKEN_URL;
-		}
 	}
 
 	public function setToken($token, $tokenSecret) {
@@ -58,7 +61,7 @@ class OSM_OAuth {
 
 	public function requestAuthorizationUrl() {
 
-		$result = $this->http($this->_reqTokUrl);
+		$result = $this->http($this->_options['requestTokenUrl']);
 
 		parse_str($result, $tokenParts);
 		//echo 'requestAuthorizationUrl: '.print_r( $tokenParts ,true)."\n";
@@ -67,7 +70,7 @@ class OSM_OAuth {
 		$this->_tokenSecret = $tokenParts['oauth_token_secret'];
 
 		return array(
-			'url' => $this->_authkUrl . '?oauth_token=' . $this->_token,
+			'url' => $this->_options['authorizeUrl'] . '?oauth_token=' . $this->_token,
 			'token' => $this->_token,
 			'tokenSecret' => $this->_tokenSecret
 		);
@@ -75,7 +78,7 @@ class OSM_OAuth {
 
 	public function requestAccessToken() {
 
-		$result = $this->http($this->_accTokUrl);
+		$result = $this->http($this->_options['accessTokenUrl']);
 
 		parse_str($result, $tokenParts);
 		//echo 'requestAccessToken: '.print_r( $tokenParts ,true)."\n";
@@ -91,31 +94,12 @@ class OSM_OAuth {
 
 	public function http($url, $method ='GET', $params=null) {
 
-		switch ($method)
-		{
-			case 'GET':
-				break;
-			case 'POST':
-				break;
-		}
-
-		if (empty($params['oauth_signature']))
-			$params = $this->_prepareParameters($method, $url, $params);
-
-		$urlParts = parse_url($url);
-
-		$oauth = '';
-		foreach ($params['oauth'] as $name => $value)
-		{
-			$oauth .= $name . '="' . $value . '",';
-		}
-		$oauth = substr($oauth, 0, -1); //lose the final ','
-
 		$headers = array(
-			'Expect:',
-			'Authorization: OAuth realm="' . $urlParts['path'] /* 'OAuth_essais01' */ . '",' . $oauth,
-			'Content-type: application/x-www-form-urlencoded'
+			//'Content-type: application/x-www-form-urlencoded'
+			'Content-type: multipart/form-data'
+			
 		);
+		$this->addHeaders($headers, $url, $method);
 
 		if ($params == null)
 		{
@@ -162,8 +146,24 @@ class OSM_OAuth {
 
 		return $result;
 	}
+	
+	public function addHeaders(&$headers, $url, $method='GET') {
 
-	protected function _prepareParameters($method = null, $url = null, $params = null) {
+		$oauth = $this->_prepareParameters($method, $url);
+
+		$oauthStr = '';
+		foreach ($oauth as $name => $value)
+		{
+			$oauthStr .= $name . '="' . $value . '",';
+		}
+		$oauthStr = substr($oauthStr, 0, -1); //lose the final ','
+
+		$urlParts = parse_url($url);
+
+		$headers[] = 'Authorization: OAuth realm="' . $urlParts['path'] . '",' . $oauthStr;
+	}
+
+	protected function _prepareParameters($method = null, $url = null) {
 
 		if (empty($method) || empty($url))
 			return false;
@@ -173,21 +173,18 @@ class OSM_OAuth {
 		$oauth['oauth_nonce'] = md5(uniqid(rand(), true));
 		$oauth['oauth_timestamp'] = !isset($this->_timestamp) ? time() : $this->_timestamp;
 		$oauth['oauth_signature_method'] = self::SIGNATURE_METHOD;
-		$oauth['oauth_version'] = '1.0';
+		$oauth['oauth_version'] = self::PROTOCOL_VERSION ;
 
 		// encoding
 		array_walk($oauth, array($this, '_encode'));
-		if (is_array($params))
-			array_walk($params, array($this, '_encode'));
-
-		$encodedParams = array_merge($oauth, (array) $params);
 
 		// important: does not work without sorting !
-		ksort($encodedParams);
+		// sign could not be validated by the server
+		ksort($oauth);
 
 		// signing
-		$oauth['oauth_signature'] = $this->_encode($this->_generateSignature($method, $url, $encodedParams));
-		return array('request' => $params, 'oauth' => $oauth);
+		$oauth['oauth_signature'] = $this->_encode($this->_generateSignature($method, $url, $oauth));
+		return $oauth;
 	}
 
 	protected function _generateSignature($method = null, $url = null, $params = null) {

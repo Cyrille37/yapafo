@@ -45,30 +45,32 @@ class OSM_Api {
 		'simulation' => true,
 		'url' => self::URL_PROD_FR,
 		'url4Write' => self::URL_PROD_UK,
-		'user' => null,
-		'password' => null,
 		// to store every network communications (load/save) in a file.
 		'outputFolder' => null,
 		'appName' => '', // name for the application using the API
 		'log' => array('level' => OSM_ZLog::LEVEL_ERROR),
 		'oapi_url' => self::OAPI_URL_FR
 	);
-
 	protected $_stats = array(
-		'requestCount'=>0,
-		'loadedBytes'=> 0
-		);
+		'requestCount' => 0,
+		'loadedBytes' => 0
+	);
 	protected $_url;
 	protected $_url4Write;
+	/**
+	 * @var OSM_Auth_IAuthProvider
+	 */
+	protected $_authProvider;
 	protected $_relations = array();
 	protected $_ways = array();
 	protected $_nodes = array();
 	protected $_newIdCounter = -1;
+
 	/**
 	 * Works with $_options['outputFolder']. It's used to construct the filename.
 	 * @var int
 	 */
-	protected $_outputWriteCount = 0 ;
+	protected $_outputWriteCount = 0;
 
 	/**
 	 * Store all xml Objects
@@ -102,7 +104,7 @@ class OSM_Api {
 		foreach ($options as $k => $v)
 		{
 			if (!array_key_exists($k, $this->_options))
-				throw new OSM_Exception('Unknow Api option "' . $k . '"');
+				throw new OSM_Exception('Unknow '.__CLASS__.' option "' . $k . '"');
 			$this->_options[$k] = $v;
 		}
 		// Set the Logger
@@ -122,9 +124,9 @@ class OSM_Api {
 			throw new OSM_Exception('Option "oapi_url" must be set');
 		}
 
-		if (! empty($this->_options['outputFolder']))
+		if (!empty($this->_options['outputFolder']))
 		{
-			if( !file_exists($this->_options['outputFolder']))
+			if (!file_exists($this->_options['outputFolder']))
 			{
 				throw new OSM_Exception('Option "outputFolder" is set, but the folder does not exists');
 			}
@@ -163,6 +165,18 @@ class OSM_Api {
 		return $this->_loadedXml[count($this->_loadedXml) - 1]->asXML();
 	}
 
+	/**
+	 *
+	 * @param string $authMethod @link{self::AUTH_BASIC}, @link{self::AUTH_OAUTH}
+	 * @param string $key Basic:user, OAuth:token
+	 * @param string $secret Basic:password, OAuth:token secret
+	 */
+	public function setCredentials(OSM_Auth_IAuthProvider $authProvider) {
+
+		$this->_authProvider = $authProvider;
+
+	}
+
 	protected function _httpApi($relativeUrl, $data=null, $method='GET') {
 
 		$url = null;
@@ -182,12 +196,15 @@ class OSM_Api {
 
 		OSM_ZLog::notice(__METHOD__, $method . ' url: ', $url);
 
-		$auth = base64_encode($this->_options['user'] . ':' . $this->_options['password']);
-
 		$headers = array(
-			'Authorization: Basic ' . $auth,
-			'Content-type: application/x-www-form-urlencoded'
+			//'Content-type: application/x-www-form-urlencoded'
+			'Content-type: multipart/form-data'
 		);
+
+		if( $this->_authProvider != null )
+		{
+			$this->_authProvider->addHeaders($headers, $url, $method );
+		}
 
 		if ($data == null)
 		{
@@ -208,7 +225,6 @@ class OSM_Api {
 				array(
 					'method' => $method,
 					'user_agent' => $this->_getUserAgent(),
-					//'header' => 'Content-type: application/x-www-form-urlencoded',
 					'header' => /* implode("\r\n", $headers) */$headers,
 					'content' => $postdata
 				)
@@ -223,13 +239,13 @@ class OSM_Api {
 		if ($result === false)
 		{
 			$e = error_get_last();
-			if( isset($http_response_header) )
+			if (isset($http_response_header))
 			{
 				throw new OSM_HttpException($http_response_header);
 			}
 			else
 			{
-				throw new OSM_HttpException( $e['message'] );
+				throw new OSM_HttpException($e['message']);
 			}
 		}
 
@@ -289,7 +305,7 @@ class OSM_Api {
 
 		if ($this->_options['outputFolder'] != null)
 		{
-			file_put_contents( $this->_getOutputFilename(__METHOD__), $result);
+			file_put_contents($this->_getOutputFilename(__METHOD__), $result);
 		}
 
 		if (OSM_ZLog::isDebug())
@@ -363,7 +379,7 @@ class OSM_Api {
 
 		$xmlObj = simplexml_load_string($xmlStr);
 
-		$this->_loadedXml[] = $xmlStr ;
+		$this->_loadedXml[] = $xmlStr;
 
 		// Take all others object
 		$objects = $xmlObj->xpath('/osm/*');
@@ -389,10 +405,11 @@ class OSM_Api {
 
 				case 'note':
 				case 'meta':
+				case 'remark':
 					break;
 
 				default:
-					throw new OSM_Exception('Object "' . $obj->getName() . '" is not supported in subobjects (request full object)');
+					throw new OSM_Exception('Object "' . $obj->getName() . '" is not supported');
 			}
 		}
 	}
@@ -415,27 +432,25 @@ class OSM_Api {
 				if (array_key_exists($id, $this->_nodes))
 					return true;
 				break;
-				
+
 			default:
 				throw new OSM_Exception('Unknow object type "' . $type . '"');
-
 		}
 		return false;
 	}
 
-	public function hasNode($id)
-	{
+	public function hasNode($id) {
 		return $this->hasObject(self::OBJTYPE_NODE, $id);
 	}
-	public function hasWay($id)
-	{
+
+	public function hasWay($id) {
 		return $this->hasObject(self::OBJTYPE_WAY, $id);
 	}
-	public function hasRelation($id)
-	{
+
+	public function hasRelation($id) {
 		return $this->hasObject(self::OBJTYPE_RELATION, $id);
 	}
-	
+
 	/**
 	 * Returns all loaded objects.
 	 * @return OSM_Objects_Object[] List of objects
@@ -566,8 +581,7 @@ class OSM_Api {
 		}
 	}
 
-	public function removeAllObjects()
-	{
+	public function removeAllObjects() {
 		$this->_relations = $this->_ways = $this->_nodes = array();
 	}
 
@@ -581,8 +595,8 @@ class OSM_Api {
 	 * @param bool $full
 	 * @return OSM_Objects_Object the reverted object
 	 */
-	public function reloadObject($type, $id, $full=false ) {
-		
+	public function reloadObject($type, $id, $full=false) {
+
 		$this->removeObject($type, $id);
 		return $this->getObject($type, $id, $full);
 	}
@@ -592,8 +606,7 @@ class OSM_Api {
 	 * 
 	 * @param string $xmlQuery 
 	 */
-	public function queryOApi( $xmlQuery )
-	{
+	public function queryOApi($xmlQuery) {
 		$postdata = http_build_query(array('data' => $xmlQuery));
 
 		$opts = array('http' =>
@@ -612,13 +625,13 @@ class OSM_Api {
 		if ($result === false)
 		{
 			$e = error_get_last();
-			if( isset($http_response_header) )
+			if (isset($http_response_header))
 			{
 				throw new OSM_HttpException($http_response_header);
 			}
 			else
 			{
-				throw new OSM_HttpException( $e['message'] );
+				throw new OSM_HttpException($e['message']);
 			}
 		}
 
@@ -732,7 +745,7 @@ class OSM_Api {
 		{
 			if ($this->_options['outputFolder'] != null)
 			{
-				file_put_contents( $this->_getOutputFilename(__METHOD__), $xmlStr);
+				file_put_contents($this->_getOutputFilename(__METHOD__), $xmlStr);
 			}
 			$result = 'Simulation, no call to Api';
 		}
@@ -951,7 +964,7 @@ class OSM_Api {
 
 		return $waysOrdered;
 	}
-	
+
 	public function getStatsRequestCount() {
 		return $this->_stats['requestCount'];
 	}
@@ -975,12 +988,11 @@ class OSM_Api {
 		return $userAgent;
 	}
 
-	protected function _getOutputFilename($methodName )
-	{
+	protected function _getOutputFilename($methodName) {
 		return $this->_options['outputFolder'] .
-			DIRECTORY_SEPARATOR .__CLASS__
-			.'_'.sprintf('%04d',++$this->_outputWriteCount).'-'.time()
-			.'_'. $methodName . '.xml' ;
+			DIRECTORY_SEPARATOR . __CLASS__
+			. '_' . sprintf('%04d', ++$this->_outputWriteCount) . '-' . time()
+			. '_' . $methodName . '.xml';
 	}
 
 }

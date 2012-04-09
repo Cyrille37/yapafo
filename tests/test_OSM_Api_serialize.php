@@ -17,5 +17,7 @@ $node = $osmApi->getNode('611571');
 $serialData = serialize($osmApi);
 $osmApi = unserialize($serialData);
 
+$node = $osmApi->getNode('611571');
+
 $time_end = microtime(true);
 _wl('Test well done in ' . number_format($time_end - $time_start, 3) . ' second(s).');
