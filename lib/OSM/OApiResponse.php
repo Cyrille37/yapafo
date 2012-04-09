@@ -1,7 +1,7 @@
 <?php
 
 /**
- * OSM/OAPIResponse.class.php
+ * OSM/OApiResponse.class.php
  */
 
 /**

@@ -17,16 +17,16 @@
 
 		<?php
 		
-			require_once(__DIR__.'/../lib/OSM/OApi.php');
+			require_once(__DIR__.'/../lib/OSM/Api.php');
 			/**
 			 * You can change the Overpass-API with option 'oapi_url'.
 			 * $osmop = new OSM_Api( array( 'oapi_url'=>'http://anotherinterpreter.org' ) );
 			 */
-			$osmop = new OSM_OApi();
-			$oapiUrl = $osmop->getUrl();
+			$osmop = new OSM_Api();
+			$oapiUrl = $osmop->getOption('oapi_url');
 		?>
 
-		<p>A simple proxy to overpass-api using Class OSM_OApi at <a href="<?php echo $oapiUrl ?>"><?php echo $oapiUrl ?></a><br/>
+		<p>A simple proxy to overpass-api using class OSM_Api at <a href="<?php echo $oapiUrl ?>"><?php echo $oapiUrl ?></a><br/>
 			Documentation:
 			<a href="http://wiki.openstreetmap.org/wiki/Overpass_API">Overpass_API</a>,
 			<a href="http://wiki.openstreetmap.org/wiki/Overpass_API/Language_Guide">Overpass_API/Language_Guide</a>
@@ -47,12 +47,12 @@
 				$xmlQuery = $_POST['xmlquery'];
 			}
 			$timeStart = microtime(true);
-			$response = $osmop->request($xmlQuery);
+			$response = $osmop->queryOApi($xmlQuery);
 			$timeEnd = microtime(true);
 			
 			$loadedBytes = $osmop->getStatsLoadedBytes();
 			
-			$xmlResult = $response->asXML();
+			$xmlResult = $osmop->getLastLoadedXmlString();
 		}
 		?>
 

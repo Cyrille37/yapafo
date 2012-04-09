@@ -37,7 +37,7 @@ class OSM_Api {
 	 */
 	const OAPI_URL_FR = 'http://api.openstreetmap.fr/oapi/interpreter';
 	const OAPI_URL_RU = 'http://overpass.osm.rambler.ru/';
-	const OAPI_URL_LETUFFE = 'http://overpassapi.letuffe.org/api/interpreter';
+	//const OAPI_URL_LETUFFE = 'http://overpassapi.letuffe.org/api/interpreter';
 	const OAPI_URL_DE = 'http://www.overpass-api.de/api/interpreter';
 
 	protected $_options = array(
@@ -157,24 +157,28 @@ class OSM_Api {
 		return $this;
 	}
 
+	/**
+	 * @return SimpleXMLElement
+	 */
 	public function getLastLoadedXmlObject() {
-		return $this->_loadedXml[count($this->_loadedXml) - 1];
-	}
-
-	public function getLastLoadedXmlString() {
-		return $this->_loadedXml[count($this->_loadedXml) - 1]->asXML();
+		return simplexml_load_string($this->_loadedXml[count($this->_loadedXml) - 1]);
 	}
 
 	/**
 	 *
-	 * @param string $authMethod @link{self::AUTH_BASIC}, @link{self::AUTH_OAUTH}
-	 * @param string $key Basic:user, OAuth:token
-	 * @param string $secret Basic:password, OAuth:token secret
+	 * @return string
+	 */
+	public function getLastLoadedXmlString() {
+		return $this->_loadedXml[count($this->_loadedXml) - 1];
+	}
+
+	/**
+	 *
+	 * @param OSM_Auth_IAuthProvider $authProvider 
 	 */
 	public function setCredentials(OSM_Auth_IAuthProvider $authProvider) {
 
 		$this->_authProvider = $authProvider;
-
 	}
 
 	protected function _httpApi($relativeUrl, $data=null, $method='GET') {
@@ -197,8 +201,11 @@ class OSM_Api {
 		OSM_ZLog::notice(__METHOD__, $method . ' url: ', $url);
 
 		$headers = array(
+			// Failed with PUT :
 			//'Content-type: application/x-www-form-urlencoded'
-			'Content-type: multipart/form-data'
+			// Works with PUT :
+			//'Content-type: multipart/form-data'
+			'Content-type: text/xml'
 		);
 
 		if( $this->_authProvider != null )

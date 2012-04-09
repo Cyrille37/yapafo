@@ -1,7 +1,7 @@
 <?php
 
 /**
- * OSM/OAPI.class.php
+ * OSM/OApi.class.php
  */
 require_once ( __DIR__ . '/OApiResponse.php');
 
