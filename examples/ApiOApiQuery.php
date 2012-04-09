@@ -2,10 +2,7 @@
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
   <!--
-  A Php Proxy to querying overpass-api.
-  exemple:
-  http://cyrille.giquello.fr/labs/carto/overpass-api/query.php
-
+  A Php Proxy to querying overpass-api using class OSM_Api.
   -->
   <head>
     <meta http-equiv="content-type" content="text/html; charset=utf-8" lang="en"></meta>
