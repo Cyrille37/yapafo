@@ -106,7 +106,7 @@ class OSM_Auth_OAuth implements OSM_Auth_IAuthProvider {
 			$opts = array('http' =>
 				array(
 					'method' => $method,
-					'user_agent' => 'DEV_OAuth http://www.openstreetmap.org/user/Cyrille37',
+					'user_agent' => 'Yapafo OSM_OAuth http://yapafo.net',
 					'header' => /* implode("\r\n", $headers) */$headers,
 				)
 			);
@@ -119,7 +119,7 @@ class OSM_Auth_OAuth implements OSM_Auth_IAuthProvider {
 			$opts = array('http' =>
 				array(
 					'method' => $method,
-					'user_agent' => 'DEV_OAuth http://www.openstreetmap.org/user/Cyrille37',
+					'user_agent' => 'Yapafo OSM_OAuth http://yapafo.net',
 					//'header' => 'Content-type: application/x-www-form-urlencoded',
 					'header' => /* implode("\r\n", $headers) */$headers,
 					'content' => $postdata
