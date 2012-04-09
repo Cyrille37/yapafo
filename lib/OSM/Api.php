@@ -803,10 +803,16 @@ class OSM_Api {
 	 * 
 	 * @param type $comment
 	 * @return bool true if has saved something, false if nothing to save.
+	 * @throws OSM_Exception if not authenticated
 	 */
 	public function saveChanges($comment) {
 
 		OSM_ZLog::notice(__METHOD__, 'comment = "', $comment, '"');
+
+		if( $this->_authProvider==null )
+		{
+			throw new OSM_Exception('Must be authenticated');
+		}
 
 		if ($this->_options['simulation'])
 		{
@@ -1032,6 +1038,40 @@ class OSM_Api {
 			DIRECTORY_SEPARATOR . __CLASS__
 			. '_' . sprintf('%04d', ++$this->_outputWriteCount) . '-' . time()
 			. '_' . $methodName . '.xml';
+	}
+
+	/**
+	 *
+	 * @return OSM_Objects_UserDetails
+	 * @throws OSM_Exception if not authenticated
+	 */
+	public function getUserDetails()
+	{
+		if( $this->_authProvider==null )
+		{
+			throw new OSM_Exception('Must be authenticated');
+		}
+		
+		$result = $this->_httpApi('/user/details');
+
+		OSM_ZLog::debug(__METHOD__,$result);
+	
+		return OSM_Objects_UserDetails::createFromXmlString($result) ;
+	}
+	
+	public function getUserPreferences()
+	{
+		throw new Exception('NOT IMPLEMENTED');
+	}
+
+	public function getUserPreference( $key )
+	{
+		throw new Exception('NOT IMPLEMENTED');		
+	}
+
+	public function setUserPreference( $key, $value)
+	{
+		throw new Exception('NOT IMPLEMENTED');
 	}
 
 }
