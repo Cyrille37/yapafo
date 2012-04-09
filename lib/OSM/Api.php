@@ -382,7 +382,7 @@ class OSM_Api {
 	 */
 	public function createObjectsfromXml($xmlStr) {
 
-		OSM_ZLog::debug(__METHOD__);
+		OSM_ZLog::debug(__METHOD__,$xmlStr );
 
 		$xmlObj = simplexml_load_string($xmlStr);
 
@@ -611,9 +611,21 @@ class OSM_Api {
 	/**
 	 * Retreive objects with the Overpass-Api and fill objects collection from result.
 	 * 
-	 * @param string $xmlQuery 
+	 * If you do not need to save back data and want efficient network communication you can
+	 * swith $withMeta to false to avoid download of metadata.
+	 * 
+	 * @param string $xmlQuery
+	 * @param string $withMeta To get metadata which are needed for saving back data (Version, User...).
 	 */
-	public function queryOApi($xmlQuery) {
+	public function queryOApi($xmlQuery, $withMeta=true ) {
+
+		if( $withMeta )
+		{
+			$this->_oapiAddMetadata( $xmlQuery );
+		}
+
+		OSM_ZLog::debug(__METHOD__,$xmlQuery );
+
 		$postdata = http_build_query(array('data' => $xmlQuery));
 
 		$opts = array('http' =>
@@ -645,6 +657,26 @@ class OSM_Api {
 		$this->_stats['loadedBytes'] += strlen($result);
 
 		$this->createObjectsfromXml($result);
+	}
+
+	/**
+	 *
+	 * @param string $xmlQuery 
+	 */
+	protected function _oapiAddMetadata( &$xmlQuery ){
+
+		OSM_ZLog::debug(__METHOD__);
+		
+		$x = new SimpleXMLElement($xmlQuery);
+		$xPrints = $x->xpath('//print');
+		foreach( $xPrints as $xPrint )
+		{
+			if( $xPrint['mode']==null )
+			{
+				$xPrint->addAttribute('mode','meta');
+			}
+		}
+		$xmlQuery = $x->asXml() ;
 	}
 
 	/**

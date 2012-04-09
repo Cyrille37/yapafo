@@ -160,13 +160,26 @@ class OSM_Objects_Object implements OSM_Objects_IDirty {
 	}
 
 	/**
-	 * @param OSM_Objects_Tag $tag
+	 * @param OSM_Objects_Tag|string $tagOrKey
+	 * @param string value
 	 */
-	public function addTag(OSM_Objects_Tag $tag) {
+	public function addTag( $tagOrKey, $value=null) {
 
-		if (array_key_exists($tag->getKey(), $this->_tags))
+		if( $tagOrKey instanceof OSM_Objects_Tag )
 		{
-			throw new OSM_Exception('duplicate tag "' . $tag->getKey() . '"');
+			if (array_key_exists($tagOrKey->getKey(), $this->_tags))
+			{
+				throw new OSM_Exception('duplicate tag "' . $tagOrKey->getKey() . '"');
+			}
+			$tag = $tagOrKey ;
+		}
+		else
+		{
+			if (array_key_exists($tagOrKey, $this->_tags))
+			{
+				throw new OSM_Exception('duplicate tag "' . $tagOrKey . '"');
+			}
+			$tag = new OSM_Objects_Tag($tagOrKey, $value);
 		}
 		$this->_tags[$tag->getKey()] = $tag;
 		$this->setDirty();

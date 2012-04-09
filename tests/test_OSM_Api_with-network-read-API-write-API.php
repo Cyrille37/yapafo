@@ -1,8 +1,10 @@
 #!/usr/bin/php
 <?php
 /**
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Read with the API
+ * Write with the API (on the DEV Server)
+ * Select the Auth method (look at comment "Authentification")
+ * 
  */
 $time_start = microtime(true);
 
@@ -25,7 +27,7 @@ $auth_oauth_token = '';
 $auth_oauth_secret = '';
 //
 $auth_method = '';
-// Override $user and $password in the file below
+// Override above parameters into you own file:
 include (__DIR__ . '/../../secrets.php');
 //
 // ===================================================
