@@ -57,6 +57,7 @@ class OSM_Api {
 	);
 	protected $_url;
 	protected $_url4Write;
+
 	/**
 	 * @var OSM_Auth_IAuthProvider
 	 */
@@ -104,7 +105,7 @@ class OSM_Api {
 		foreach ($options as $k => $v)
 		{
 			if (!array_key_exists($k, $this->_options))
-				throw new OSM_Exception('Unknow '.__CLASS__.' option "' . $k . '"');
+				throw new OSM_Exception('Unknow ' . __CLASS__ . ' option "' . $k . '"');
 			$this->_options[$k] = $v;
 		}
 		// Set the Logger
@@ -208,9 +209,9 @@ class OSM_Api {
 			'Content-type: text/xml'
 		);
 
-		if( $this->_authProvider != null )
+		if ($this->_authProvider != null)
 		{
-			$this->_authProvider->addHeaders($headers, $url, $method );
+			$this->_authProvider->addHeaders($headers, $url, $method);
 		}
 
 		if ($data == null)
@@ -382,7 +383,7 @@ class OSM_Api {
 	 */
 	public function createObjectsfromXml($xmlStr) {
 
-		OSM_ZLog::debug(__METHOD__,$xmlStr );
+		OSM_ZLog::debug(__METHOD__, $xmlStr);
 
 		$xmlObj = simplexml_load_string($xmlStr);
 
@@ -617,14 +618,14 @@ class OSM_Api {
 	 * @param string $xmlQuery
 	 * @param string $withMeta To get metadata which are needed for saving back data (Version, User...).
 	 */
-	public function queryOApi($xmlQuery, $withMeta=true ) {
+	public function queryOApi($xmlQuery, $withMeta=true) {
 
-		if( $withMeta )
+		if ($withMeta)
 		{
-			$this->_oapiAddMetadata( $xmlQuery );
+			$this->_oapiAddMetadata($xmlQuery);
 		}
 
-		OSM_ZLog::debug(__METHOD__,$xmlQuery );
+		OSM_ZLog::debug(__METHOD__, $xmlQuery);
 
 		$postdata = http_build_query(array('data' => $xmlQuery));
 
@@ -663,20 +664,20 @@ class OSM_Api {
 	 *
 	 * @param string $xmlQuery 
 	 */
-	protected function _oapiAddMetadata( &$xmlQuery ){
+	protected function _oapiAddMetadata(&$xmlQuery) {
 
 		OSM_ZLog::debug(__METHOD__);
-		
+
 		$x = new SimpleXMLElement($xmlQuery);
 		$xPrints = $x->xpath('//print');
-		foreach( $xPrints as $xPrint )
+		foreach ($xPrints as $xPrint)
 		{
-			if( $xPrint['mode']==null )
+			if ($xPrint['mode'] == null)
 			{
-				$xPrint->addAttribute('mode','meta');
+				$xPrint->addAttribute('mode', 'meta');
 			}
 		}
-		$xmlQuery = $x->asXml() ;
+		$xmlQuery = $x->asXml();
 	}
 
 	/**
@@ -809,7 +810,7 @@ class OSM_Api {
 
 		OSM_ZLog::notice(__METHOD__, 'comment = "', $comment, '"');
 
-		if( $this->_authProvider==null )
+		if ($this->_authProvider == null)
 		{
 			throw new OSM_Exception('Must be authenticated');
 		}
@@ -1045,33 +1046,44 @@ class OSM_Api {
 	 * @return OSM_Objects_UserDetails
 	 * @throws OSM_Exception if not authenticated
 	 */
-	public function getUserDetails()
-	{
-		if( $this->_authProvider==null )
+	public function getUserDetails() {
+		if ($this->_authProvider == null)
 		{
 			throw new OSM_Exception('Must be authenticated');
 		}
-		
+
 		$result = $this->_httpApi('/user/details');
 
-		OSM_ZLog::debug(__METHOD__,$result);
-	
-		return OSM_Objects_UserDetails::createFromXmlString($result) ;
-	}
-	
-	public function getUserPreferences()
-	{
-		throw new Exception('NOT IMPLEMENTED');
+		OSM_ZLog::debug(__METHOD__, $result);
+
+		return OSM_Objects_UserDetails::createFromXmlString($result);
 	}
 
-	public function getUserPreference( $key )
-	{
-		throw new Exception('NOT IMPLEMENTED');		
+	public function getUserPreferences() {
+		
+		if ($this->_authProvider == null)
+		{
+			throw new OSM_Exception('Must be authenticated');
+		}
+
+		$result = $this->_httpApi('/user/preferences');
+
+		OSM_ZLog::debug(__METHOD__, $result);
 	}
 
-	public function setUserPreference( $key, $value)
-	{
-		throw new Exception('NOT IMPLEMENTED');
+	public function setUserPreference($key, $value) {
+		
+		if ($this->_authProvider == null)
+		{
+			throw new OSM_Exception('Must be authenticated');
+		}
+
+		$result = $this->_httpApi(
+			'/user/preferences/' . rawurlencode(utf8_encode($key)),
+			rawurlencode(utf8_encode($value)),
+			'PUT');
+
+		OSM_ZLog::debug(__METHOD__, $result);
 	}
 
 }
