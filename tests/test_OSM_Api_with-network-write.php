@@ -38,14 +38,15 @@ $osmApi = new OSM_Api(array(
 
 if ($auth_method == 'Basic')
 {
-	_wl('set Basic auth');
+	_wl(' using Basic auth with user="'.$auth_basic_user.'"');
 	$osmApi->setCredentials(
 		new OSM_Auth_Basic($auth_basic_user, $auth_basic_password)
 	);
+	
 }
 else if ($auth_method == 'OAuth')
 {
-	_wl('set OAuth auth');
+	_wl(' using OAuth auth with consumerKey="'.$auth_oauth_consumer_key.'"');
 	$oauth = new OSM_Auth_OAuth($auth_oauth_consumer_key, $auth_oauth_consumer_secret	);
 	$oauth->setToken($auth_oauth_token, $auth_oauth_secret);
 	$osmApi->setCredentials($oauth);
