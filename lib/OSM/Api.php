@@ -21,7 +21,7 @@ spl_autoload_register(array('OSM_Api', 'autoload'));
  */
 class OSM_Api {
 	const VERSION = '0.2';
-	const USER_AGENT = 'Yapafo';
+	const USER_AGENT = 'Yapafo OSM_Api http://yapafo.net';
 
 	const URL_DEV_UK = 'http://api06.dev.openstreetmap.org/api/0.6';
 	//deprecated: const OSMAPI_URL_PROD_PROXY_LETTUFE = 'http://beta.letuffe.org/api/0.6';
@@ -991,7 +991,7 @@ class OSM_Api {
 		{
 			$userAgent .= $this->_options['appName'] . ' / ';
 		}
-		$userAgent .= self::USER_AGENT . ' ' . self::VERSION;
+		$userAgent .= self::USER_AGENT . ' v' . self::VERSION;
 		return $userAgent;
 	}
 

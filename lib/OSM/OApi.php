@@ -17,7 +17,7 @@ require_once ( __DIR__ . '/OApiResponse.php');
 class OSM_OApi {
 
 	const VERSION = '0.2';
-	const USER_AGENT = 'http://yapafo.net';
+	const USER_AGENT = 'Yapafo OSM_OApi http://yapafo.net';
 
 	/**
 	 * Query form: http://api.openstreetmap.fr/query_form.html
@@ -79,7 +79,7 @@ class OSM_OApi {
 		$opts = array('http' =>
 			array(
 				'method' => 'POST',
-				'user_agent' => OSM_OApi::USER_AGENT . ' ' . OSM_OApi::VERSION,
+				'user_agent' => OSM_OApi::USER_AGENT . ' v' . OSM_OApi::VERSION,
 				'header' => 'Content-type: application/x-www-form-urlencoded',
 				'content' => $postdata
 			)
