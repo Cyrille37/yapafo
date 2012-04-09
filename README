@@ -1,9 +1,19 @@
 yapafo - Yet Another Php Api For Ospenstreetmap
 
-This library permit to access for read and write objects in the OpenStreetMap database.
+This library permit to read and write objects in the OpenStreetMap database.
 
-Here is the first commit, let us so time to make it better. And shure fork then tell us about new or better feature.
+FEATURES:
+- Read objects from API and Overpass-API.
+- Write objects to API.
+- Authenticate with Basic or OAuth.
+- The class instance and its osm objects is serializable.
+- A bit of geometry stuff (id node inside/outside polygon)
+- ...
+
+BUGS:
+- Please notify us at
+	https://github.com/Cyrille37/yapafo/issues
 
 TODO:
-- merge OSM_OAPI into OSM_API
-- remove the ZLog and replace with a external library
+- Have a look at issues 
+	https://github.com/Cyrille37/yapafo/issues
