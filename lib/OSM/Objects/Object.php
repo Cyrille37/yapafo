@@ -105,9 +105,7 @@ class OSM_Objects_Object implements OSM_Objects_IDirty {
 	}
 
 	/**
-	 * Return all tags.
-	 * 
-	 * Returned tags could be selected
+	 * Return all tags or tags matching $searchTags
 	 * 
 	 * @param array $searchTags Optionnal. If you want to filter the returned tags.
 	 * @return OSM_Objects_Tag[]

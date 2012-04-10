@@ -243,6 +243,11 @@ class OSM_Api {
 
 		$this->_stats['requestCount']++;
 
+		if ($this->_options['outputFolder'] != null)
+		{
+			file_put_contents($this->_getOutputFilename('out', $relativeUrl, $method), $data);
+		}
+
 		$result = @file_get_contents($url, false, $context);
 		if ($result === false)
 		{
@@ -255,6 +260,11 @@ class OSM_Api {
 			{
 				throw new OSM_HttpException($e['message']);
 			}
+		}
+
+		if ($this->_options['outputFolder'] != null)
+		{
+			file_put_contents($this->_getOutputFilename('in', $relativeUrl, $method), $result);
 		}
 
 		$this->_stats['loadedBytes'] += strlen($result);
@@ -310,11 +320,6 @@ class OSM_Api {
 		$relativeUrl = $type . '/' . $id . ($full ? '/full' : '' );
 
 		$result = $this->_httpApi($relativeUrl, null, 'GET');
-
-		if ($this->_options['outputFolder'] != null)
-		{
-			file_put_contents($this->_getOutputFilename(__METHOD__), $result);
-		}
 
 		if (OSM_ZLog::isDebug())
 			OSM_Zlog::debug(__METHOD__, print_r($result, true));
@@ -783,10 +788,6 @@ class OSM_Api {
 
 		if ($this->_options['simulation'])
 		{
-			if ($this->_options['outputFolder'] != null)
-			{
-				file_put_contents($this->_getOutputFilename(__METHOD__), $xmlStr);
-			}
 			$result = 'Simulation, no call to Api';
 		}
 		else
@@ -1034,11 +1035,14 @@ class OSM_Api {
 		return $userAgent;
 	}
 
-	protected function _getOutputFilename($methodName) {
+	protected function _getOutputFilename($inOrOut, $relativeUrl, $method) {
+
+		// file_put_contents($this->_getOutputFilename('in', $relativeUrl, $method, $data))
+
 		return $this->_options['outputFolder'] .
 			DIRECTORY_SEPARATOR . __CLASS__
 			. '_' . sprintf('%04d', ++$this->_outputWriteCount) . '-' . time()
-			. '_' . $methodName . '.xml';
+			. '_' . $inOrOut . '-' . $method . '-' . urlencode($relativeUrl) . '.txt';
 	}
 
 	/**
@@ -1059,8 +1063,13 @@ class OSM_Api {
 		return OSM_Objects_UserDetails::createFromXmlString($result);
 	}
 
-	public function getUserPreferences() {
-		
+	/**
+	 * Retreive all user preferences from openstreetmap.org website.
+	 * 
+	 * @return array
+	 */
+	public function &getUserPreferences() {
+
 		if ($this->_authProvider == null)
 		{
 			throw new OSM_Exception('Must be authenticated');
@@ -1069,19 +1078,33 @@ class OSM_Api {
 		$result = $this->_httpApi('/user/preferences');
 
 		OSM_ZLog::debug(__METHOD__, $result);
+
+		$prefs = array();
+
+		$x = new SimpleXMLElement($result);
+		foreach ($x->preferences->children() as $p)
+		{
+			$prefs[(string)$p['k']] = (string)$p['v'];
+		}
+
+		return $prefs;
 	}
 
+	/**
+	 * Set a user preference value.
+	 * 
+	 * @param string $key
+	 * @param string $value 
+	 */
 	public function setUserPreference($key, $value) {
-		
+
 		if ($this->_authProvider == null)
 		{
 			throw new OSM_Exception('Must be authenticated');
 		}
 
 		$result = $this->_httpApi(
-			'/user/preferences/' . rawurlencode(utf8_encode($key)),
-			rawurlencode(utf8_encode($value)),
-			'PUT');
+			'/user/preferences/' . rawurlencode(utf8_encode($key)), rawurlencode(utf8_encode($value)), 'PUT');
 
 		OSM_ZLog::debug(__METHOD__, $result);
 	}

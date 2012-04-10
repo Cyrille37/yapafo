@@ -37,7 +37,7 @@ include (__DIR__ . '/../../secrets.php');
 $osmApi = new OSM_Api(array(
 		'url' => OSM_Api::URL_DEV_UK,
 		'url4Write' => OSM_Api::URL_DEV_UK,
-		'log' => array('level' => OSM_ZLog::LEVEL_DEBUG)
+		//'log' => array('level' => OSM_ZLog::LEVEL_DEBUG)
 	));
 
 if ($auth_method == 'Basic')
@@ -63,8 +63,14 @@ else if ($auth_method == 'OAuth')
 // get a node
 
 $userPreferences = $osmApi->getUserPreferences();
-$osmApi->setUserPreference('test', time());
+//echo print_r($userPreferences,true)."\n";
+
+$expectedValue= time();
+$osmApi->setUserPreference('test', $expectedValue );
+
 $userPreferences = $osmApi->getUserPreferences();
+_assert( isset($userPreferences['test']));
+_assert($userPreferences['test']==$expectedValue);
 
 $time_end = microtime(true);
 _wl('Test well done in ' . number_format($time_end - $time_start, 3) . ' second(s).');
