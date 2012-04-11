@@ -47,7 +47,7 @@ class OSM_Objects_ChangeSet {
 		else
 		{
 			$obj->setAttribute('changeset', $this->_id);
-			// do not increment the version, the server will do it.
+			// do not increment the version, it's need by the server to detect conflict.
 			//$obj->setAttribute('version', $obj->getAttribute('version') + 1);
 			$this->_modifiedObjects[$objectId] = $obj;
 		}
@@ -60,8 +60,9 @@ class OSM_Objects_ChangeSet {
 			throw new OSM_Exception('Object Id must be set');
 
 		$obj->setAttribute('changeset', $this->_id);
-		$obj->setAttribute('version', $obj->getAttribute('version') + 1);
-		$this->$_deleteObjects[$objectId] = $obj;
+		// do not increment the version, it's need by the server to detect conflict.
+		//$obj->setAttribute('version', $obj->getAttribute('version') + 1);
+		$this->_deleteObjects[$objectId] = $obj;
 	}
 
 	/**
