@@ -199,7 +199,7 @@ class OSM_Api {
 		}
 		$url .= '/' . $relativeUrl;
 
-		OSM_ZLog::notice(__METHOD__, $method . ' url: ', $url);
+		OSM_ZLog::notice(__METHOD__, $method, ' url: ', $url);
 
 		$headers = array(
 			// Failed with PUT :
@@ -630,6 +630,7 @@ class OSM_Api {
 			$this->_oapiAddMetadata($xmlQuery);
 		}
 
+		OSM_ZLog::notice(__METHOD__, ' url: ', $this->_options['oapi_url']);
 		OSM_ZLog::debug(__METHOD__, $xmlQuery);
 
 		$postdata = http_build_query(array('data' => $xmlQuery));
@@ -695,11 +696,7 @@ class OSM_Api {
 	 */
 	public function addNewNode($lat=0, $lon=0, array $tags=null) {
 
-		$node = new OSM_Objects_Node($this->_newIdCounter--);
-		$node->setLat($lat);
-		$node->setLon($lon);
-		if (is_array($tags))
-			$node->addTags($tags);
+		$node = new OSM_Objects_Node($this->_newIdCounter--, $lat, $lon, $tags);
 		$this->_nodes[$node->getId()] = $node;
 		return $node;
 	}
@@ -798,6 +795,26 @@ class OSM_Api {
 		OSM_ZLog::debug(__METHOD__, print_r($result, true));
 	}
 
+	public function &getDirtyObjects() {
+
+		$dirtyObjects = array();
+
+		// union of objects
+		$objects = $this->_relations + $this->_ways + $this->_nodes;
+
+		foreach ($objects as $obj)
+		{
+			OSM_ZLog::debug(__METHOD__, 'Is Object "' . get_class($obj) . '" "' . $obj->getId() . '" dirty');
+			if ($obj->isDirty())
+			{
+				OSM_ZLog::info(__METHOD__, 'Object "' . $obj->getId() . '" is dirty');
+				$dirtyObjects[] = $obj;
+			}
+		}
+
+		return $dirtyObjects;
+	}
+
 	/**
 	 * Save changes made to objects.
 	 * 
@@ -821,43 +838,46 @@ class OSM_Api {
 			OSM_ZLog::notice(__METHOD__, 'Simulation Mode, not saving' . ($this->_options['outputFolder'] != null ? ' but look inside folder ' . $this->_options['outputFolder'] : ''));
 		}
 
-		// union of objects
-		$objects = $this->_relations + $this->_ways + $this->_nodes;
-		$hasChanges = false;
-		foreach ($objects as $obj)
+		/*
+		  // union of objects
+		  $objects = $this->_relations + $this->_ways + $this->_nodes;
+		  $hasChanges = false;
+		  foreach ($objects as $obj)
+		  {
+		  OSM_ZLog::debug(__METHOD__, 'Is Object "' . get_class($obj) . '" "' . $obj->getId() . '" dirty');
+		  if ($obj->isDirty())
+		  {
+		  OSM_ZLog::info(__METHOD__, 'Object "' . $obj->getId() . '" is dirty');
+		  $hasChanges = true;
+		  break;
+		  }
+		  }
+		 */
+		$dirtyObjects = $this->getDirtyObjects();
+		$dirtyObjectsCount = count($dirtyObjects);
+		
+		if( $dirtyObjectsCount==0 )
 		{
-			OSM_ZLog::debug(__METHOD__, 'Is Object "' . get_class($obj) . '" "' . $obj->getId() . '" dirty');
-			if ($obj->isDirty())
-			{
-				OSM_ZLog::info(__METHOD__, 'Object "' . $obj->getId() . '" is dirty');
-				$hasChanges = true;
-				break;
-			}
+			OSM_ZLog::notice(__METHOD__, 'No dirty object, abort save');
+			return false;			
 		}
-
-		OSM_ZLog::info(__METHOD__, 'Has dirty objects = "' . ($hasChanges ? 'true' : 'false') . '"');
-
-		if (!$hasChanges)
-			return false;
+		OSM_ZLog::notice(__METHOD__, 'Has dirty ',$dirtyObjectsCount,' objects');
 
 		$changeSet = $this->_createChangeSet($comment);
 
 		$changeSetId = $changeSet->getId();
 
-		foreach ($objects as $obj)
+		foreach ($dirtyObjects as $obj)
 		{
-			if ($obj->isDirty())
-			{
-				//OSM_ZLog::debug(__METHOD__,print_r($obj,true));
+			//OSM_ZLog::debug(__METHOD__,print_r($obj,true));
 
-				if ($obj->isDeleted())
-				{
-					$changeSet->deleteObject($obj);
-				}
-				else
-				{
-					$changeSet->addObject($obj);
-				}
+			if ($obj->isDeleted())
+			{
+				$changeSet->deleteObject($obj);
+			}
+			else
+			{
+				$changeSet->addObject($obj);
 			}
 		}
 
@@ -1084,7 +1104,7 @@ class OSM_Api {
 		$x = new SimpleXMLElement($result);
 		foreach ($x->preferences->children() as $p)
 		{
-			$prefs[(string)$p['k']] = (string)$p['v'];
+			$prefs[(string) $p['k']] = (string) $p['v'];
 		}
 
 		return $prefs;

@@ -120,5 +120,48 @@ $node = $osmApi->getNode('611571');
 _assert(!$node->isDirty());
 _assert($node->getTag($tagName, $tagValue + 1)->getValue() == '2');
 
+// @todo ...
+$relation = $osmApi->getRelation('500');
+$memberRole = 'yapafo_test';
+// Create a node
+$node = $osmApi->addNewNode(0.1, 0.1);
+$node->addTag('A yapafo.net test', 'add node');
+// Add it has member to the relation
+$member = new OSM_Objects_Member( OSM_Api::OBJTYPE_NODE, $node->getId(), $memberRole);
+$relation->addMember($member);
+$osmApi->saveChanges('A yapafo.net test');
+//
+// Check node exists and it's a relation's member.
+//
+$osmApi->removeAllObjects();
+$relation = $osmApi->getRelation('500',true);
+$nodes = $osmApi->getNodesByTags(array('A yapafo.net test'=>'add node'));
+_assert($nodes!=null);
+$members = $relation->findMembersByTypeAndRole( OSM_Api::OBJTYPE_NODE, $memberRole);
+_assert($members!=null);
+// remove this new member and delete the created node
+foreach( $members as $member )
+{
+	$relation->removeMember($member);
+}
+$osmApi->saveChanges('A yapafo.net test');
+// delete the created node
+$osmApi->removeAllObjects();
+$relation = $osmApi->getRelation('500',true);
+foreach( $members as $member )
+{
+	$osmApi->getNode( $member->getRef() )->delete();
+}
+$osmApi->saveChanges('A yapafo.net test');
+//
+// Check remove members and delete object
+//
+$osmApi->removeAllObjects();
+$relation = $osmApi->getRelation('500',true);
+$nodes = $osmApi->getNodesByTags(array('A yapafo.net test'=>'add node'));
+_assert(count($nodes)==0);
+$members = $relation->findMembersByTypeAndRole( OSM_Api::OBJTYPE_NODE, $memberRole);
+_assert(count($members)==0);
+
 $time_end = microtime(true);
 _wl('Test well done in ' . number_format($time_end - $time_start, 3) . ' second(s).');

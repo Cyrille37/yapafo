@@ -25,6 +25,20 @@ class OSM_Objects_Node extends OSM_Objects_Object implements OSM_Objects_IXml {
 		return $node;
 	}
 
+	public function __construct($id=null, $lat=null, $lon=null, array $tags=null) {
+
+		parent::__construct($id);
+
+		if ($lat != null)
+			$this->setLat($lat);
+		if ($lon != null)
+			$this->setLon($lon);
+		if (is_array($tags))
+			$node->addTags($tags);
+		
+		$this->setDirty();
+	}
+
 	/**
 	 * @return string 
 	 */

@@ -35,8 +35,7 @@ class OSM_Objects_Object implements OSM_Objects_IDirty {
 	 * @param string $id 
 	 */
 	public function __construct($id=null) {
-
-		if ($id != null && $id != '' && $id != 0)
+		if ($id != null )
 			$this->setId($id);
 		$this->setDirty();
 	}
@@ -65,10 +64,12 @@ class OSM_Objects_Object implements OSM_Objects_IDirty {
 	 */
 	public function isDirty() {
 
+		if( $this->_dirty )
+			return true ;
 		foreach ($this->_tags as $t)
 			if ($t->isDirty())
 				return true;
-		return $this->_dirty;
+		return false ;
 	}
 
 	/**
@@ -96,12 +97,11 @@ class OSM_Objects_Object implements OSM_Objects_IDirty {
 	 * @param array $searchTags
 	 * @return bool
 	 */
-	public function hasTags(array $searchTags )
-	{
-		$resultTags = $this->findTags( $searchTags);
-		if( count($resultTags) == count($searchTags) )
-			return true ;
-		return false ;
+	public function hasTags(array $searchTags) {
+		$resultTags = $this->findTags($searchTags);
+		if (count($resultTags) == count($searchTags))
+			return true;
+		return false;
 	}
 
 	/**
@@ -117,14 +117,14 @@ class OSM_Objects_Object implements OSM_Objects_IDirty {
 			return $this->_tags;
 
 		$resultTags = array();
-		foreach ($searchTags as $k=>$v)
+		foreach ($searchTags as $k => $v)
 		{
-			if( ($t=$this->getTag($k, $v))!=null )
+			if (($t = $this->getTag($k, $v)) != null)
 			{
-				$resultTags[] = $t ;
+				$resultTags[] = $t;
 			}
 		}
-		return $resultTags ;
+		return $resultTags;
 	}
 
 	/**
@@ -161,15 +161,15 @@ class OSM_Objects_Object implements OSM_Objects_IDirty {
 	 * @param OSM_Objects_Tag|string $tagOrKey
 	 * @param string value
 	 */
-	public function addTag( $tagOrKey, $value=null) {
+	public function addTag($tagOrKey, $value=null) {
 
-		if( $tagOrKey instanceof OSM_Objects_Tag )
+		if ($tagOrKey instanceof OSM_Objects_Tag)
 		{
 			if (array_key_exists($tagOrKey->getKey(), $this->_tags))
 			{
 				throw new OSM_Exception('duplicate tag "' . $tagOrKey->getKey() . '"');
 			}
-			$tag = $tagOrKey ;
+			$tag = $tagOrKey;
 		}
 		else
 		{

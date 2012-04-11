@@ -114,7 +114,7 @@ class OSM_Objects_Relation extends OSM_Objects_Object implements OSM_Objects_IXm
 		foreach ($this->_members as $m)
 			if ($m->isDirty())
 				return true;
-		return $this->_dirty;
+		return false;
 	}
 
 	public function hasMember(OSM_Objects_Member $member) {
@@ -187,7 +187,7 @@ class OSM_Objects_Relation extends OSM_Objects_Object implements OSM_Objects_IXm
 		$members = array();
 		foreach ($this->_members as $member)
 		{
-			if ($member->getType() == $type && $member->getRole() == $role )
+			if ($member->getType() == $type && $member->getRole() == $role)
 				$members[] = $member;
 		}
 		return $members;
@@ -201,7 +201,7 @@ class OSM_Objects_Relation extends OSM_Objects_Object implements OSM_Objects_IXm
 	 */
 	public function getMember($memberType, $refId) {
 
-		$k = self::_memberKey($memberType, $nodeId);
+		$k = self::_memberKey($memberType, $refId);
 		if (array_key_exists($k, $this->_members))
 		{
 			return $this->_members[$k];
@@ -279,6 +279,9 @@ class OSM_Objects_Relation extends OSM_Objects_Object implements OSM_Objects_IXm
 	 */
 	public function addMembers(array $members) {
 
+		if (!is_array($members) || count($members) == 0)
+			throw new OSM_Exception('members array is empty');
+
 		foreach ($members as $member)
 		{
 			if ($this->hasMember($member))
@@ -290,6 +293,7 @@ class OSM_Objects_Relation extends OSM_Objects_Object implements OSM_Objects_IXm
 		{
 			$this->_members[self::_memberKey($member)] = $member;
 		}
+		$this->setDirty();
 		return $this;
 	}
 
