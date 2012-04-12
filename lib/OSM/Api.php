@@ -249,7 +249,7 @@ class OSM_Api {
 		}
 
 		$result = @file_get_contents($url, false, $context);
-		if ($result === false)
+		if ($result === false || $result==null)
 		{
 			$e = error_get_last();
 			if (isset($http_response_header))
@@ -390,7 +390,18 @@ class OSM_Api {
 
 		OSM_ZLog::debug(__METHOD__, $xmlStr);
 
+		if (empty($xmlStr))
+		{
+			throw new OSM_Exception('Xml string could not be empty');
+		}
+		
 		$xmlObj = simplexml_load_string($xmlStr);
+
+		if ($xmlObj == null)
+		{
+			_err('Failed to parse xml: [' . print_r($xmlStr, true).']');
+			throw new OSM_Exception('Failed to parse xml');
+		}
 
 		$this->_loadedXml[] = $xmlStr;
 
@@ -855,13 +866,13 @@ class OSM_Api {
 		 */
 		$dirtyObjects = $this->getDirtyObjects();
 		$dirtyObjectsCount = count($dirtyObjects);
-		
-		if( $dirtyObjectsCount==0 )
+
+		if ($dirtyObjectsCount == 0)
 		{
 			OSM_ZLog::notice(__METHOD__, 'No dirty object, abort save');
-			return false;			
+			return false;
 		}
-		OSM_ZLog::notice(__METHOD__, 'Has dirty ',$dirtyObjectsCount,' objects');
+		OSM_ZLog::notice(__METHOD__, 'Has dirty ', $dirtyObjectsCount, ' objects');
 
 		$changeSet = $this->_createChangeSet($comment);
 
