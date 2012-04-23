@@ -23,43 +23,14 @@ _wl('test "' . basename(__FILE__) . '');
 
 require_once (__DIR__ . '/../lib/OSM/Api.php');
 
-/**
- * Détails OAuth pour OAuth_essais01 (PROD)
- * 
- * http://www.openstreetmap.org/user/Cyrille37/oauth_clients/499
- * 
- * Clé de l'utilisateur : K0Fc6En9GulO9nBrJ6Bz7ltHcZRL9vD3kqDMaX8V
- * Secret de l'utilisateur : HRv7OOGCA2bKYcfw1Jlbg8nCXodHOCSAAHhY1XU4
- * 
- * Demande des permission suivantes de l'utilisateur :
- * 	modifier la carte.
- * Nous supportons hamc-sha1 (recommandé) et texte brut en mode ssl.
- */
-$OAUTH_COMSUMERKEY = 'K0Fc6En9GulO9nBrJ6Bz7ltHcZRL9vD3kqDMaX8V';
-$OAUTH_COMSUMERSECRET = 'HRv7OOGCA2bKYcfw1Jlbg8nCXodHOCSAAHhY1XU4';
-
-/**
- * Détails OAuth pour OAuth_essais01 (DEV)
- * 
- * http://api06.dev.openstreetmap.org/user/Cyrille37_TEST/oauth_clients/1217
- * 
- * Clé de l'utilisateur : K0Fc6En9GulO9nBrJ6Bz7ltHcZRL9vD3kqDMaX8V
- * Secret de l'utilisateur : HRv7OOGCA2bKYcfw1Jlbg8nCXodHOCSAAHhY1XU4
- * 
- * Demande des permission suivantes de l'utilisateur :
- * 	modifier la carte.
- * Nous supportons hamc-sha1 (recommandé) et texte brut en mode ssl.
- */
-$OAUTH_COMSUMERKEY_DEV = 'T7qXv9xVzFFqhbIbygEnu0MB0uchtmTuaDbz6WcK';
-$OAUTH_COMSUMERSECRET_DEV = 'VtJnCvwzdE8rVNeAukLAYd1YxqeWCQD3W4xLeU1Z';
-
 //
 //
 //
 
 if ($DEV)
 {
-	$oauth = new OSM_Auth_OAuth($OAUTH_COMSUMERKEY_DEV, $OAUTH_COMSUMERSECRET_DEV, array(
+	include_once (__DIR__ . '/../../secrets.php');
+	$oauth = new OSM_Auth_OAuth($AUTH_OAUTH_CONSUMER_KEY, $AUTH_OAUTH_CONSUMER_SECRET, array(
 			'requestTokenUrl' => OSM_Auth_OAuth::REQUEST_TOKEN_URL_DEV,
 			'accessTokenUrl' => OSM_Auth_OAuth::ACCESS_TOKEN_URL_DEV,
 			'authorizeUrl' => OSM_Auth_OAuth::AUTHORIZE_TOKEN_URL_DEV
@@ -68,8 +39,8 @@ if ($DEV)
 }
 else
 {
-
-	$oauth = new OSM_Auth_OAuth($OAUTH_COMSUMERKEY, $OAUTH_COMSUMERSECRET);
+	include_once (__DIR__ . '/../../secrets_prod.php');
+	$oauth = new OSM_Auth_OAuth($AUTH_OAUTH_CONSUMER_KEY, $AUTH_OAUTH_CONSUMER_SECRET);
 	$apiUrl = 'http://www.openstreetmap.org/api/0.6';
 }
 
