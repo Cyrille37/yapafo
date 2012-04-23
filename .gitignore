@@ -4,3 +4,8 @@
 
 en_vrac
 
+# Eclipse project stuff:
+
+.settings
+.buildpath
+.project
