@@ -11,7 +11,7 @@
  */
 class OSM_Objects_Object implements OSM_Objects_IDirty {
 	/**
-	 * 
+	 *
 	 */
 	const OBJTYPE_TAG = 'tag';
 
@@ -32,7 +32,7 @@ class OSM_Objects_Object implements OSM_Objects_IDirty {
 	protected $_deleted = false;
 
 	/**
-	 * @param string $id 
+	 * @param string $id
 	 */
 	public function __construct($id=null) {
 		if ($id != null )
@@ -60,7 +60,7 @@ class OSM_Objects_Object implements OSM_Objects_IDirty {
 	}
 
 	/**
-	 * @return bool 
+	 * @return bool
 	 */
 	public function isDirty() {
 
@@ -68,15 +68,33 @@ class OSM_Objects_Object implements OSM_Objects_IDirty {
 			return true ;
 		foreach ($this->_tags as $t)
 			if ($t->isDirty())
-				return true;
+			return true;
 		return false ;
 	}
 
 	/**
-	 * @param bool $dirty 
+	 * @param bool $dirty
 	 */
 	public function setDirty($dirty=true) {
+		
 		$this->_dirty = $dirty;
+		
+		if( $dirty )
+		{
+			// 'action' attribute is need by the osm file format.
+			if($this->_deleted)
+			{
+				$this->_attrs["action"] = 'delete';
+			}
+			else
+			{
+				$this->_attrs["action"] = 'modify';
+			}
+		}
+		else
+		{
+			$this->_deleted = false ;
+		}
 	}
 
 	public function delete() {
@@ -93,7 +111,7 @@ class OSM_Objects_Object implements OSM_Objects_IDirty {
 
 	/**
 	 * Like findTags but return a bool instead of tags.
-	 * 
+	 *
 	 * @param array $searchTags
 	 * @return bool
 	 */
@@ -106,7 +124,7 @@ class OSM_Objects_Object implements OSM_Objects_IDirty {
 
 	/**
 	 * Return all tags or tags matching $searchTags
-	 * 
+	 *
 	 * @param array $searchTags Optionnal. If you want to filter the returned tags.
 	 * @return OSM_Objects_Tag[]
 	 * @see findTag()
@@ -129,9 +147,9 @@ class OSM_Objects_Object implements OSM_Objects_IDirty {
 
 	/**
 	 * Retreive a tag by Key.
-	 * 
+	 *
 	 * A value could be provided to enforce the test.
-	 * 
+	 *
 	 * @param string $key
 	 * @param string $v Optional. If not provided or if an empty string or a '*' the value will not be tested.
 	 * @return OSM_Objects_Tag

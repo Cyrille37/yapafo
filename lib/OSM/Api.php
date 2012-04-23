@@ -9,14 +9,14 @@ spl_autoload_register(array('OSM_Api', 'autoload'));
 
 /**
  * Class OSM_Api
- * 
+ *
  * Changes:
  * 2012-03-29
  * 	- One url for reading, another one for writing ($this->_url & $this->_url4Write)
  * Doc:
  * - http://wiki.openstreetmap.org/wiki/Api
  * - http://wiki.openstreetmap.org/wiki/OsmChange
- * 
+ *
  * @author cyrille
  */
 class OSM_Api {
@@ -41,19 +41,19 @@ class OSM_Api {
 	const OAPI_URL_DE = 'http://www.overpass-api.de/api/interpreter';
 
 	protected $_options = array(
-		// simulation is set by default to avoid (protected against) unwanted write !
-		'simulation' => true,
-		'url' => self::URL_PROD_FR,
-		'url4Write' => self::URL_PROD_UK,
-		// to store every network communications (load/save) in a file.
-		'outputFolder' => null,
-		'appName' => '', // name for the application using the API
-		'log' => array('level' => OSM_ZLog::LEVEL_ERROR),
-		'oapi_url' => self::OAPI_URL_FR
+			// simulation is set by default to avoid (protected against) unwanted write !
+			'simulation' => true,
+			'url' => self::URL_PROD_FR,
+			'url4Write' => self::URL_PROD_UK,
+			// to store every network communications (load/save) in a file.
+			'outputFolder' => null,
+			'appName' => '', // name for the application using the API
+			'log' => array('level' => OSM_ZLog::LEVEL_ERROR),
+			'oapi_url' => self::OAPI_URL_FR
 	);
 	protected $_stats = array(
-		'requestCount' => 0,
-		'loadedBytes' => 0
+			'requestCount' => 0,
+			'loadedBytes' => 0
 	);
 	protected $_url;
 	protected $_url4Write;
@@ -175,7 +175,7 @@ class OSM_Api {
 
 	/**
 	 *
-	 * @param OSM_Auth_IAuthProvider $authProvider 
+	 * @param OSM_Auth_IAuthProvider $authProvider
 	 */
 	public function setCredentials(OSM_Auth_IAuthProvider $authProvider) {
 
@@ -202,11 +202,11 @@ class OSM_Api {
 		OSM_ZLog::notice(__METHOD__, $method, ' url: ', $url);
 
 		$headers = array(
-			// Failed with PUT :
-			//'Content-type: application/x-www-form-urlencoded'
-			// Works with PUT :
-			//'Content-type: multipart/form-data'
-			'Content-type: text/xml'
+				// Failed with PUT :
+				//'Content-type: application/x-www-form-urlencoded'
+				// Works with PUT :
+				//'Content-type: multipart/form-data'
+				'Content-type: text/xml'
 		);
 
 		if ($this->_authProvider != null)
@@ -217,11 +217,11 @@ class OSM_Api {
 		if ($data == null)
 		{
 			$opts = array('http' =>
-				array(
-					'method' => $method,
-					'user_agent' => $this->_getUserAgent(),
-					'header' => /* implode("\r\n", $headers) */$headers,
-				)
+					array(
+							'method' => $method,
+							'user_agent' => $this->_getUserAgent(),
+							'header' => /* implode("\r\n", $headers) */$headers,
+					)
 			);
 		}
 		else
@@ -230,12 +230,12 @@ class OSM_Api {
 			$postdata = $data;
 
 			$opts = array('http' =>
-				array(
-					'method' => $method,
-					'user_agent' => $this->_getUserAgent(),
-					'header' => /* implode("\r\n", $headers) */$headers,
-					'content' => $postdata
-				)
+					array(
+							'method' => $method,
+							'user_agent' => $this->_getUserAgent(),
+							'header' => /* implode("\r\n", $headers) */$headers,
+							'content' => $postdata
+					)
 			);
 		}
 
@@ -274,13 +274,13 @@ class OSM_Api {
 
 	/**
 	 * Return the designated object.
-	 * 
+	 *
 	 * Reuse the loaded one if exists and $full is not set.
-	 * 
+	 *
 	 * @param type $type
 	 * @param type $id
 	 * @param boolean $full
-	 * @return OSM_Objects_Object 
+	 * @return OSM_Objects_Object
 	 */
 	public function getObject($type, $id, $full = false) {
 
@@ -345,11 +345,11 @@ class OSM_Api {
 
 	/**
 	 * Load or get a node by Id from loaded objects.
-	 * 
+	 *
 	 * Use removeObject to force the reload of the object.
-	 * 
+	 *
 	 * @param string $id
-	 * @return OSM_Objects_Node 
+	 * @return OSM_Objects_Node
 	 */
 	public function getNode($id) {
 		return $this->getObject(self::OBJTYPE_NODE, $id);
@@ -357,12 +357,12 @@ class OSM_Api {
 
 	/**
 	 * Load or get a way by Id from loaded objects.
-	 * 
+	 *
 	 * Use removeObject to force the reload of the object.
-	 * 
+	 *
 	 * @param string $id
 	 * @param bool $full With its nodes (true) or not (false=default)
-	 * @return OSM_Objects_Way 
+	 * @return OSM_Objects_Way
 	 */
 	public function getWay($id, $full = false) {
 		return $this->getObject(self::OBJTYPE_WAY, $id, $full);
@@ -370,12 +370,12 @@ class OSM_Api {
 
 	/**
 	 * Load or get a relation by Id from loaded objects.
-	 * 
+	 *
 	 * Use removeObject to force the reload of the object.
-	 * 
+	 *
 	 * @param string $id The relation Id
 	 * @param bool $full true for loading all relation's members
-	 * @return OSM_Objects_Relation 
+	 * @return OSM_Objects_Relation
 	 */
 	public function getRelation($id, $full = false) {
 		return $this->getObject(self::OBJTYPE_RELATION, $id, $full);
@@ -383,7 +383,7 @@ class OSM_Api {
 
 	/**
 	 * Create objects and fill objects tables from a xml document (string).
-	 * 
+	 *
 	 * @param string $xmlStr
 	 */
 	public function createObjectsfromXml($xmlStr) {
@@ -394,7 +394,7 @@ class OSM_Api {
 		{
 			throw new OSM_Exception('Xml string could not be empty');
 		}
-		
+
 		$xmlObj = simplexml_load_string($xmlStr);
 
 		if ($xmlObj == null)
@@ -511,21 +511,21 @@ class OSM_Api {
 
 	/**
 	 * Returns all loaded objects which are matching tags attributes
-	 * 
+	 *
 	 * @param array $searchTags is a array of Key=>Value.
 	 * @return OSM_Objects_Object[]
 	 */
 	public function &getObjectsByTags(array $searchTags) {
 
 		$results = array_merge(
-			$this->getRelationsByTags($searchTags), $this->getWaysByTags($searchTags), $this->getNodesByTags($searchTags)
+				$this->getRelationsByTags($searchTags), $this->getWaysByTags($searchTags), $this->getNodesByTags($searchTags)
 		);
 		return $results;
 	}
 
 	/**
 	 * Returns all loaded nodes which are matching tags attributes
-	 * 
+	 *
 	 * @param array $tags is a array of Key=>Value.
 	 * @return OSM_Objects_Node[]
 	 */
@@ -542,7 +542,7 @@ class OSM_Api {
 
 	/**
 	 * Returns all loaded nodes which are matching tags attributes
-	 * 
+	 *
 	 * @param array $tags is a array of Key=>Value.
 	 * @return OSM_Objects_Node[]
 	 */
@@ -559,7 +559,7 @@ class OSM_Api {
 
 	/**
 	 * Returns all loaded nodes which are matching tags attributes
-	 * 
+	 *
 	 * @param array $tags is a array of Key=>Value.
 	 * @return OSM_Objects_Node[]
 	 */
@@ -611,9 +611,9 @@ class OSM_Api {
 
 	/**
 	 * Reload a given OSM Object into the objects collection.
-	 * 
+	 *
 	 * It remove the object before.
-	 * 
+	 *
 	 * @param string $type
 	 * @param int $id
 	 * @param bool $full
@@ -627,10 +627,10 @@ class OSM_Api {
 
 	/**
 	 * Retreive objects with the Overpass-Api and fill objects collection from result.
-	 * 
+	 *
 	 * If you do not need to save back data and want efficient network communication you can
 	 * swith $withMeta to false to avoid download of metadata.
-	 * 
+	 *
 	 * @param string $xmlQuery
 	 * @param string $withMeta To get metadata which are needed for saving back data (Version, User...).
 	 */
@@ -647,12 +647,12 @@ class OSM_Api {
 		$postdata = http_build_query(array('data' => $xmlQuery));
 
 		$opts = array('http' =>
-			array(
-				'method' => 'POST',
-				'user_agent' => $this->_getUserAgent(),
-				'header' => 'Content-type: application/x-www-form-urlencoded',
-				'content' => $postdata
-			)
+				array(
+						'method' => 'POST',
+						'user_agent' => $this->_getUserAgent(),
+						'header' => 'Content-type: application/x-www-form-urlencoded',
+						'content' => $postdata
+				)
 		);
 		$context = stream_context_create($opts);
 
@@ -679,7 +679,7 @@ class OSM_Api {
 
 	/**
 	 *
-	 * @param string $xmlQuery 
+	 * @param string $xmlQuery
 	 */
 	protected function _oapiAddMetadata(&$xmlQuery) {
 
@@ -699,11 +699,11 @@ class OSM_Api {
 
 	/**
 	 * Create and add a new node to the objects collection.
-	 * 
+	 *
 	 * @param type $lat
 	 * @param type $lon
 	 * @param array $tags
-	 * @return OSM_Objects_Node 
+	 * @return OSM_Objects_Node
 	 */
 	public function addNewNode($lat=0, $lon=0, array $tags=null) {
 
@@ -714,10 +714,10 @@ class OSM_Api {
 
 	/**
 	 * Create and add a new way to the objects collection.
-	 * 
+	 *
 	 * @param array $nodes
 	 * @param array $tags
-	 * @return OSM_Objects_Way 
+	 * @return OSM_Objects_Way
 	 */
 	public function addNewWay(array $nodes=null, array $tags=null) {
 
@@ -731,7 +731,7 @@ class OSM_Api {
 
 	/**
 	 * Create and add a new relation to the objects collection.
-	 * 
+	 *
 	 * @param array $members
 	 * @param array $tags
 	 * @return OSM_Objects_Relation
@@ -744,66 +744,6 @@ class OSM_Api {
 		if (is_array($tags))
 			$relation->addTags($tags);
 		return $relation;
-	}
-
-	/**
-	 *
-	 * @param string $comment
-	 * @return OSM_Objects_ChangeSet 
-	 */
-	protected function _createChangeSet($comment) {
-
-		$relativeUrl = 'changeset/create';
-
-		if ($this->_options['simulation'])
-		{
-			OSM_ZLog::info(__METHOD__, 'Simulation Mode, set changeset id to 999');
-			$result = 999;
-		}
-		else
-		{
-			$result = $this->_httpApi($relativeUrl, OSM_Objects_ChangeSet::getCreateXmlStr($comment, $this->_getUserAgent()), 'PUT');
-		}
-
-		OSM_ZLog::debug(__METHOD__, var_export($result, true));
-
-		$changeSet = new OSM_Objects_ChangeSet($result);
-		return $changeSet;
-	}
-
-	protected function _closeChangeSet($changeSet) {
-
-		$relativeUrl = 'changeset/' . $changeSet->getId() . '/close';
-
-		if ($this->_options['simulation'])
-		{
-			
-		}
-		else
-		{
-			$result = $this->_httpApi($relativeUrl, null, 'PUT');
-		}
-	}
-
-	protected function _uploadChangeSet($changeSet) {
-
-		$relativeUrl = 'changeset/' . $changeSet->getId() . '/upload';
-
-		$xmlStr = $changeSet->getUploadXmlStr($this->_getUserAgent());
-
-		if (OSM_ZLog::isDebug())
-			file_put_contents('debug.OSM_Api._uploadChangeSet.postdata.xml', $xmlStr);
-
-		if ($this->_options['simulation'])
-		{
-			$result = 'Simulation, no call to Api';
-		}
-		else
-		{
-			$result = $this->_httpApi($relativeUrl, $xmlStr, 'POST');
-		}
-
-		OSM_ZLog::debug(__METHOD__, print_r($result, true));
 	}
 
 	public function &getDirtyObjects() {
@@ -827,10 +767,38 @@ class OSM_Api {
 	}
 
 	/**
+	 * Return Xml document of all contained objects.
+	 * @param bool $onlyDirtyObjects To get only modified objects (added, modified or deleted)
+	 * @return string Xml document as a string.
+	 */
+	public function getXmlDocument( $onlyDirtyObjects = false )
+	{
+		$xml = '<osm version="0.6" upload="true" generator="'.$this->_getUserAgent().'">' ."\n";
+		// union of objects
+		$objects = $this->_relations + $this->_ways + $this->_nodes;
+		foreach ($objects as $obj)
+		{
+			if( $onlyDirtyObjects )
+			{
+				if($obj->isDirty())
+				{
+					$xml .= $obj->asXmlStr() . "\n";
+				}
+			}
+			else
+			{
+				$xml .= $obj->asXmlStr() . "\n";
+			}
+		}
+		$xml .= '</osm>' ."\n";
+		return $xml ;
+	}
+
+	/**
 	 * Save changes made to objects.
-	 * 
+	 *
 	 * Objects stay dirties after save. You have to destroy/reload them to get them up-to-date (id, version, ...)
-	 * 
+	 *
 	 * @param type $comment
 	 * @return bool true if has saved something, false if nothing to save.
 	 * @throws OSM_Exception if not authenticated
@@ -849,21 +817,6 @@ class OSM_Api {
 			OSM_ZLog::notice(__METHOD__, 'Simulation Mode, not saving' . ($this->_options['outputFolder'] != null ? ' but look inside folder ' . $this->_options['outputFolder'] : ''));
 		}
 
-		/*
-		  // union of objects
-		  $objects = $this->_relations + $this->_ways + $this->_nodes;
-		  $hasChanges = false;
-		  foreach ($objects as $obj)
-		  {
-		  OSM_ZLog::debug(__METHOD__, 'Is Object "' . get_class($obj) . '" "' . $obj->getId() . '" dirty');
-		  if ($obj->isDirty())
-		  {
-		  OSM_ZLog::info(__METHOD__, 'Object "' . $obj->getId() . '" is dirty');
-		  $hasChanges = true;
-		  break;
-		  }
-		  }
-		 */
 		$dirtyObjects = $this->getDirtyObjects();
 		$dirtyObjectsCount = count($dirtyObjects);
 
@@ -900,12 +853,72 @@ class OSM_Api {
 	}
 
 	/**
+	 *
+	 * @param string $comment
+	 * @return OSM_Objects_ChangeSet
+	 */
+	protected function _createChangeSet($comment) {
+
+		$relativeUrl = 'changeset/create';
+
+		if ($this->_options['simulation'])
+		{
+			OSM_ZLog::info(__METHOD__, 'Simulation Mode, set changeset id to 999');
+			$result = 999;
+		}
+		else
+		{
+			$result = $this->_httpApi($relativeUrl, OSM_Objects_ChangeSet::getCreateXmlStr($comment, $this->_getUserAgent()), 'PUT');
+		}
+
+		OSM_ZLog::debug(__METHOD__, var_export($result, true));
+
+		$changeSet = new OSM_Objects_ChangeSet($result);
+		return $changeSet;
+	}
+
+	protected function _closeChangeSet($changeSet) {
+
+		$relativeUrl = 'changeset/' . $changeSet->getId() . '/close';
+
+		if ($this->_options['simulation'])
+		{
+
+		}
+		else
+		{
+			$result = $this->_httpApi($relativeUrl, null, 'PUT');
+		}
+	}
+
+	protected function _uploadChangeSet($changeSet) {
+
+		$relativeUrl = 'changeset/' . $changeSet->getId() . '/upload';
+
+		$xmlStr = $changeSet->getUploadXmlStr($this->_getUserAgent());
+
+		if (OSM_ZLog::isDebug())
+			file_put_contents('debug.OSM_Api._uploadChangeSet.postdata.xml', $xmlStr);
+
+		if ($this->_options['simulation'])
+		{
+			$result = 'Simulation, no call to Api';
+		}
+		else
+		{
+			$result = $this->_httpApi($relativeUrl, $xmlStr, 'POST');
+		}
+
+		OSM_ZLog::debug(__METHOD__, print_r($result, true));
+	}
+
+	/**
 	 * Tell if the Node is inside the polygon defined by the Relation.
 	 * Note: Does not works with multipolygon (outer/inner/...)
-	 * 
+	 *
 	 * @param OSM_Objects_Node $node2test
 	 * @param OSM_Objects_Relation $relation
-	 * @return bool 
+	 * @return bool
 	 */
 	public function isNodeInsideRelationPolygon(OSM_Objects_Node $node2test, OSM_Objects_Relation $relation) {
 
@@ -920,7 +933,7 @@ class OSM_Api {
 	/**
 	 *
 	 * @param OSM_Objects_Relation $relation
-	 * @return \OSM\Tools\Polygon 
+	 * @return \OSM\Tools\Polygon
 	 */
 	public function getPolygon(OSM_Objects_Relation $relation) {
 
@@ -982,9 +995,9 @@ class OSM_Api {
 
 	/**
 	 * Return relation's way ordered by nodes position, like we can draw a well formed polygon.
-	 * 
+	 *
 	 * @param OSM_Objects_Relation $relation
-	 * @return OSM_Objects_Way[] 
+	 * @return OSM_Objects_Way[]
 	 */
 	public function getRelationWaysOrdered(OSM_Objects_Relation $relation) {
 
@@ -1053,7 +1066,7 @@ class OSM_Api {
 
 	/**
 	 * Return a string like "MyApp / Yapafo 0.1", based on the "appName" options and the library constants.
-	 * This appears as the editor's name in the changeset properties (key "crated_by") 
+	 * This appears as the editor's name in the changeset properties (key "crated_by")
 	 * @return string user agent string
 	 */
 	protected function _getUserAgent() {
@@ -1071,9 +1084,9 @@ class OSM_Api {
 		// file_put_contents($this->_getOutputFilename('in', $relativeUrl, $method, $data))
 
 		return $this->_options['outputFolder'] .
-			DIRECTORY_SEPARATOR . __CLASS__
-			. '_' . sprintf('%04d', ++$this->_outputWriteCount) . '-' . time()
-			. '_' . $inOrOut . '-' . $method . '-' . urlencode($relativeUrl) . '.txt';
+		DIRECTORY_SEPARATOR . __CLASS__
+		. '_' . sprintf('%04d', ++$this->_outputWriteCount) . '-' . time()
+		. '_' . $inOrOut . '-' . $method . '-' . urlencode($relativeUrl) . '.txt';
 	}
 
 	/**
@@ -1096,7 +1109,7 @@ class OSM_Api {
 
 	/**
 	 * Retreive all user preferences from openstreetmap.org website.
-	 * 
+	 *
 	 * @return array
 	 */
 	public function &getUserPreferences() {
@@ -1123,9 +1136,9 @@ class OSM_Api {
 
 	/**
 	 * Set a user preference value.
-	 * 
+	 *
 	 * @param string $key
-	 * @param string $value 
+	 * @param string $value
 	 */
 	public function setUserPreference($key, $value) {
 
@@ -1135,7 +1148,7 @@ class OSM_Api {
 		}
 
 		$result = $this->_httpApi(
-			'/user/preferences/' . rawurlencode(utf8_encode($key)), rawurlencode(utf8_encode($value)), 'PUT');
+				'/user/preferences/' . rawurlencode(utf8_encode($key)), rawurlencode(utf8_encode($value)), 'PUT');
 
 		OSM_ZLog::debug(__METHOD__, $result);
 	}

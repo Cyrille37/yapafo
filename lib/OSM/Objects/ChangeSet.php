@@ -33,6 +33,12 @@ class OSM_Objects_ChangeSet {
 		return $this->_id ;
 	}
 
+	/**
+	 * Add an new or modified object to the ChangeSet.
+	 * It will self compute the "New" or "Modified" object's status.
+	 * @param OSM_Objects_Object $obj
+	 * @throws OSM_Exception
+	 */
 	public function addObject(OSM_Objects_Object $obj) {
 
 		$objectId = $obj->getId();
@@ -53,6 +59,11 @@ class OSM_Objects_ChangeSet {
 		}
 	}
 
+	/**
+	 * Add a deleted object to the ChangeSet.
+	 * @param OSM_Objects_Object $obj
+	 * @throws OSM_Exception
+	 */
 	public function deleteObject(OSM_Objects_Object $obj) {
 
 		$objectId = $obj->getId();
@@ -83,11 +94,13 @@ class OSM_Objects_ChangeSet {
 	}
 
 	/**
+	 * Get the ChangeSet Xml document ready to upload.
 	 * 
-	 * http://wiki.openstreetmap.org/wiki/API_v0.6#Diff_upload:_POST_.2Fapi.2F0.6.2Fchangeset.2F.23id.2Fupload
 	 * With this API call files in the OsmChange format (OSC) can be uploaded to the server.
 	 * If a diff is successfully applied a XML (content type text/xml) is returned in the following format.
-	 * @return string 
+	 * http://wiki.openstreetmap.org/wiki/API_v0.6#Diff_upload:_POST_.2Fapi.2F0.6.2Fchangeset.2F.23id.2Fupload
+	 * @param string $generator The name of the generator, like user-agent.
+	 * @return string The ChangeSet Xml document ready to upload.
 	 */
 	public function getUploadXmlStr($generator) {
 
