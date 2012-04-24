@@ -9,6 +9,8 @@ if (!file_exists($OSM_Api_filename))
 }
 require_once($OSM_Api_filename);
 
+session_start();
+
 include(__DIR__ . '/secrets.php');
 $consumer_key = $AUTH_OAUTH_CONSUMER_KEY_DEV;
 $consumer_secret = $AUTH_OAUTH_CONSUMER_SECRET_DEV;
@@ -22,44 +24,61 @@ $applicationName = str_replace('.php', '', basename(__FILE__));
 
 _wl('Running ' . $applicationName);
 
-// osm api handler is instantiated if necessary
-if (!isset($_SESSION["api"]))
+if (isset($_REQUEST['go']))
 {
-	_wl('Create API instance');
-	$api = new OSM_Api(array(
-			'appName' => $applicationName, 'url' => $api_url
-		));
-	$_SESSION['api'] = $api;
-}
+
+// osm api handler is instantiated if necessary
+	if (!isset($_SESSION["api"]))
+	{
+		_wl('Create API instance');
+		$api = new OSM_Api(array(
+				'appName' => $applicationName, 'url' => $api_url
+			));
+		$_SESSION['api'] = $api;
+	}
 
 // Have you already got an OAuth object ?
-if (!isset($_SESSION["oauth"]))
-{
-	_wl('Create OAUTH instance');
-	$_SESSION['oauth'] = new OSM_Auth_OAuth($consumer_key, $consumer_secret,
-			array(
-				'requestTokenUrl' => $requestTokenUrl,
-				'accessTokenUrl' => $accessTokenUrl,
-				'authorizeUrl' => $authorizeUrl
-			)
-	);
-}
+	if (!isset($_SESSION["oauth"]))
+	{
+		_wl('Create OAUTH instance');
+		$_SESSION['oauth'] = new OSM_Auth_OAuth($consumer_key, $consumer_secret,
+				array(
+					'requestTokenUrl' => $requestTokenUrl,
+					'accessTokenUrl' => $accessTokenUrl,
+					'authorizeUrl' => $authorizeUrl
+				)
+		);
+	}
 
 // Auth phases
-if (isset($_REQUEST["oauth_token"]))
-{
-	_wl('Request access token');
-	//$credentials = $_SESSION['oauth']->requestAccessToken();
-	//$_SESSION['oauth']->setToken( $credentials["token"], $credentials["tokenSecret"] );
-	$_SESSION['oauth']->requestAccessToken();
-	$_SESSION["api"]->setCredentials($_SESSION['oauth']);
-}
-else if (!$_SESSION['oauth']->hasAccessToken())
-{
-	_wl('Request access authorization');
-	$req = $_SESSION['oauth']->requestAuthorizationUrl();
-	//$_SESSION['oauth']->setToken( $req["token"], $req["tokenSecret"] );
-	header("Location:" . $req["url"]);
+	if (isset($_REQUEST["oauth_token"]))
+	{
+		_wl('Request access token');
+		//$credentials = $_SESSION['oauth']->requestAccessToken();
+		//$_SESSION['oauth']->setToken( $credentials["token"], $credentials["tokenSecret"] );
+		$_SESSION['oauth']->requestAccessToken();
+		$_SESSION["api"]->setCredentials($_SESSION['oauth']);
+	}
+	else if (!$_SESSION['oauth']->hasAccessToken())
+	{
+		try
+		{
+			// try to get a access token
+			$_SESSION['oauth']->requestAccessToken();
+		}
+		catch (OSM_HttpException $ex)
+		{
+			_wl('Could not get access. http:' . $ex->getHttpCode());
+			// if it fails, 
+			if ($ex->getHttpCode() == '401')
+			{
+				_wl('Request access authorization');
+				$req = $_SESSION['oauth']->requestAuthorizationUrl();
+				//$_SESSION['oauth']->setToken( $req["token"], $req["tokenSecret"] );
+				header("Location:" . $req["url"]);
+			}
+		}
+	}
 }
 
 function _wl($s) {
@@ -89,6 +108,9 @@ function _wl($s) {
 		<ul>
 			<li>API: <?php echo (isset($_SESSION['api']) ? 'true' : 'false') ?></li>
 			<li>OAUTH: <?php echo (isset($_SESSION['oauth']) ? 'true' : 'false') ?></li>
+			<li>Access token: <?php echo ($_SESSION['oauth']->hasAccessToken() ? 'true' : 'false') ?></li>
 		</ul>
+
+		<a href="http://localhost/Cartographie/OSM/yapafo/examples/OAuthUsage.php?go=1">start<a/>
 	</body>
 </html>
