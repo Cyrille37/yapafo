@@ -12,6 +12,8 @@
  * 2. lancer tests/test_OSM_Auth_OAuth.php et suivre les instructions
  * 3. relancer tests/test_OSM_Auth_OAuth.php qui va réutiliser le token obtenu (stocké dans "*.token" )
  * 		en étape 2 pour accéder aux données de l'utilisateur.
+ * 
+ * Note: files "secrets.php" and "test_OSM_OAuth.php.token" are ignored by Git (see .gitignore)
  */
 
 $DEV = true;
@@ -23,25 +25,21 @@ _wl('test "' . basename(__FILE__) . '');
 
 require_once (__DIR__ . '/../lib/OSM/Api.php');
 
-//
-//
-//
+include_once (__DIR__ . '/secrets.php');
 
 if ($DEV)
 {
-	include_once (__DIR__ . '/../../secrets.php');
-	$oauth = new OSM_Auth_OAuth($AUTH_OAUTH_CONSUMER_KEY, $AUTH_OAUTH_CONSUMER_SECRET, array(
+	$apiUrl = 'http://api06.dev.openstreetmap.org/api/0.6';
+	$oauth = new OSM_Auth_OAuth($AUTH_OAUTH_CONSUMER_KEY_DEV, $AUTH_OAUTH_CONSUMER_SECRET_DEV, array(
 			'requestTokenUrl' => OSM_Auth_OAuth::REQUEST_TOKEN_URL_DEV,
 			'accessTokenUrl' => OSM_Auth_OAuth::ACCESS_TOKEN_URL_DEV,
 			'authorizeUrl' => OSM_Auth_OAuth::AUTHORIZE_TOKEN_URL_DEV
 		));
-	$apiUrl = 'http://api06.dev.openstreetmap.org/api/0.6';
 }
 else
 {
-	include_once (__DIR__ . '/../../secrets_prod.php');
-	$oauth = new OSM_Auth_OAuth($AUTH_OAUTH_CONSUMER_KEY, $AUTH_OAUTH_CONSUMER_SECRET);
 	$apiUrl = 'http://www.openstreetmap.org/api/0.6';
+	$oauth = new OSM_Auth_OAuth($AUTH_OAUTH_CONSUMER_KEY_PROD, $AUTH_OAUTH_CONSUMER_SECRET_PROD);
 }
 
 $tokenFilename = __DIR__ . '/' . basename(__FILE__) . '.token';
@@ -62,7 +60,7 @@ if (file_exists($tokenFilename))
 	echo 'User details: ' . print_r($result, true) . "\n";
 
 	// Ask a changeSet (PUT)
-	
+
 	$xmlStr = "<?xml version='1.0' encoding=\"UTF-8\"?>\n" .
 		'<osm version="0.6" generator="DEV OAUTH">'
 		. '<changeset id="0" open="false">'

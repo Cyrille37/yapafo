@@ -2,5 +2,5 @@
 # ignore tests generated files
 #
 
+secrets.php
 test_OSM_OAuth.php.token
-
