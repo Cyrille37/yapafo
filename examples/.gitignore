@@ -1,0 +1,6 @@
+###############################
+# ignore some files
+#
+
+# ignore some secrets data
+secrets.php

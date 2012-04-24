@@ -4,8 +4,13 @@
 
 en_vrac
 
+# Netbeans project stuff:
+
+nbproject
+
 # Eclipse project stuff:
 
 .settings
 .buildpath
 .project
+/nbproject/private/

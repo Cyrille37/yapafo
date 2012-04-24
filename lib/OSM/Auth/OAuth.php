@@ -7,21 +7,20 @@
 
 /**
  * Class OSM_OAuth implement OAuth (Open Authorization)
- * 
+ *
  * http://oauth.net/documentation/
  * http://tools.ietf.org/html/rfc5849
  * http://wiki.openstreetmap.org/wiki/OAuth
  */
 class OSM_Auth_OAuth implements OSM_Auth_IAuthProvider {
+
 	const REQUEST_TOKEN_URL = 'http://www.openstreetmap.org/oauth/request_token';
 	const ACCESS_TOKEN_URL = 'http://www.openstreetmap.org/oauth/access_token';
 	const AUTHORIZE_TOKEN_URL = 'http://www.openstreetmap.org/oauth/authorize';
-
 	const REQUEST_TOKEN_URL_DEV = 'http://api06.dev.openstreetmap.org/oauth/request_token';
 	const ACCESS_TOKEN_URL_DEV = 'http://api06.dev.openstreetmap.org/oauth/access_token';
 	const AUTHORIZE_TOKEN_URL_DEV = 'http://api06.dev.openstreetmap.org/oauth/authorize';
-
-	const PROTOCOL_VERSION = '1.0' ;
+	const PROTOCOL_VERSION = '1.0';
 	const SIGNATURE_METHOD = 'HMAC-SHA1';
 
 	protected $_options = array(
@@ -31,11 +30,13 @@ class OSM_Auth_OAuth implements OSM_Auth_IAuthProvider {
 	);
 	protected $_consKey;
 	protected $_consSec;
-	protected $_token;
-	protected $_tokenSecret;
+	protected $_requestToken;
+	protected $_requestTokenSecret;
+	protected $_accessToken;
+	protected $_accessTokenSecret;
 	protected $_timestamp;
 
-	public function __construct($consumerKey, $consumerSecret, $options=array()) {
+	public function __construct($consumerKey, $consumerSecret, $options = array()) {
 
 		if (empty($consumerKey))
 			throw new OSM_Exception('Credential "consumerKey" must be set');
@@ -54,59 +55,87 @@ class OSM_Auth_OAuth implements OSM_Auth_IAuthProvider {
 		$this->_consSec = $consumerSecret;
 	}
 
-	public function setToken($token, $tokenSecret) {
-		$this->_token = $token;
-		$this->_tokenSecret = $tokenSecret;
+	public function setRequestToken($token, $tokenSecret) {
+
+		$this->_requestToken = $token;
+		$this->_requestTokenSecret = $tokenSecret;
+	}
+
+	public function getRequestToken() {
+
+		return array(
+			'token' => $this->_requestToken,
+			'tokenSecret' => $this->_requestTokenSecret
+		);
+	}
+
+	public function setAccessToken($token, $tokenSecret) {
+
+		$this->_accessToken = $token;
+		$this->_accessTokenSecret = $tokenSecret;
+	}
+
+	public function getAccessToken() {
+
+		return array(
+			'token' => $this->_accessToken,
+			'tokenSecret' => $this->_accessTokenSecret
+		);
+	}
+
+	public function hasAccessToken() {
+
+		if (!empty($this->_accessToken) && !empty($this->_accessTokenSecret))
+			return true;
+		return false;
 	}
 
 	public function requestAuthorizationUrl() {
 
-		$result = $this->http($this->_options['requestTokenUrl']);
+		$result = $this->_http($this->_options['requestTokenUrl']);
 
 		parse_str($result, $tokenParts);
 		//echo 'requestAuthorizationUrl: '.print_r( $tokenParts ,true)."\n";
 
-		$this->_token = $tokenParts['oauth_token'];
-		$this->_tokenSecret = $tokenParts['oauth_token_secret'];
+		$this->_requestToken = $tokenParts['oauth_token'];
+		$this->_requestTokenSecret = $tokenParts['oauth_token_secret'];
 
 		return array(
-			'url' => $this->_options['authorizeUrl'] . '?oauth_token=' . $this->_token,
-			'token' => $this->_token,
-			'tokenSecret' => $this->_tokenSecret
+			'url' => $this->_options['authorizeUrl'] . '?oauth_token=' . $this->_requestToken,
+			'token' => $this->_requestToken,
+			'tokenSecret' => $this->_requestTokenSecret
 		);
 	}
 
 	public function requestAccessToken() {
 
-		$result = $this->http($this->_options['accessTokenUrl']);
+		$result = $this->_http($this->_options['accessTokenUrl']);
 
 		parse_str($result, $tokenParts);
 		//echo 'requestAccessToken: '.print_r( $tokenParts ,true)."\n";
 
-		$this->_token = $tokenParts['oauth_token'];
-		$this->_tokenSecret = $tokenParts['oauth_token_secret'];
+		$this->_accessToken = $tokenParts['oauth_token'];
+		$this->_accessTokenSecret = $tokenParts['oauth_token_secret'];
 
 		return array(
-			'token' => $this->_token,
-			'tokenSecret' => $this->_tokenSecret
+			'token' => $this->_accessToken,
+			'tokenSecret' => $this->_accessTokenSecret
 		);
 	}
 
-	public function http($url, $method ='GET', $params=null) {
+	protected function _http($url, $method = 'GET', $params = null) {
 
 		$headers = array(
 			//'Content-type: application/x-www-form-urlencoded'
 			'Content-type: multipart/form-data'
-			
 		);
-		$this->addHeaders($headers, $url, $method);
+		$this->addHeaders($headers, $url, $method, false);
 
 		if ($params == null)
 		{
-			$opts = array('http' =>
-				array(
-					'method' => $method,
-					'user_agent' => 'Yapafo OSM_OAuth http://yapafo.net',
+			$opts = array(
+				'http' => array(
+					'method' => $method, 'user_agent' => 'Yapafo OSM_OAuth http://yapafo.net',
 					'header' => /* implode("\r\n", $headers) */$headers,
 				)
 			);
@@ -116,22 +145,20 @@ class OSM_Auth_OAuth implements OSM_Auth_IAuthProvider {
 			//$postdata = http_build_query(array('data' => $params));
 			$postdata = $params;
 
-			$opts = array('http' =>
-				array(
-					'method' => $method,
-					'user_agent' => 'Yapafo OSM_OAuth http://yapafo.net',
+			$opts = array(
+				'http' => array(
+					'method' => $method, 'user_agent' => 'Yapafo OSM_OAuth http://yapafo.net',
 					//'header' => 'Content-type: application/x-www-form-urlencoded',
-					'header' => /* implode("\r\n", $headers) */$headers,
-					'content' => $postdata
+					'header' => /* implode("\r\n", $headers) */$headers, 'content' => $postdata
 				)
 			);
 		}
 
 		$context = stream_context_create($opts);
 
-//echo 'url: '.$url."\n";
-//echo 'headers: '.print_r( $headers,true	)."\n";
-//echo 'opts: '.print_r( $opts ,true)."\n";
+		//echo 'url: '.$url."\n";
+		//echo 'headers: '.print_r( $headers,true	)."\n";
+		//echo 'opts: '.print_r( $opts ,true)."\n";
 
 		$result = @file_get_contents($url, false, $context);
 		if ($result === false)
@@ -146,10 +173,21 @@ class OSM_Auth_OAuth implements OSM_Auth_IAuthProvider {
 
 		return $result;
 	}
-	
-	public function addHeaders(&$headers, $url, $method='GET') {
 
-		$oauth = $this->_prepareParameters($method, $url);
+	public function addHeaders(&$headers, $url, $method = 'GET', $forAccess = true) {
+
+		if ($forAccess)
+		{
+			$token = $this->_accessToken;
+			$secret = $this->_accessTokenSecret;
+		}
+		else
+		{
+			$token = $this->_requestToken;
+			$secret = $this->_requestTokenSecret;
+		}
+
+		$oauth = $this->_prepareParameters($token, $secret, $method, $url);
 
 		$oauthStr = '';
 		foreach ($oauth as $name => $value)
@@ -163,17 +201,17 @@ class OSM_Auth_OAuth implements OSM_Auth_IAuthProvider {
 		$headers[] = 'Authorization: OAuth realm="' . $urlParts['path'] . '",' . $oauthStr;
 	}
 
-	protected function _prepareParameters($method = null, $url = null) {
+	protected function _prepareParameters($token, $secret, $method = null, $url = null) {
 
 		if (empty($method) || empty($url))
 			return false;
 
 		$oauth['oauth_consumer_key'] = $this->_consKey;
-		$oauth['oauth_token'] = $this->_token;
+		$oauth['oauth_token'] = $token;
 		$oauth['oauth_nonce'] = md5(uniqid(rand(), true));
 		$oauth['oauth_timestamp'] = !isset($this->_timestamp) ? time() : $this->_timestamp;
 		$oauth['oauth_signature_method'] = self::SIGNATURE_METHOD;
-		$oauth['oauth_version'] = self::PROTOCOL_VERSION ;
+		$oauth['oauth_version'] = self::PROTOCOL_VERSION;
 
 		// encoding
 		array_walk($oauth, array($this, '_encode'));
@@ -183,11 +221,11 @@ class OSM_Auth_OAuth implements OSM_Auth_IAuthProvider {
 		ksort($oauth);
 
 		// signing
-		$oauth['oauth_signature'] = $this->_encode($this->_generateSignature($method, $url, $oauth));
+		$oauth['oauth_signature'] = $this->_encode($this->_generateSignature($secret, $method, $url, $oauth));
 		return $oauth;
 	}
 
-	protected function _generateSignature($method = null, $url = null, $params = null) {
+	protected function _generateSignature($secret, $method = null, $url = null, $params = null) {
 
 		if (empty($method) || empty($url))
 			return false;
@@ -204,26 +242,28 @@ class OSM_Auth_OAuth implements OSM_Auth_IAuthProvider {
 		$normalizedUrl = $this->_encode($this->_normalizeUrl($url));
 
 		$signatureBaseString = $method . '&' . $normalizedUrl . '&' . $concatenatedParams;
-		return $this->signString($signatureBaseString);
+		return $this->_signString($signatureBaseString, $secret);
 	}
 
 	/**
 	 * Sign the string with the Consumer Secret and the Token Secret.
-	 * 
+	 *
 	 * @param type $string The string to sign
 	 * @return string The signature Base64 encoded
 	 */
-	protected function signString($string) {
+	protected function _signString($string, $secret) {
 
-		$key = $this->_encode($this->_consSec) . '&' . $this->_encode($this->_tokenSecret);
+		$key = $this->_encode($this->_consSec) . '&' . $this->_encode($secret);
 		return base64_encode(hash_hmac('sha1', $string, $key, true));
 	}
 
 	protected function _encode($string) {
+
 		return rawurlencode(utf8_encode($string));
 	}
 
 	protected function _normalizeUrl($url = null) {
+
 		$urlParts = parse_url($url);
 		$scheme = strtolower($urlParts['scheme']);
 		$host = strtolower($urlParts['host']);
