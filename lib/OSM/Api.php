@@ -20,14 +20,13 @@ spl_autoload_register(array('OSM_Api', 'autoload'));
  * @author cyrille
  */
 class OSM_Api {
+
 	const VERSION = '0.2';
 	const USER_AGENT = 'http://yapafo.net';
-
 	const URL_DEV_UK = 'http://api06.dev.openstreetmap.org/api/0.6';
 	//deprecated: const OSMAPI_URL_PROD_PROXY_LETTUFE = 'http://beta.letuffe.org/api/0.6';
 	const URL_PROD_FR = 'http://api.openstreetmap.fr/api/0.6';
 	const URL_PROD_UK = 'http://api.openstreetmap.org/api/0.6';
-
 	const OBJTYPE_NODE = 'node';
 	const OBJTYPE_WAY = 'way';
 	const OBJTYPE_RELATION = 'relation';
@@ -41,19 +40,19 @@ class OSM_Api {
 	const OAPI_URL_DE = 'http://www.overpass-api.de/api/interpreter';
 
 	protected $_options = array(
-			// simulation is set by default to avoid (protected against) unwanted write !
-			'simulation' => true,
-			'url' => self::URL_PROD_FR,
-			'url4Write' => self::URL_PROD_UK,
-			// to store every network communications (load/save) in a file.
-			'outputFolder' => null,
-			'appName' => '', // name for the application using the API
-			'log' => array('level' => OSM_ZLog::LEVEL_ERROR),
-			'oapi_url' => self::OAPI_URL_FR
+		// simulation is set by default to avoid (protected against) unwanted write !
+		'simulation' => true,
+		'url' => self::URL_PROD_FR,
+		'url4Write' => self::URL_PROD_UK,
+		// to store every network communications (load/save) in a file.
+		'outputFolder' => null,
+		'appName' => '', // name for the application using the API
+		'log' => array('level' => OSM_ZLog::LEVEL_ERROR),
+		'oapi_url' => self::OAPI_URL_FR
 	);
 	protected $_stats = array(
-			'requestCount' => 0,
-			'loadedBytes' => 0
+		'requestCount' => 0,
+		'loadedBytes' => 0
 	);
 	protected $_url;
 	protected $_url4Write;
@@ -99,7 +98,7 @@ class OSM_Api {
 	/**
 	 * @param bool $devMode Opération sur BdD de dev ou de prod. Par défaut sur l'API de DEV pour éviter les erreurs.
 	 */
-	public function __construct(array $options=array()) {
+	public function __construct(array $options = array()) {
 
 		// Check that all options exist then override defaults
 		foreach ($options as $k => $v)
@@ -174,7 +173,6 @@ class OSM_Api {
 	}
 
 	/**
-	 *
 	 * @param OSM_Auth_IAuthProvider $authProvider
 	 */
 	public function setCredentials(OSM_Auth_IAuthProvider $authProvider) {
@@ -182,7 +180,15 @@ class OSM_Api {
 		$this->_authProvider = $authProvider;
 	}
 
-	protected function _httpApi($relativeUrl, $data=null, $method='GET') {
+	/**
+	 * @return OSM_Auth_IAuthProvider 
+	 */
+	public function getCredentials() {
+
+		return $this->_authProvider;
+	}
+
+	protected function _httpApi($relativeUrl, $data = null, $method = 'GET') {
 
 		$url = null;
 		switch ($method)
@@ -202,11 +208,11 @@ class OSM_Api {
 		OSM_ZLog::notice(__METHOD__, $method, ' url: ', $url);
 
 		$headers = array(
-				// Failed with PUT :
-				//'Content-type: application/x-www-form-urlencoded'
-				// Works with PUT :
-				//'Content-type: multipart/form-data'
-				'Content-type: text/xml'
+			// Failed with PUT :
+			//'Content-type: application/x-www-form-urlencoded'
+			// Works with PUT :
+			//'Content-type: multipart/form-data'
+			'Content-type: text/xml'
 		);
 
 		if ($this->_authProvider != null)
@@ -217,11 +223,11 @@ class OSM_Api {
 		if ($data == null)
 		{
 			$opts = array('http' =>
-					array(
-							'method' => $method,
-							'user_agent' => $this->_getUserAgent(),
-							'header' => /* implode("\r\n", $headers) */$headers,
-					)
+				array(
+					'method' => $method,
+					'user_agent' => $this->_getUserAgent(),
+					'header' => /* implode("\r\n", $headers) */$headers,
+				)
 			);
 		}
 		else
@@ -230,12 +236,12 @@ class OSM_Api {
 			$postdata = $data;
 
 			$opts = array('http' =>
-					array(
-							'method' => $method,
-							'user_agent' => $this->_getUserAgent(),
-							'header' => /* implode("\r\n", $headers) */$headers,
-							'content' => $postdata
-					)
+				array(
+					'method' => $method,
+					'user_agent' => $this->_getUserAgent(),
+					'header' => /* implode("\r\n", $headers) */$headers,
+					'content' => $postdata
+				)
 			);
 		}
 
@@ -249,7 +255,7 @@ class OSM_Api {
 		}
 
 		$result = @file_get_contents($url, false, $context);
-		if ($result === false || $result==null)
+		if ($result === false || $result == null)
 		{
 			$e = error_get_last();
 			if (isset($http_response_header))
@@ -399,7 +405,7 @@ class OSM_Api {
 
 		if ($xmlObj == null)
 		{
-			_err('Failed to parse xml: [' . print_r($xmlStr, true).']');
+			_err('Failed to parse xml: [' . print_r($xmlStr, true) . ']');
 			throw new OSM_Exception('Failed to parse xml');
 		}
 
@@ -518,7 +524,7 @@ class OSM_Api {
 	public function &getObjectsByTags(array $searchTags) {
 
 		$results = array_merge(
-				$this->getRelationsByTags($searchTags), $this->getWaysByTags($searchTags), $this->getNodesByTags($searchTags)
+			$this->getRelationsByTags($searchTags), $this->getWaysByTags($searchTags), $this->getNodesByTags($searchTags)
 		);
 		return $results;
 	}
@@ -619,7 +625,7 @@ class OSM_Api {
 	 * @param bool $full
 	 * @return OSM_Objects_Object the reverted object
 	 */
-	public function reloadObject($type, $id, $full=false) {
+	public function reloadObject($type, $id, $full = false) {
 
 		$this->removeObject($type, $id);
 		return $this->getObject($type, $id, $full);
@@ -634,7 +640,7 @@ class OSM_Api {
 	 * @param string $xmlQuery
 	 * @param string $withMeta To get metadata which are needed for saving back data (Version, User...).
 	 */
-	public function queryOApi($xmlQuery, $withMeta=true) {
+	public function queryOApi($xmlQuery, $withMeta = true) {
 
 		if ($withMeta)
 		{
@@ -647,12 +653,12 @@ class OSM_Api {
 		$postdata = http_build_query(array('data' => $xmlQuery));
 
 		$opts = array('http' =>
-				array(
-						'method' => 'POST',
-						'user_agent' => $this->_getUserAgent(),
-						'header' => 'Content-type: application/x-www-form-urlencoded',
-						'content' => $postdata
-				)
+			array(
+				'method' => 'POST',
+				'user_agent' => $this->_getUserAgent(),
+				'header' => 'Content-type: application/x-www-form-urlencoded',
+				'content' => $postdata
+			)
 		);
 		$context = stream_context_create($opts);
 
@@ -705,7 +711,7 @@ class OSM_Api {
 	 * @param array $tags
 	 * @return OSM_Objects_Node
 	 */
-	public function addNewNode($lat=0, $lon=0, array $tags=null) {
+	public function addNewNode($lat = 0, $lon = 0, array $tags = null) {
 
 		$node = new OSM_Objects_Node($this->_newIdCounter--, $lat, $lon, $tags);
 		$this->_nodes[$node->getId()] = $node;
@@ -719,7 +725,7 @@ class OSM_Api {
 	 * @param array $tags
 	 * @return OSM_Objects_Way
 	 */
-	public function addNewWay(array $nodes=null, array $tags=null) {
+	public function addNewWay(array $nodes = null, array $tags = null) {
 
 		$way = new OSM_Objects_Way($this->_newIdCounter--);
 		if (is_array($nodes))
@@ -736,7 +742,7 @@ class OSM_Api {
 	 * @param array $tags
 	 * @return OSM_Objects_Relation
 	 */
-	public function addNewRelation(array $members=null, array $tags=null) {
+	public function addNewRelation(array $members = null, array $tags = null) {
 
 		$relation = new OSM_Objects_Relation($this->_newIdCounter--);
 		if (is_array($members))
@@ -771,16 +777,15 @@ class OSM_Api {
 	 * @param bool $onlyDirtyObjects To get only modified objects (added, modified or deleted)
 	 * @return string Xml document as a string.
 	 */
-	public function getXmlDocument( $onlyDirtyObjects = false )
-	{
-		$xml = '<osm version="0.6" upload="true" generator="'.$this->_getUserAgent().'">' ."\n";
+	public function getXmlDocument($onlyDirtyObjects = false) {
+		$xml = '<osm version="0.6" upload="true" generator="' . $this->_getUserAgent() . '">' . "\n";
 		// union of objects
 		$objects = $this->_relations + $this->_ways + $this->_nodes;
 		foreach ($objects as $obj)
 		{
-			if( $onlyDirtyObjects )
+			if ($onlyDirtyObjects)
 			{
-				if($obj->isDirty())
+				if ($obj->isDirty())
 				{
 					$xml .= $obj->asXmlStr() . "\n";
 				}
@@ -790,8 +795,8 @@ class OSM_Api {
 				$xml .= $obj->asXmlStr() . "\n";
 			}
 		}
-		$xml .= '</osm>' ."\n";
-		return $xml ;
+		$xml .= '</osm>' . "\n";
+		return $xml;
 	}
 
 	/**
@@ -883,7 +888,7 @@ class OSM_Api {
 
 		if ($this->_options['simulation'])
 		{
-
+			
 		}
 		else
 		{
@@ -1084,9 +1089,9 @@ class OSM_Api {
 		// file_put_contents($this->_getOutputFilename('in', $relativeUrl, $method, $data))
 
 		return $this->_options['outputFolder'] .
-		DIRECTORY_SEPARATOR . __CLASS__
-		. '_' . sprintf('%04d', ++$this->_outputWriteCount) . '-' . time()
-		. '_' . $inOrOut . '-' . $method . '-' . urlencode($relativeUrl) . '.txt';
+			DIRECTORY_SEPARATOR . __CLASS__
+			. '_' . sprintf('%04d', ++$this->_outputWriteCount) . '-' . time()
+			. '_' . $inOrOut . '-' . $method . '-' . urlencode($relativeUrl) . '.txt';
 	}
 
 	/**
@@ -1148,7 +1153,7 @@ class OSM_Api {
 		}
 
 		$result = $this->_httpApi(
-				'/user/preferences/' . rawurlencode(utf8_encode($key)), rawurlencode(utf8_encode($value)), 'PUT');
+			'/user/preferences/' . rawurlencode(utf8_encode($key)), rawurlencode(utf8_encode($value)), 'PUT');
 
 		OSM_ZLog::debug(__METHOD__, $result);
 	}
