@@ -2,6 +2,7 @@
 /**
  * An OAuth example for Yapafo OSM_OAuth.
  */
+
 $OSM_Api_filename = __DIR__ . '/../lib/OSM/Api.php';
 if (!file_exists($OSM_Api_filename))
 {
@@ -24,42 +25,53 @@ $applicationName = str_replace('.php', '', basename(__FILE__));
 
 _wl('Running ' . $applicationName);
 
-if (isset($_REQUEST['go']))
-{
-
 // osm api handler is instantiated if necessary
-	if (!isset($_SESSION["api"]))
-	{
-		_wl('Create API instance');
-		$api = new OSM_Api(array(
-				'appName' => $applicationName, 'url' => $api_url
-			));
-		$_SESSION['api'] = $api;
-	}
+if (!isset($_SESSION["api"]))
+{
+	_wl('Create API instance');
+	$api = new OSM_Api(array(
+			'appName' => $applicationName, 'url' => $api_url
+		));
+	$_SESSION['api'] = $api;
+}
+
+//OSM_ZLog::configure(array('handler'=>'error_log','level' => OSM_ZLog::LEVEL_DEBUG));
 
 // Have you already got an OAuth object ?
-	if (!isset($_SESSION["oauth"]))
-	{
-		_wl('Create OAUTH instance');
-		$_SESSION['oauth'] = new OSM_Auth_OAuth($consumer_key, $consumer_secret,
-				array(
-					'requestTokenUrl' => $requestTokenUrl,
-					'accessTokenUrl' => $accessTokenUrl,
-					'authorizeUrl' => $authorizeUrl
-				)
-		);
-	}
+if (!isset($_SESSION["oauth"]))
+{
+	_wl('Create OAUTH instance');
+	$_SESSION['oauth'] = new OSM_Auth_OAuth($consumer_key, $consumer_secret,
+			array(
+				'requestTokenUrl' => $requestTokenUrl,
+				'accessTokenUrl' => $accessTokenUrl,
+				'authorizeUrl' => $authorizeUrl
+			)
+	);
+}
 
-// Auth phases
-	if (isset($_REQUEST["oauth_token"]))
+// If a callback url has been set for consumer application
+if (isset($_REQUEST["oauth_token"]))
+{
+	_wl('User coming back via callback url.');
+	//$credentials = $_SESSION['oauth']->requestAccessToken();
+	//$_SESSION['oauth']->setToken( $credentials["token"], $credentials["tokenSecret"] );
+
+	$creds = $_SESSION['oauth']->getRequestToken();
+	if ($creds['token'] == $_REQUEST["oauth_token"])
 	{
-		_wl('Request access token');
-		//$credentials = $_SESSION['oauth']->requestAccessToken();
-		//$_SESSION['oauth']->setToken( $credentials["token"], $credentials["tokenSecret"] );
 		$_SESSION['oauth']->requestAccessToken();
 		$_SESSION["api"]->setCredentials($_SESSION['oauth']);
 	}
-	else if (!$_SESSION['oauth']->hasAccessToken())
+	else
+	{
+		echo '<p>ERROR, oauth token does not match !</p>'."\n";
+	}
+}
+
+if (isset($_REQUEST['go']))
+{
+	if (!$_SESSION['oauth']->hasAccessToken())
 	{
 		try
 		{
@@ -76,6 +88,7 @@ if (isset($_REQUEST['go']))
 				$req = $_SESSION['oauth']->requestAuthorizationUrl();
 				//$_SESSION['oauth']->setToken( $req["token"], $req["tokenSecret"] );
 				header("Location:" . $req["url"]);
+				exit();
 			}
 		}
 	}
@@ -111,6 +124,37 @@ function _wl($s) {
 			<li>Access token: <?php echo ($_SESSION['oauth']->hasAccessToken() ? 'true' : 'false') ?></li>
 		</ul>
 
-		<a href="http://localhost/Cartographie/OSM/yapafo/examples/OAuthUsage.php?go=1">start<a/>
+		<?php
+		if (isset($_SESSION['oauth']) && $_SESSION['oauth']->hasAccessToken())
+		{
+			?>
+			<p>
+				The application is autorized.<br/>
+				Here are user's details:
+			</p>
+				<?php
+				$ud = $_SESSION['api']->getUserDetails();
+				?>
+		<ul>
+			<li>Username: <?php echo $ud->getName()?></li>
+			<li>Description: <?php echo $ud->getDescription()?></li>
+			<li>Terms: <?php $terms = $ud->getTerms(); echo ($terms['pd']===true?'true':'false').'/'.($terms['agreed']===true?'true':'false'); ?></li>
+		</ul>
+			<pre>
+				<?php
+				$ud = $ud->getDetails();
+				echo print_r($ud, true);
+				?>
+			</pre>
+			<?php
+		}
+		else
+		{
+			?>
+			<p>
+				Click <a href="http://localhost/Cartographie/OSM/yapafo/examples/OAuthUsage.php?go=1">start<a/> to launch the autorization processus.
+			</p>
+<?php } ?>
+
 	</body>
 </html>

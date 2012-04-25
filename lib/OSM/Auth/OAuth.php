@@ -55,26 +55,16 @@ class OSM_Auth_OAuth implements OSM_Auth_IAuthProvider {
 		$this->_consSec = $consumerSecret;
 	}
 
-	public function setRequestToken($token, $tokenSecret) {
-
-		$this->_requestToken = $token;
-		$this->_requestTokenSecret = $tokenSecret;
-	}
-
-	public function getRequestToken() {
-
-		return array(
-			'token' => $this->_requestToken,
-			'tokenSecret' => $this->_requestTokenSecret
-		);
-	}
-
 	public function setAccessToken($token, $tokenSecret) {
 
 		$this->_accessToken = $token;
 		$this->_accessTokenSecret = $tokenSecret;
 	}
 
+	/**
+	 * Return access Token and it's secret.
+	 * @return array array('token' => string, 'tokenSecret' => string) 
+	 */
 	public function getAccessToken() {
 
 		return array(
@@ -83,6 +73,14 @@ class OSM_Auth_OAuth implements OSM_Auth_IAuthProvider {
 		);
 	}
 
+	public function deleteAccessToken()
+	{
+		$this->setAccessToken(null, null);
+	}
+
+	/**
+	 * @return boolean Has got an access token which permit to act as a user.
+	 */
 	public function hasAccessToken() {
 
 		if (!empty($this->_accessToken) && !empty($this->_accessTokenSecret))
@@ -94,6 +92,7 @@ class OSM_Auth_OAuth implements OSM_Auth_IAuthProvider {
 
 		$result = $this->_http($this->_options['requestTokenUrl']);
 
+		$tokenParts = null ;
 		parse_str($result, $tokenParts);
 		//echo 'requestAuthorizationUrl: '.print_r( $tokenParts ,true)."\n";
 
@@ -111,6 +110,7 @@ class OSM_Auth_OAuth implements OSM_Auth_IAuthProvider {
 
 		$result = $this->_http($this->_options['accessTokenUrl']);
 
+		$tokenParts = null ;
 		parse_str($result, $tokenParts);
 		//echo 'requestAccessToken: '.print_r( $tokenParts ,true)."\n";
 
@@ -174,6 +174,13 @@ class OSM_Auth_OAuth implements OSM_Auth_IAuthProvider {
 		return $result;
 	}
 
+	/**
+	 * @see OSM_Auth_IAuthProvider::addHeaders(&$headers, $url, $method)
+	 * @param array $headers
+	 * @param type $url
+	 * @param type $method
+	 * @param type $forAccess 
+	 */
 	public function addHeaders(&$headers, $url, $method = 'GET', $forAccess = true) {
 
 		if ($forAccess)
