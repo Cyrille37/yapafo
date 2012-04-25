@@ -153,7 +153,9 @@ function _wl($s) {
 				catch(OSM_HttpException $ex)
 				{
 					?>
-					<p>We've got Access Token but access failed: <?php $ex->getMessage(); ?>
+					<p>
+						We've got Access Token but access failed: <span style="color: red;"><?php echo $ex->getMessage(); ?></span>
+					</p>
 					<?php
 				}
 		}
