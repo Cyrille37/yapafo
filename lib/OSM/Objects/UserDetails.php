@@ -22,6 +22,7 @@ class OSM_Objects_UserDetails {
 	
 	public static function createFromXmlString( $xmlStr )
 	{
+		OSM_ZLog::debug(__METHOD__, 'User details: ', $xmlStr);
 
 		$x = new SimpleXMLElement( $xmlStr );
 
@@ -42,8 +43,8 @@ class OSM_Objects_UserDetails {
 		$userDetails->_details['description'] = $o==null ? '' : (string)$o[0] ;
 
 		$o = $u->xpath('contributor-terms');
-		$userDetails->_details['terms']['pd'] = $o==null ? '' : (string)$o[0]['pd'] ;
-		$userDetails->_details['terms']['agreed'] = $o==null ? '' : (string)$o[0]['agreed'] ;
+		$userDetails->_details['terms']['pd'] = $o==null ? '' : (bool)$o[0]['pd'] ;
+		$userDetails->_details['terms']['agreed'] = $o==null ? '' : (bool)$o[0]['agreed'] ;
 
 		$o = $u->xpath('home');
 		$userDetails->_details['home']['lat'] = $o==null ? '' : (string)$o[0]['lat'] ;
@@ -80,10 +81,16 @@ class OSM_Objects_UserDetails {
 	{
 		return $this->_details['description'] ;
 	}
+	/**
+	 * @return array array('pd'=>bool, 'agreed'=>bool) 
+	 */
 	public function getTerms()
 	{
-		return $this->_details['contributor-terms'] ;
+		return $this->_details['terms'] ;
 	}
+	/**
+	 * @return array array('lat'=>number, 'lon'=>number)
+	 */
 	public function getHome()
 	{
 		return $this->_details['home'] ;
