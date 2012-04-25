@@ -2,7 +2,6 @@
 /**
  * An OAuth example for Yapafo OSM_OAuth.
  */
-
 $OSM_Api_filename = __DIR__ . '/../lib/OSM/Api.php';
 if (!file_exists($OSM_Api_filename))
 {
@@ -36,7 +35,6 @@ if (!isset($_SESSION['api']))
 }
 
 //OSM_ZLog::configure(array('handler'=>'error_log','level' => OSM_ZLog::LEVEL_DEBUG));
-
 // Have you already got an OAuth object ?
 if (!isset($_SESSION['oauth']))
 {
@@ -49,6 +47,11 @@ if (!isset($_SESSION['oauth']))
 			)
 	);
 	$_SESSION['api']->setCredentials($_SESSION['oauth']);
+}
+
+if (isset($_REQUEST['deleteAccess']))
+{
+	$_SESSION['oauth']->deleteAccessAuthorization();
 }
 
 // If a callback url has been set for consumer application
@@ -65,7 +68,7 @@ if (isset($_REQUEST["oauth_token"]))
 	}
 	else
 	{
-		echo '<p>ERROR, oauth token does not match !</p>'."\n";
+		echo '<p>ERROR, oauth token does not match !</p>' . "\n";
 	}
 }
 
@@ -132,32 +135,40 @@ function _wl($s) {
 				The application is autorized.<br/>
 				Here are user's details:
 			</p>
-				<?php
-				
-				try{
+			<?php
+			try
+			{
 				$ud = $_SESSION['api']->getUserDetails();
 				?>
-		<ul>
-			<li>Username: <?php echo $ud->getName()?></li>
-			<li>Description: <?php echo $ud->getDescription()?></li>
-			<li>Terms: <?php $terms = $ud->getTerms(); echo ($terms['pd']===true?'true':'false').'/'.($terms['agreed']===true?'true':'false'); ?></li>
-		</ul>
-			<pre>
-				<?php
-				$ud = $ud->getDetails();
-				echo print_r($ud, true);
-				?>
-			</pre>
-			<?php
-				}
-				catch(OSM_HttpException $ex)
-				{
-					?>
-					<p>
-						We've got Access Token but access failed: <span style="color: red;"><?php echo $ex->getMessage(); ?></span>
-					</p>
+				<ul>
+					<li>Username: <?php echo $ud->getName() ?></li>
+					<li>Description: <?php echo $ud->getDescription() ?></li>
+					<li>Terms: <?php $terms = $ud->getTerms();
+		echo ($terms['pd'] === true ? 'true' : 'false') . '/' . ($terms['agreed'] === true ? 'true' : 'false');
+				?></li>
+				</ul>
+				<pre>
 					<?php
-				}
+					$ud = $ud->getDetails();
+					echo print_r($ud, true);
+					?>
+				</pre>
+				<?php
+			}
+			catch (OSM_HttpException $ex)
+			{
+				?>
+				<p>
+					We've got Access Token but access failed: <span style="color: red;"><?php echo $ex->getMessage(); ?></span>
+				</p>
+				<?php
+			}
+			?>
+			<p>
+				Click <a href="http://localhost/Cartographie/OSM/yapafo/examples/OAuthWebUsage.php?deleteAccess=1">delete Access<a/> to delete access token (forgot user authorization).
+			</p>
+
+			<?php
 		}
 		else
 		{
@@ -165,7 +176,9 @@ function _wl($s) {
 			<p>
 				Click <a href="http://localhost/Cartographie/OSM/yapafo/examples/OAuthWebUsage.php?go=1">start<a/> to launch the autorization processus.
 			</p>
-<?php } ?>
+			<?php
+		}
+		?>
 
 	</body>
 </html>

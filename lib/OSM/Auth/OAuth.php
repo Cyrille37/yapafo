@@ -73,9 +73,12 @@ class OSM_Auth_OAuth implements OSM_Auth_IAuthProvider {
 		);
 	}
 
-	public function deleteAccessToken()
+	public function deleteAccessAuthorization()
 	{
-		$this->setAccessToken(null, null);
+		$this->_accessToken = null ;
+		$this->_accessTokenSecret = null ;
+		$this->_requestToken = null ;
+		$this->_requestTokenSecret = null ;
 	}
 
 	/**
