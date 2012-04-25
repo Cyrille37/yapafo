@@ -31,40 +31,39 @@ if (!isset($_SESSION['api']))
 	$api = new OSM_Api(array(
 			'appName' => $applicationName, 'url' => $api_url
 		));
-	$_SESSION['api'] = $api;
-}
-
-//OSM_ZLog::configure(array('handler'=>'error_log','level' => OSM_ZLog::LEVEL_DEBUG));
-// Have you already got an OAuth object ?
-if (!isset($_SESSION['oauth']))
-{
-	_wl('Create OAUTH instance');
-	$_SESSION['oauth'] = new OSM_Auth_OAuth($consumer_key, $consumer_secret,
+	$api->setCredentials(
+		new OSM_Auth_OAuth($consumer_key, $consumer_secret,
 			array(
 				'requestTokenUrl' => $requestTokenUrl,
 				'accessTokenUrl' => $accessTokenUrl,
 				'authorizeUrl' => $authorizeUrl
 			)
+		)
 	);
-	$_SESSION['api']->setCredentials($_SESSION['oauth']);
+	$_SESSION['api'] = $api;
+}
+else
+{
+	$api = $_SESSION['api'] ;
+	$oauth = $api->getCredentials();
 }
 
 if (isset($_REQUEST['deleteAccess']))
 {
-	$_SESSION['oauth']->deleteAccessAuthorization();
+	$oauth->deleteAccessAuthorization();
 }
 
 // If a callback url has been set for consumer application
 if (isset($_REQUEST["oauth_token"]))
 {
 	_wl('User coming back via callback url.');
-	//$credentials = $_SESSION['oauth']->requestAccessToken();
-	//$_SESSION['oauth']->setToken( $credentials["token"], $credentials["tokenSecret"] );
+	//$credentials = $oauth->requestAccessToken();
+	//$oauth->setToken( $credentials["token"], $credentials["tokenSecret"] );
 
-	$creds = $_SESSION['oauth']->getRequestToken();
+	$creds = $oauth->getRequestToken();
 	if ($creds['token'] == $_REQUEST["oauth_token"])
 	{
-		$_SESSION['oauth']->requestAccessToken();
+		$oauth->requestAccessToken();
 	}
 	else
 	{
@@ -74,12 +73,12 @@ if (isset($_REQUEST["oauth_token"]))
 
 if (isset($_REQUEST['go']))
 {
-	if (!$_SESSION['oauth']->hasAccessToken())
+	if (!$oauth->hasAccessToken())
 	{
 		try
 		{
 			// try to get a access token
-			$_SESSION['oauth']->requestAccessToken();
+			$oauth->requestAccessToken();
 		}
 		catch (OSM_HttpException $ex)
 		{
@@ -88,8 +87,8 @@ if (isset($_REQUEST['go']))
 			if ($ex->getHttpCode() == '401')
 			{
 				_wl('Request access authorization');
-				$req = $_SESSION['oauth']->requestAuthorizationUrl();
-				//$_SESSION['oauth']->setToken( $req["token"], $req["tokenSecret"] );
+				$req = $oauth->requestAuthorizationUrl();
+				//$oauth->setToken( $req["token"], $req["tokenSecret"] );
 				header("Location:" . $req["url"]);
 				exit();
 			}
@@ -122,13 +121,11 @@ function _wl($s) {
 		<h1>OSM OAuth usage example</h1>
 
 		<ul>
-			<li>API: <?php echo (isset($_SESSION['api']) ? 'true' : 'false') ?></li>
-			<li>OAUTH: <?php echo (isset($_SESSION['oauth']) ? 'true' : 'false') ?></li>
-			<li>Access token: <?php echo ($_SESSION['oauth']->hasAccessToken() ? 'true' : 'false') ?></li>
+			<li>has Access token: <?php echo ($oauth->hasAccessToken() ? 'true' : 'false') ?></li>
 		</ul>
 
 		<?php
-		if (isset($_SESSION['oauth']) && $_SESSION['oauth']->hasAccessToken())
+		if (isset($oauth) && $oauth->hasAccessToken())
 		{
 			?>
 			<p>
@@ -138,12 +135,13 @@ function _wl($s) {
 			<?php
 			try
 			{
-				$ud = $_SESSION['api']->getUserDetails();
+				$ud = $api->getUserDetails();
 				?>
 				<ul>
 					<li>Username: <?php echo $ud->getName() ?></li>
 					<li>Description: <?php echo $ud->getDescription() ?></li>
-					<li>Terms: <?php $terms = $ud->getTerms();
+					<li>Terms: <?php
+		$terms = $ud->getTerms();
 		echo ($terms['pd'] === true ? 'true' : 'false') . '/' . ($terms['agreed'] === true ? 'true' : 'false');
 				?></li>
 				</ul>
