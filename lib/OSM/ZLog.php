@@ -45,7 +45,14 @@ class OSM_ZLog {
 					break;
 			}
 
-			self::$_log = Log::singleton(self::$_options['handler'], '', 'OsmApi', null, self::$_options['level']);
+			switch(self::$_options['level'])
+			{
+				default:
+					$logName = PEAR_LOG_TYPE_SYSTEM;
+					break;
+			}
+	
+			self::$_log = Log::singleton(self::$_options['handler'], $logName, 'OsmApi', null, self::$_options['level']);
 		}
 
 		return self::$_log;
