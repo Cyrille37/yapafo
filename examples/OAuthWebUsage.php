@@ -26,7 +26,7 @@ $applicationName = str_replace('.php', '', basename(__FILE__));
 _wl('Running ' . $applicationName);
 
 // osm api handler is instantiated if necessary
-if (!isset($_SESSION["api"]))
+if (!isset($_SESSION['api']))
 {
 	_wl('Create API instance');
 	$api = new OSM_Api(array(
@@ -38,7 +38,7 @@ if (!isset($_SESSION["api"]))
 //OSM_ZLog::configure(array('handler'=>'error_log','level' => OSM_ZLog::LEVEL_DEBUG));
 
 // Have you already got an OAuth object ?
-if (!isset($_SESSION["oauth"]))
+if (!isset($_SESSION['oauth']))
 {
 	_wl('Create OAUTH instance');
 	$_SESSION['oauth'] = new OSM_Auth_OAuth($consumer_key, $consumer_secret,
@@ -48,6 +48,7 @@ if (!isset($_SESSION["oauth"]))
 				'authorizeUrl' => $authorizeUrl
 			)
 	);
+	$_SESSION['api']->setCredentials($_SESSION['oauth']);
 }
 
 // If a callback url has been set for consumer application
@@ -61,7 +62,6 @@ if (isset($_REQUEST["oauth_token"]))
 	if ($creds['token'] == $_REQUEST["oauth_token"])
 	{
 		$_SESSION['oauth']->requestAccessToken();
-		$_SESSION["api"]->setCredentials($_SESSION['oauth']);
 	}
 	else
 	{
@@ -133,6 +133,8 @@ function _wl($s) {
 				Here are user's details:
 			</p>
 				<?php
+				
+				try{
 				$ud = $_SESSION['api']->getUserDetails();
 				?>
 		<ul>
@@ -147,12 +149,19 @@ function _wl($s) {
 				?>
 			</pre>
 			<?php
+				}
+				catch(OSM_HttpException $ex)
+				{
+					?>
+					<p>We've got Access Token but access failed: <?php $ex->getMessage(); ?>
+					<?php
+				}
 		}
 		else
 		{
 			?>
 			<p>
-				Click <a href="http://localhost/Cartographie/OSM/yapafo/examples/OAuthUsage.php?go=1">start<a/> to launch the autorization processus.
+				Click <a href="http://localhost/Cartographie/OSM/yapafo/examples/OAuthWebUsage.php?go=1">start<a/> to launch the autorization processus.
 			</p>
 <?php } ?>
 

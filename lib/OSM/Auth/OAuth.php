@@ -88,6 +88,18 @@ class OSM_Auth_OAuth implements OSM_Auth_IAuthProvider {
 		return false;
 	}
 
+	/**
+	 * Return request Token and it's secret.
+	 * @return array array('token' => string, 'tokenSecret' => string) 
+	 */
+	public function getRequestToken()
+	{
+		return array(
+			'token' => $this->_requestToken,
+			'tokenSecret' => $this->_requestTokenSecret
+		);		
+	}
+	
 	public function requestAuthorizationUrl() {
 
 		$result = $this->_http($this->_options['requestTokenUrl']);
