@@ -21,7 +21,7 @@ spl_autoload_register(array('OSM_Api', 'autoload'));
  */
 class OSM_Api {
 
-	const VERSION = '0.2';
+	const VERSION = '0.3';
 	const USER_AGENT = 'http://yapafo.net';
 	const URL_DEV_UK = 'http://api06.dev.openstreetmap.org/api/0.6';
 	//deprecated: const OSMAPI_URL_PROD_PROXY_LETTUFE = 'http://beta.letuffe.org/api/0.6';
