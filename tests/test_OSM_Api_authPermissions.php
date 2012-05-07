@@ -32,6 +32,8 @@ include (__DIR__ . '/../../secrets.php');
 //
 // ===================================================
 
+//$auth_method = 'Basic';
+
 $osmApi = new OSM_Api(array(
 		'url' => OSM_Api::URL_DEV_UK,
 		//'log' => array('level' => OSM_ZLog::LEVEL_DEBUG)
@@ -62,12 +64,25 @@ else if ($auth_method == 'OAuth')
 $permissions = $osmApi->getAuthPermissions();
 echo print_r($permissions,true)."\n";
 
-_assert( ($osmApi->isAllowedToReadPrefs()=== true) );
-_assert( ($osmApi->isAllowedToWritePrefs() === true) );
-_assert( ($osmApi->isAllowedToWriteDiary() === false) );
-_assert( ($osmApi->isAllowedToWriteApi() === true) );
-_assert( ($osmApi->isAllowedToReadGpx() === true) );
-_assert( ($osmApi->isAllowedToWriteGpx() === false) );
+if( $auth_method == 'Basic')
+{
+	_assert( ($osmApi->isAllowedToReadPrefs()=== true) );
+	_assert( ($osmApi->isAllowedToWritePrefs() === true) );
+	_assert( ($osmApi->isAllowedToWriteDiary() === true) );
+	_assert( ($osmApi->isAllowedToWriteApi() === true) );
+	_assert( ($osmApi->isAllowedToReadGpx() === true) );
+	_assert( ($osmApi->isAllowedToWriteGpx() === true) );
+	
+}
+else
+{
+	_assert( ($osmApi->isAllowedToReadPrefs()=== true) );
+	_assert( ($osmApi->isAllowedToWritePrefs() === true) );
+	_assert( ($osmApi->isAllowedToWriteDiary() === false) );
+	_assert( ($osmApi->isAllowedToWriteApi() === true) );
+	_assert( ($osmApi->isAllowedToReadGpx() === true) );
+	_assert( ($osmApi->isAllowedToWriteGpx() === false) );
+}
 
 $time_end = microtime(true);
 _wl('Test well done in ' . number_format($time_end - $time_start, 3) . ' second(s).');
