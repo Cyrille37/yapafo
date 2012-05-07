@@ -90,6 +90,12 @@ class OSM_Auth_OAuth implements OSM_Auth_IAuthProvider {
 			return true;
 		return false;
 	}
+	
+	public function setRequestToken($token, $tokenSecret) {
+
+		$this->_requestToken = $token;
+		$this->_requestTokenSecret = $tokenSecret;
+	}
 
 	/**
 	 * Return request Token and it's secret.

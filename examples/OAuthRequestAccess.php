@@ -47,7 +47,7 @@ if (!empty($consumerKey) && !empty($consumerSecret))
 	}
 	else
 	{
-		$oauth->setToken($authReqToken, $authReqTokenSecret);
+		$oauth->setRequestToken($authReqToken, $authReqTokenSecret);
 		$authCredentials = $oauth->requestAccessToken();
 		$authAccessToken = $authCredentials['token'];
 		$authAccessTokenSecret = $authCredentials['tokenSecret'];
