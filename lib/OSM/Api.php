@@ -1095,11 +1095,119 @@ class OSM_Api {
 	}
 
 	/**
+	 * array(
+	 * 	'allow_read_prefs',		// read user preferences
+	 * 	'allow_write_prefs',	// modify user preferences
+	 * 	'allow_write_diary',	// create diary entries, comments and make friends
+	 * 	'allow_write_api',		// modify the map
+	 * 	'allow_read_gpx',			// allow_read_gpx
+	 * 	'allow_write_gpx'			// upload GPS traces
+	 * )
+	 * 
+	 * @var array 
+	 */
+	protected $_cachedPermissions = null;
+
+	/**
+	 * Implements GET /api/0.6/permissions
+	 * 
+	 * https://github.com/openstreetmap/openstreetmap-website/pull/45
+	 * 
+	 * @param bool $force
+	 */
+	public function getAuthPermissions($force = false) {
+
+		if (!$force && $this->_cachedPermissions != null)
+		{
+			return $this->_cachedPermissions;
+		}
+
+		$result = $this->_httpApi('/permissions');
+		//OSM_ZLog::debug(__METHOD__, $result);
+
+		/*
+		  <?xml version="1.0" encoding="UTF-8"?>
+		  <osm generator="OpenStreetMap Server" version="0.6">
+		  <permissions>
+		  <permission name="allow_read_prefs"/>
+		  <permission name="allow_write_prefs"/>
+		  <permission name="allow_write_api"/>
+		  <permission name="allow_read_gpx"/>
+		  </permissions>
+		  </osm>
+		 */
+
+		$x = new SimpleXMLElement($result);
+		$perms = $x->xpath('/osm/permissions/permission');
+
+		$this->_cachedPermissions = array();
+		foreach ($perms as $perm)
+		{
+			$this->_cachedPermissions[] = (string) $perm['name'];
+		}
+
+		/*
+		  protected $_cachedPermissions = array(
+		  'allow_read_prefs', // read user preferences
+		  'allow_write_prefs', // modify user preferences
+		  'allow_write_diary', // create diary entries, comments and make friends
+		  'allow_write_api', // modify the map
+		  'allow_read_gpx', // allow_read_gpx
+		  'allow_write_gpx'	 // upload GPS traces
+		  );
+		 */
+		return $this->_cachedPermissions;
+	}
+
+	/**
+	 * @return bool allow_read_prefs
+	 */
+	public function isAllowedToReadPrefs() {
+		return in_array('allow_read_prefs', $this->getAuthPermissions());
+	}
+
+	/**
+	 * @return bool allow_write_prefs
+	 */
+	public function isAllowedToWritePrefs() {
+		return in_array('allow_write_prefs', $this->getAuthPermissions());
+	}
+
+	/**
+	 * @return bool allow_write_diary
+	 */
+	public function isAllowedToWriteDiary() {
+		return in_array('allow_write_diary', $this->getAuthPermissions());
+	}
+
+	/**
+	 * @return bool allow_write_api
+	 */
+	public function isAllowedToWriteApi() {
+		return in_array('allow_write_api', $this->getAuthPermissions());
+	}
+
+	/**
+	 * @return bool allow_read_gpx
+	 */
+	public function isAllowedToReadGpx() {
+		return in_array('allow_read_gpx', $this->getAuthPermissions());
+	}
+
+	/**
+	 * @return bool allow_write_gpx
+	 */
+	public function isAllowedToWriteGpx() {
+		return in_array('allow_write_gpx', $this->getAuthPermissions());
+	}
+
+	/**
 	 *
 	 * @return OSM_Objects_UserDetails
 	 * @throws OSM_Exception if not authenticated
 	 */
 	public function getUserDetails() {
+
 		if ($this->_authProvider == null)
 		{
 			throw new OSM_Exception('Must be authenticated');

@@ -8,8 +8,6 @@
  */
 $time_start = microtime(true);
 
-$TEST_EXPECTED_USERNAME = 'Cyrille37_TEST' ;
-
 require_once (__DIR__ . '/tests_common.php');
 _wl('test "' . basename(__FILE__) . '');
 
@@ -51,7 +49,7 @@ else if ($auth_method == 'OAuth')
 {
 	_wl(' using OAuth auth with consumerKey="'.$auth_oauth_consumer_key.'"');
 	$oauth = new OSM_Auth_OAuth($auth_oauth_consumer_key, $auth_oauth_consumer_secret	);
-	$oauth->setToken($auth_oauth_token, $auth_oauth_secret);
+	$oauth->setAccessToken($auth_oauth_token, $auth_oauth_secret);
 	$osmApi->setCredentials($oauth);
 	
 }
@@ -63,7 +61,7 @@ else if ($auth_method == 'OAuth')
 
 $userDetails = $osmApi->getUserDetails();
 //echo print_r($userDetails,true)."\n";
-_assert( $TEST_EXPECTED_USERNAME == $userDetails->getName() );
+_assert( $test_expected_auth_username == $userDetails->getName() );
 
 $time_end = microtime(true);
 _wl('Test well done in ' . number_format($time_end - $time_start, 3) . ' second(s).');
