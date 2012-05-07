@@ -24,7 +24,9 @@ $applicationName = str_replace('.php', '', basename(__FILE__));
 
 _wl('Running ' . $applicationName);
 
-// osm api handler is instantiated if necessary
+//
+// Create or retreive the OSM_Api instance
+//
 if (!isset($_SESSION['api']))
 {
 	_wl('Create API instance');
@@ -44,22 +46,24 @@ if (!isset($_SESSION['api']))
 }
 else
 {
-	$api = $_SESSION['api'] ;
+	$api = $_SESSION['api'];
 	$oauth = $api->getCredentials();
 }
 
+/// Logout
 if (isset($_REQUEST['deleteAccess']))
 {
 	$oauth->deleteAccessAuthorization();
 }
 
-// If a callback url has been set for consumer application
+// If a callback url has been set for consumer application,
+// the user will come back here after authorization acceptation.
+// The osm site will callback us with the parameter "oauth_token"
 if (isset($_REQUEST["oauth_token"]))
 {
 	_wl('User coming back via callback url.');
-	//$credentials = $oauth->requestAccessToken();
-	//$oauth->setToken( $credentials["token"], $credentials["tokenSecret"] );
 
+	// Check that the callback is for us.
 	$creds = $oauth->getRequestToken();
 	if ($creds['token'] == $_REQUEST["oauth_token"])
 	{
@@ -145,12 +149,15 @@ function _wl($s) {
 		echo ($terms['pd'] === true ? 'true' : 'false') . '/' . ($terms['agreed'] === true ? 'true' : 'false');
 				?></li>
 				</ul>
-				<pre>
-					<?php
-					$ud = $ud->getDetails();
-					echo print_r($ud, true);
-					?>
-				</pre>
+				<p>Permissions accepted by the user are:</p>
+				<ul>
+					<li>Allowed to read user preferences: <?php echo ($api->isAllowedToReadPrefs() ? '<i>allowed</i>' : '<b>forbidden</b>'); ?></li>
+					<li>Allowed to write user preferences: <?php echo ($api->isAllowedToWritePrefs() ? '<i>allowed</i>' : '<b>forbidden</b>'); ?></li>
+					<li>Allowed to access (read/write) user diary: <?php echo ($api->isAllowedToWriteDiary() ? '<i>allowed</i>' : '<b>forbidden</b>'); ?></li>
+					<li>Allowed to write api (change the map): <?php echo ($api->isAllowedToWriteApi() ? '<i>allowed</i>' : '<b>forbidden</b>'); ?></li>
+					<li>Allowed to load user gpx traces: <?php echo ($api->isAllowedToReadGpx() ? '<i>allowed</i>' : '<b>forbidden</b>'); ?></li>
+					<li>Allowed to upload user gpx traces: <?php echo ($api->isAllowedToWriteGpx() ? '<i>allowed</i>' : '<b>forbidden</b>'); ?></li>
+				</ul>
 				<?php
 			}
 			catch (OSM_HttpException $ex)
@@ -163,7 +170,8 @@ function _wl($s) {
 			}
 			?>
 			<p>
-				Click <a href="http://localhost/Cartographie/OSM/yapafo/examples/OAuthWebUsage.php?deleteAccess=1">delete Access<a/> to delete access token (forgot user authorization).
+				You can revoke this authorization: <a href="<?php echo $_SERVER['SCRIPT_URI']; ?>?deleteAccess=1">delete access<a/>.<br/>
+				Or just reload this page to see that your authorization persists: <a href="<?php echo $_SERVER['SCRIPT_URI']; ?>">refresh<a/>.
 			</p>
 
 			<?php
@@ -172,7 +180,7 @@ function _wl($s) {
 		{
 			?>
 			<p>
-				Click <a href="http://localhost/Cartographie/OSM/yapafo/examples/OAuthWebUsage.php?go=1">start<a/> to launch the autorization processus.
+				Click <a href="<?php echo $_SERVER['SCRIPT_URI']; ?>?go=1">start<a/> to launch the autorization processus.
 			</p>
 			<?php
 		}
