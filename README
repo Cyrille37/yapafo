@@ -10,6 +10,11 @@ FEATURES:
 - A bit of geometry stuff (id node inside/outside polygon)
 - ...
 
+REQUIREMENTS:
+- The Log Package : http://pear.github.com/Log/
+	easy install with:
+	$ sudo pear install Log
+
 TUTORIALS / EXAMPLES:
 - look at tests/test_OSM_Api_with-network-write.php to see how to Read data, Authenticate and Save changes.
 - the tool examples/OAuthRequestAccess.php is an easy way to get OAuth Access Token (and understand the protocol phases ;-)
