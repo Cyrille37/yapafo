@@ -1109,6 +1109,15 @@ class OSM_Api {
 	}
 
 	/**
+	 * After an authorization, client should call this method to clear permissions cache. 
+	 * @todo It's not nice to leave the client with that job. The Api should manage this case itself... But I do not find any idea...
+	 */
+	public function clearCachedAuthPermissions()
+	{
+		$this->_cachedPermissions = null ;
+	}
+
+	/**
 	 * Implements GET /api/0.6/permissions
 	 * 
 	 * https://github.com/openstreetmap/openstreetmap-website/pull/45
@@ -1123,7 +1132,7 @@ class OSM_Api {
 		}
 
 		$result = $this->_httpApi('/permissions');
-		//OSM_ZLog::debug(__METHOD__, $result);
+		OSM_ZLog::debug(__METHOD__, $result);
 
 		/*
 		  <?xml version="1.0" encoding="UTF-8"?>

@@ -38,11 +38,15 @@ if (!isset($_SESSION['api']))
 			array(
 				'requestTokenUrl' => $requestTokenUrl,
 				'accessTokenUrl' => $accessTokenUrl,
-				'authorizeUrl' => $authorizeUrl
+				'authorizeUrl' => $authorizeUrl,
+				// You can set the url in the application configuration on osm.org website
+				// or specify it here.
+				'callback_url'=> 'http://localhost/dev.www/Cartographie/OSM/yapafo/examples/OAuthWebUsage.php'
 			)
 		)
 	);
 	$_SESSION['api'] = $api;
+	$oauth = $api->getCredentials();
 }
 else
 {
@@ -59,15 +63,19 @@ if (isset($_REQUEST['deleteAccess']))
 // If a callback url has been set for consumer application,
 // the user will come back here after authorization acceptation.
 // The osm site will callback us with the parameter "oauth_token"
-if (isset($_REQUEST["oauth_token"]))
+if (isset($_REQUEST['oauth_token']))
 {
 	_wl('User coming back via callback url.');
 
 	// Check that the callback is for us.
 	$creds = $oauth->getRequestToken();
-	if ($creds['token'] == $_REQUEST["oauth_token"])
+	if ($creds['token'] == $_REQUEST['oauth_token'])
 	{
-		$oauth->requestAccessToken();
+		$oauth->requestAccessToken(
+			isset($_REQUEST['oauth_verifier'])
+			?$_REQUEST['oauth_verifier']
+			:null
+			);
 	}
 	else
 	{
@@ -91,6 +99,7 @@ if (isset($_REQUEST['go']))
 			if ($ex->getHttpCode() == '401')
 			{
 				_wl('Request access authorization');
+				$api->clearCachedAuthPermissions();
 				$req = $oauth->requestAuthorizationUrl();
 				//$oauth->setToken( $req["token"], $req["tokenSecret"] );
 				header("Location:" . $req["url"]);
@@ -170,8 +179,8 @@ function _wl($s) {
 			}
 			?>
 			<p>
-				You can revoke this authorization: <a href="<?php echo $_SERVER['SCRIPT_URI']; ?>?deleteAccess=1">delete access<a/>.<br/>
-				Or just reload this page to see that your authorization persists: <a href="<?php echo $_SERVER['SCRIPT_URI']; ?>">refresh<a/>.
+				You can revoke this authorization: <a href="<?php echo $_SERVER['PHP_SELF']; ?>?deleteAccess=1">delete access<a/>.<br/>
+				Or just reload this page to see that your authorization persists: <a href="<?php echo $_SERVER['PHP_SELF']; ?>">refresh<a/>.
 			</p>
 
 			<?php
@@ -180,7 +189,7 @@ function _wl($s) {
 		{
 			?>
 			<p>
-				Click <a href="<?php echo $_SERVER['SCRIPT_URI']; ?>?go=1">start<a/> to launch the autorization processus.
+				Click <a href="<?php echo $_SERVER['PHP_SELF']; ?>?go=1">start<a/> to launch the autorization processus.
 			</p>
 			<?php
 		}

@@ -26,7 +26,8 @@ class OSM_Auth_OAuth implements OSM_Auth_IAuthProvider {
 	protected $_options = array(
 		'requestTokenUrl' => self::REQUEST_TOKEN_URL,
 		'accessTokenUrl' => self::ACCESS_TOKEN_URL,
-		'authorizeUrl' => self::AUTHORIZE_TOKEN_URL
+		'authorizeUrl' => self::AUTHORIZE_TOKEN_URL,
+		'callback_url' => null ,
 	);
 	protected $_consKey;
 	protected $_consSec;
@@ -34,6 +35,13 @@ class OSM_Auth_OAuth implements OSM_Auth_IAuthProvider {
 	protected $_requestTokenSecret;
 	protected $_accessToken;
 	protected $_accessTokenSecret;
+	/**
+	 * Only used if a callback url is specified.
+	 * @see requestAccessToken()
+	 * @see _prepareParameters()
+	 * @var string
+	 */
+	protected $_oauth_verifier ;
 	protected $_timestamp;
 
 	public function __construct($consumerKey, $consumerSecret, $options = array()) {
@@ -127,9 +135,21 @@ class OSM_Auth_OAuth implements OSM_Auth_IAuthProvider {
 		);
 	}
 
-	public function requestAccessToken() {
+	/**
+	 *
+	 * @param string $oauth_verifier Only used if a callback url is specified.
+	 * @return array Contains 'token' and 'tokenSecret'.
+	 */
+	public function requestAccessToken( $oauth_verifier=null ) {
+	
+		// Only used if a callback url is specified
+		$this->_oauth_verifier = $oauth_verifier ;
 
 		$result = $this->_http($this->_options['accessTokenUrl']);
+	
+		// Not so nice, but easiest ;-)
+		// this should be an parameter not a property, but it's easiest like that ...
+		$this->_oauth_verifier = null;
 
 		$tokenParts = null ;
 		parse_str($result, $tokenParts);
@@ -240,6 +260,14 @@ class OSM_Auth_OAuth implements OSM_Auth_IAuthProvider {
 		$oauth['oauth_timestamp'] = !isset($this->_timestamp) ? time() : $this->_timestamp;
 		$oauth['oauth_signature_method'] = self::SIGNATURE_METHOD;
 		$oauth['oauth_version'] = self::PROTOCOL_VERSION;
+		if( isset($this->_options['callback_url']))
+		{
+			$oauth['oauth_callback'] = $this->_options['callback_url'] ;
+		}
+		if( isset($this->_oauth_verifier))
+		{
+			$oauth['oauth_verifier'] = $this->_oauth_verifier ;
+		}
 
 		// encoding
 		array_walk($oauth, array($this, '_encode'));
