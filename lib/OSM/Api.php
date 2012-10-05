@@ -61,6 +61,20 @@ class OSM_Api {
 	 * @var OSM_Auth_IAuthProvider
 	 */
 	protected $_authProvider;
+	/**
+	 * array(
+	 * 	'allow_read_prefs',		// read user preferences
+	 * 	'allow_write_prefs',	// modify user preferences
+	 * 	'allow_write_diary',	// create diary entries, comments and make friends
+	 * 	'allow_write_api',		// modify the map
+	 * 	'allow_read_gpx',			// allow_read_gpx
+	 * 	'allow_write_gpx'			// upload GPS traces
+	 * )
+	 * 
+	 * @var array 
+	 */
+	protected $_cachedPermissions = null;
+
 	protected $_relations = array();
 	protected $_ways = array();
 	protected $_nodes = array();
@@ -1093,20 +1107,6 @@ class OSM_Api {
 			. '_' . sprintf('%04d', ++$this->_outputWriteCount) . '-' . time()
 			. '_' . $inOrOut . '-' . $method . '-' . urlencode($relativeUrl) . '.txt';
 	}
-
-	/**
-	 * array(
-	 * 	'allow_read_prefs',		// read user preferences
-	 * 	'allow_write_prefs',	// modify user preferences
-	 * 	'allow_write_diary',	// create diary entries, comments and make friends
-	 * 	'allow_write_api',		// modify the map
-	 * 	'allow_read_gpx',			// allow_read_gpx
-	 * 	'allow_write_gpx'			// upload GPS traces
-	 * )
-	 * 
-	 * @var array 
-	 */
-	protected $_cachedPermissions = null;
 
 	/**
 	 * Implements GET /api/0.6/permissions
