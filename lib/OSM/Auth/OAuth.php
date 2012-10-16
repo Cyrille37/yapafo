@@ -36,12 +36,12 @@ class OSM_Auth_OAuth implements OSM_Auth_IAuthProvider {
 	protected $_accessToken;
 	protected $_accessTokenSecret;
 	/**
-	 * Only used if a callback url is specified.
+	 * Required if a custom callback_url is specified.
 	 * @see requestAccessToken()
 	 * @see _prepareParameters()
 	 * @var string
 	 */
-	protected $_oauth_verifier ;
+	protected $_requestOAuthVerifier ;
 	protected $_timestamp;
 
 	public function __construct($consumerKey, $consumerSecret, $options = array()) {
@@ -141,15 +141,17 @@ class OSM_Auth_OAuth implements OSM_Auth_IAuthProvider {
 	 * @return array Contains 'token' and 'tokenSecret'.
 	 */
 	public function requestAccessToken( $oauth_verifier=null ) {
-	
-		// Only used if a callback url is specified
-		$this->_oauth_verifier = $oauth_verifier ;
+
+		// Required if a custom callback url is specified
+		$this->_requestOAuthVerifier = $oauth_verifier ;
 
 		$result = $this->_http($this->_options['accessTokenUrl']);
-	
-		// Not so nice, but easiest ;-)
+
+		// FIXME: Not so nice, but easiest ;-)
 		// this should be an parameter not a property, but it's easiest like that ...
-		$this->_oauth_verifier = null;
+		// AND is it required to clean this value ? Is this value associated with authorization or access ?
+		// Please, make add a test !
+		$this->_requestOAuthVerifier = null;
 
 		$tokenParts = null ;
 		parse_str($result, $tokenParts);
@@ -264,9 +266,9 @@ class OSM_Auth_OAuth implements OSM_Auth_IAuthProvider {
 		{
 			$oauth['oauth_callback'] = $this->_options['callback_url'] ;
 		}
-		if( isset($this->_oauth_verifier))
+		if( isset($this->_requestOAuthVerifier))
 		{
-			$oauth['oauth_verifier'] = $this->_oauth_verifier ;
+			$oauth['oauth_verifier'] = $this->_requestOAuthVerifier ;
 		}
 
 		// encoding

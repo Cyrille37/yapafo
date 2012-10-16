@@ -28,3 +28,7 @@ BUGS:
 TODO:
 - Have a look at issues 
 	https://github.com/Cyrille37/yapafo/issues
+
+REF:
+- The OAuth 1.0 Protocol : http://tools.ietf.org/html/rfc5849
+- OSM OAuth doc : http://wiki.openstreetmap.org/wiki/OAuth
