@@ -274,12 +274,14 @@ class OSM_Api {
 			$e = error_get_last();
 			if (isset($http_response_header))
 			{
-				throw new OSM_HttpException($http_response_header);
+				$ex = new OSM_HttpException($http_response_header);
 			}
 			else
 			{
-				throw new OSM_HttpException($e['message']);
+				$ex = new OSM_HttpException($e['message']);
 			}
+				if( $ex->getMessage() != 'HTTP/1.1 200 OK' )
+					throw $ex ;
 		}
 
 		if ($this->_options['outputFolder'] != null)
