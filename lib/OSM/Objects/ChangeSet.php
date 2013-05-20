@@ -106,26 +106,36 @@ class OSM_Objects_ChangeSet {
 
 		$xmlStr = '<osmChange version="0.6" generator="' . $generator . '">'."\n";
 
-		$xmlStr.= '<create version="0.3" generator="' . $generator . '">'."\n";
-		foreach ($this->_createdObjects as $id=>$obj)
+		if( count($this->_createdObjects) >0 )
 		{
-			$xmlStr.= $obj->asXmlStr();
+			$xmlStr.= '<create version="0.3" generator="' . $generator . '">'."\n";
+			foreach ($this->_createdObjects as $id=>$obj)
+			{
+				$xmlStr.= $obj->asXmlStr();
+			}
+			$xmlStr.= '</create>'."\n";
 		}
-		$xmlStr.= '</create>'."\n";
 
-		$xmlStr.= '<modify version="0.3" generator="' . $generator . '">'."\n";
-		foreach ($this->_modifiedObjects as $id=>$obj)
+		if( count($this->_modifiedObjects) >0 )
 		{
-			$xmlStr.= $obj->asXmlStr();			
+			$xmlStr.= '<modify version="0.3" generator="' . $generator . '">'."\n";
+			foreach ($this->_modifiedObjects as $id=>$obj)
+			{
+				$xmlStr.= $obj->asXmlStr();			
+			}
+			$xmlStr.= '</modify>'."\n";
 		}
-		$xmlStr.= '</modify>'."\n";
 
-		$xmlStr.= '<delete version="0.3" generator="' . $generator . '">'."\n";
-		foreach ($this->_deleteObjects as $id=>$obj)
+		if( count($this->_deleteObjects) >0 )
 		{
-			$xmlStr.= $obj->asXmlStr();			
+			$xmlStr.= '<delete version="0.3" generator="' . $generator . '">'."\n";
+			foreach ($this->_deleteObjects as $id=>$obj)
+			{
+				$xmlStr.= $obj->asXmlStr();			
+			}
+			$xmlStr.= '</delete>'."\n";
 		}
-		$xmlStr.= '</delete>'."\n";
+
 		$xmlStr.= '</osmChange>';
 
 		return $xmlStr ;
