@@ -403,8 +403,16 @@ class OSM_Api {
 		return $this->getObject(self::OBJTYPE_RELATION, $id, $full);
 	}
 
+	public function loadOSMFile( $osmFilename )
+	{
+		if( ! file_exists($osmFilename) )
+			throw new Exception('File not found "'.$osmFilename.'"');
+
+		$this->createObjectsfromXml( file_get_contents($osmFilename) );
+	}
+
 	/**
-	 * Create objects and fill objects tables from a xml document (string).
+	 * Create objects and fill objects tables from a OSM xml document (string).
 	 *
 	 * @param string $xmlStr
 	 */
