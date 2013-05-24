@@ -1,5 +1,4 @@
 <?php
-
 /**
  * OSM/Api.php
  */
@@ -1083,6 +1082,23 @@ class OSM_Api {
 		}
 
 		return $waysOrdered;
+	}
+
+	/**
+	 * Return all way's nodes coordinates
+	 * @return array
+	 */
+	public function &getWayNodesCoordinates( OSM_Objects_Way $way )
+	{
+		$coords = array();
+		$nodesRef = $way->getNodesRefs();
+		$n = count( $nodesRef );
+		for( $i=0; $i<$n; $i++ )
+		{
+			$node = $this->getNode( $nodesRef[$i] );
+			$coords[] = array( $node->getLat(), $node->getLon() );
+		}
+		return $coords ;
 	}
 
 	public function getStatsRequestCount() {
