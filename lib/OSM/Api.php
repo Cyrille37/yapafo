@@ -965,6 +965,7 @@ class OSM_Api {
 	 */
 	public function getPolygon(OSM_Objects_Relation $relation) {
 
+		require_once __DIR__.DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'OSM'.DIRECTORY_SEPARATOR.'Tools'.DIRECTORY_SEPARATOR.'Polygon.php';
 		$poly = new \OSM\Tools\Polygon();
 
 		$ways = $this->getRelationWaysOrdered($relation);

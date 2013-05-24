@@ -1,5 +1,4 @@
 <?php
-
 /* ------------------------------------------------------------------------------
  * * File:		polygon.php
  * * Description:	PHP class for a polygon. 
@@ -69,7 +68,7 @@ namespace OSM\Tools;
 
 define("infinity", 100000000); // for places that are far far away
 
-require_once(__DIR__ . '/Vertex.php'); // A polygon consists of vertices. So the polygon
+require_once(__DIR__ . DIRECTORY_SEPARATOR. 'Vertex.php'); // A polygon consists of vertices. So the polygon
 // class is just a reference to a linked list of vertices
 
 class Polygon {
