@@ -1097,7 +1097,7 @@ class OSM_Api {
 		for( $i=0; $i<$n; $i++ )
 		{
 			$node = $this->getNode( $nodesRef[$i] );
-			$coords[] = array( $node->getLat(), $node->getLon() );
+			$coords[] = array( $node->getLon(), $node->getLat() );
 		}
 		return $coords ;
 	}
