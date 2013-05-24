@@ -35,7 +35,7 @@ class OSM_Objects_Tag implements OSM_Objects_IDirty, OSM_Objects_IXml {
 	 */
 	public function asXmlStr()
 	{
-		$xmlStr = '<tag k="'.$this->_key.'" v="'.$this->_value.'" />' ;
+		$xmlStr = '<tag k="'.$this->_key.'" v="'.str_replace('"', '&quot;', $this->_value ).'" />' ;
 		return $xmlStr ;
 	}
 
