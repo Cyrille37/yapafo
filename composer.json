@@ -1,0 +1,24 @@
+{
+    "name": "cyrille37/yapafo",
+    "description": "Manipulate OpenStreetMap Data via OSM API.",
+    "type": "library",
+    "license": "GPLv3",
+    "authors": [
+        {
+            "name": "Cyrille Giquello",
+            "email": "cyrille@giquello.fr"
+        }
+    ],
+    "require": {
+        "ext-simplexml":">=5",
+        "psr/log": "^1.1"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.5"
+    },
+    "autoload": {
+        "classmap": [
+            "src/"
+        ]
+    }
+}
