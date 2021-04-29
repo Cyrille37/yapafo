@@ -91,8 +91,6 @@ class OSM_Api {
 	protected $_loadedXml = array();
 
 	/**
-	 * Undocumented variable
-	 *
 	 * @var \Psr\Log\LoggerInterface
 	 */
 	protected $_logger ;

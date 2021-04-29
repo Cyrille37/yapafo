@@ -44,6 +44,11 @@ class OSM_OApi {
 		'loadedBytes' => 0
 	);
 
+	/**
+	 * @var \Psr\Log\LoggerInterface
+	 */
+	protected $_logger ;
+
 	public function __construct( $options = [] )
 	{
 		// Check that all options exist then override defaults

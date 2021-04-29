@@ -1,7 +1,7 @@
 #!/usr/bin/env php
 <?php
 /**
- * Create a Node and add it to a Relation.
+ * Query data with Overpass API.
  */
 require_once(__DIR__.'/example-common.php');
 
