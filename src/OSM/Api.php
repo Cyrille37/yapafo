@@ -7,6 +7,7 @@ use Cyrille37\OSM\Yapafo\Auth\OAuth ;
 use Cyrille37\OSM\Yapafo\Auth\IAuthProvider ;
 use Cyrille37\OSM\Yapafo\Objects\ChangeSet;
 use Cyrille37\OSM\Yapafo\Objects\Node;
+use Cyrille37\OSM\Yapafo\Objects\OSM_Object;
 use Cyrille37\OSM\Yapafo\Objects\Relation;
 use Cyrille37\OSM\Yapafo\Objects\UserDetails;
 use Cyrille37\OSM\Yapafo\Objects\Way;
@@ -28,8 +29,8 @@ use Psr\Log\LogLevel;
  */
 class OSM_Api {
 
-	const VERSION = '0.3';
-	const USER_AGENT = 'http://yapafo.net';
+	const VERSION = '2.0';
+	const USER_AGENT = 'https://github.com/Cyrille37/yapafo';
 	const URL_DEV_UK = 'https://master.apis.dev.openstreetmap.org/api/0.6';
 	//deprecated: const OSMAPI_URL_PROD_PROXY_LETTUFE = 'http://beta.letuffe.org/api/0.6';
 	const URL_PROD_FR = 'http://api.openstreetmap.fr/api/0.6';
@@ -775,6 +776,10 @@ class OSM_Api {
 		return $relation;
 	}
 
+	/**
+	 *
+	 * @return OSM_Object[]
+	 */
 	public function &getDirtyObjects() {
 
 		$dirtyObjects = array();

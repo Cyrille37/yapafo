@@ -201,16 +201,8 @@ class OSM_Object implements IDirty {
 		$this->setDirty();
 	}
 
-	public function addTags(array $tags) {
-		if (!is_array($tags))
-			throw new OSM_Exception('Invalid array of tags');
-		foreach ($tags as $tag)
-		{
-			if (array_key_exists($tag->getKey(), $this->_tags))
-			{
-				throw new OSM_Exception('duplicate tag "' . $tag->getKey() . '"');
-			}
-		}
+	public function addTags( Array $tags )
+	{
 		foreach ($tags as $tag)
 		{
 			$this->addTag($tag);

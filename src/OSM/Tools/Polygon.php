@@ -1,4 +1,6 @@
 <?php
+namespace OSM\Tools;
+
 /* ------------------------------------------------------------------------------
  * * File:		polygon.php
  * * Description:	PHP class for a polygon. 
@@ -63,8 +65,6 @@
  * *                  incorrectly called for intersections between lines when the
  * *                  intersection occurred outside the line segments.
  */
-
-namespace OSM\Tools;
 
 define("infinity", 100000000); // for places that are far far away
 

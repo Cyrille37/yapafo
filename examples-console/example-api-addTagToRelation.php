@@ -1,7 +1,7 @@
 #!/usr/bin/env php
 <?php
 /**
- * Retrieve a full Relation and make a change: Add a tag
+ * Retrieve a full Relation and add a tag to it.
  */
 require_once(__DIR__.'/example-common.php');
 

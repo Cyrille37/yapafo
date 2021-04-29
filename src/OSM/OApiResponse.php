@@ -1,19 +1,13 @@
 <?php
+namespace Cyrille37\OSM\Yapafo ;
+
+use Psr\Log\LoggerInterface;
 
 /**
- * OSM/OApiResponse.class.php
+ * Provides some accessors to the OAPI result. All stuff are SimpleXMLElement objects.
  */
-
-/**
- * Description of OSM_OApiResponse
- *
- * Providess some accessors to the OAPI result. All stuff are SimpleXMLElement objects.
- * 
- * @author cyrille
- */
-class OSM_OApiResponse {
-
-	public static $DEBUG = 0;
+class OApiResponse
+{
 	protected $_xml;
 	protected $_relations, $_ways, $_nodes;
 	protected $_index = array(
@@ -21,14 +15,20 @@ class OSM_OApiResponse {
 		'ways' => null,
 		'nodes' => null
 	);
+	/**
+	 * @var LoggerInterface
+	 */
+	protected $logger ;
 
-	public function __construct($xmlStr) {
+	public function __construct($xmlStr, LoggerInterface $logger = null )
+	{
+		$this->logger = $logger ;
 		//_dbg(''.$xml->getName());
-		$this->_xml = new SimpleXMLElement($xmlStr);
+		$this->_xml = new \SimpleXMLElement($xmlStr);
 	}
 
 	/**
-	 * @return SimpleXMLElement 
+	 * @return \SimpleXMLElement 
 	 */
 	public function getRoot() {
 		return $this->_xml;
@@ -55,7 +55,6 @@ class OSM_OApiResponse {
 		if ($this->_relations == null)
 		{
 			$this->_relations = $this->_xml->xpath('/osm/relation');
-			$this->dbg(__METHOD__, 'found ' . count($this->_relations) . ' relations');
 		}
 		return $this->_relations;
 	}
@@ -75,7 +74,6 @@ class OSM_OApiResponse {
 				$attrs = $relation->attributes();
 				$this->_index['relations'][(string) $attrs['id']] = $relation;
 			}
-			$this->dbg(__METHOD__, 'Created index for ' . count($this->_index['relations']) . ' relations');
 		}
 
 		if (array_key_exists($relation_id, $this->_index['relations']))
@@ -146,7 +144,7 @@ class OSM_OApiResponse {
 				$attrs = $way->attributes();
 				$this->_index['ways'][(string) $attrs['id']] = $way;
 			}
-			$this->dbg(__METHOD__, 'Created index for ' . count($this->_index['ways']) . ' ways');
+			$this->logger->debug(__METHOD__. ' Created index for ' . count($this->_index['ways']) . ' ways');
 		}
 		if (array_key_exists($way_id, $this->_index['ways']))
 		{
@@ -192,7 +190,7 @@ class OSM_OApiResponse {
 				$attrs = $node->attributes();
 				$this->_index['nodes'][(string) $attrs['id']] = $node;
 			}
-			$this->dbg(__METHOD__, 'Created index for ' . count($this->_index['nodes']) . ' nodes');
+			$this->logger->debug(__METHOD__. ' Created index for ' . count($this->_index['nodes']) . ' nodes');
 		}
 		if (array_key_exists($node_id, $this->_index['nodes']))
 		{
@@ -209,7 +207,7 @@ class OSM_OApiResponse {
 		if ($this->_ways == null)
 		{
 			$this->_ways = $this->_xml->xpath('/osm/way');
-			$this->dbg(__METHOD__, 'found ' . count($this->_ways) . ' ways');
+			$this->logger->debug(__METHOD__. ' Found ' . count($this->_ways) . ' ways');
 		}
 		return $this->_ways;
 	}
@@ -222,7 +220,7 @@ class OSM_OApiResponse {
 		if ($this->_nodes == null)
 		{
 			$this->_nodes = $this->_xml->xpath('/osm/node');
-			$this->dbg(__METHOD__, 'found ' . count($this->_nodes) . ' nodes');
+			$this->logger->debug(__METHOD__. ' Found ' . count($this->_nodes) . ' nodes');
 		}
 		return $this->_nodes;
 	}
@@ -245,18 +243,6 @@ class OSM_OApiResponse {
 			$xq .= '[tag/@k="'.$k.'"][tag/@v="'.$v.'"]';
 		}
 		return $this->_xml->xpath('/osm/node'.$xq );
-	}
-
-
-	/**
-	 * @param string $who
-	 * @param string $str 
-	 */
-	public function dbg($who, $str='') {
-		if (self::$DEBUG)
-		{
-			echo '[dbg][' . $who . '] ' . $str . "\n";
-		}
 	}
 
 }

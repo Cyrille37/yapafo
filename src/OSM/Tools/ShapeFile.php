@@ -1,4 +1,5 @@
 <?php
+namespace OSM\Tools;
 
 /**
  * This class is under GPL Licencense Agreement
@@ -53,8 +54,6 @@
   }
  * 
  */
-
-namespace OSM\Tools;
 
 require_once(__DIR__ . DIRECTORY_SEPARATOR . 'ShapeFileRecord.php');
 

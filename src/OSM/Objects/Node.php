@@ -24,8 +24,8 @@ class Node extends OSM_Object implements IXml {
 		return $node;
 	}
 
-	public function __construct($id=null, $lat=null, $lon=null, array $tags=null) {
-
+	public function __construct($id=null, $lat=null, $lon=null, array $tags=null)
+	{
 		parent::__construct($id);
 
 		if ($lat != null)
@@ -33,7 +33,7 @@ class Node extends OSM_Object implements IXml {
 		if ($lon != null)
 			$this->setLon($lon);
 		if (is_array($tags))
-			$node->addTags($tags);
+			$this->addTags($tags);
 		
 		$this->setDirty();
 	}
