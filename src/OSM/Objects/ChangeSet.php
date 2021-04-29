@@ -38,10 +38,10 @@ class ChangeSet {
 	/**
 	 * Add an new or modified object to the ChangeSet.
 	 * It will self compute the "New" or "Modified" object's status.
-	 * @param OSM_Objects_Object $obj
+	 * @param OSM_Object $obj
 	 * @throws OSM_Exception
 	 */
-	public function addObject(OSM_Objects_Object $obj) {
+	public function addObject(OSM_Object $obj) {
 
 		$objectId = $obj->getId();
 		if (empty($objectId))
@@ -63,10 +63,10 @@ class ChangeSet {
 
 	/**
 	 * Add a deleted object to the ChangeSet.
-	 * @param OSM_Objects_Object $obj
+	 * @param OSM_Object $obj
 	 * @throws OSM_Exception
 	 */
-	public function deleteObject(OSM_Objects_Object $obj) {
+	public function deleteObject(OSM_Object $obj) {
 
 		$objectId = $obj->getId();
 		if (empty($objectId))

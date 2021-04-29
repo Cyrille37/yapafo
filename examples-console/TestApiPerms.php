@@ -1,5 +1,8 @@
 #!/usr/bin/env php
 <?php
+/**
+ * Display API permissions available with configured OAuth credenstials.
+ */
 
 require_once( __DIR__.'/../vendor/autoload.php');
 

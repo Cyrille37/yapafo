@@ -14,6 +14,8 @@ class Config
     public $defaults = [
         'oauth_url' => OAuth::BASE_URL_DEV,
         'osm_api_url' => OSM_Api::URL_DEV_UK,
+        'osm_api_url_4write' => OSM_Api::URL_DEV_UK,
+        'simulation' => true,
         'osm_api_token' => null ,
         'osm_api_secret' => null ,
         'osm_api_consumer_key' => null ,

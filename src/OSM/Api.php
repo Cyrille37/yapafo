@@ -48,9 +48,9 @@ class OSM_Api {
 
 	protected $_options = [
 		// simulation is set by default to avoid (protected against) unwanted write !
-		'simulation' => true,
-		'url' => self::URL_PROD_FR,
-		'url4Write' => self::URL_PROD_UK,
+		'simulation' => null,
+		'url' => null,
+		'url4Write' => null,
 		// to store every network communications (load/save) in a file.
 		'outputFolder' => null,
 		'appName' => '', // name for the application using the API
@@ -98,6 +98,9 @@ class OSM_Api {
 
 	public function __construct(array $options = array() )
 	{
+		$this->_options['simulation'] = Config::get('simulation');
+		$this->_options['url'] = Config::get('osm_api_url');
+		$this->_options['url4Write'] = Config::get('osm_api_url_4write');
 		$this->_options['log']['level'] = Config::get('log_level');
 
 		// Check that all options exist then override defaults
@@ -334,7 +337,7 @@ class OSM_Api {
 		if ($type == self::OBJTYPE_NODE)
 			$full = false;
 
-		$relativeUrl = $type . '/' . $id . ($full ? '/full' : '' );
+		$relativeUrl = '/'.$type . '/' . $id . ($full ? '/full' : '' );
 
 		$result = $this->_httpApi($relativeUrl, null, 'GET');
 
@@ -886,7 +889,7 @@ class OSM_Api {
 	 */
 	protected function _createChangeSet($comment) {
 
-		$relativeUrl = 'changeset/create';
+		$relativeUrl = '/changeset/create';
 
 		if ($this->_options['simulation'])
 		{
@@ -906,7 +909,7 @@ class OSM_Api {
 
 	protected function _closeChangeSet($changeSet) {
 
-		$relativeUrl = 'changeset/' . $changeSet->getId() . '/close';
+		$relativeUrl = '/changeset/' . $changeSet->getId() . '/close';
 
 		if ($this->_options['simulation'])
 		{
@@ -920,7 +923,7 @@ class OSM_Api {
 
 	protected function _uploadChangeSet($changeSet) {
 
-		$relativeUrl = 'changeset/' . $changeSet->getId() . '/upload';
+		$relativeUrl = '/changeset/' . $changeSet->getId() . '/upload';
 
 		$xmlStr = $changeSet->getUploadXmlStr($this->_getUserAgent());
 
@@ -936,7 +939,7 @@ class OSM_Api {
 			$result = $this->_httpApi($relativeUrl, $xmlStr, 'POST');
 		}
 
-		$this->getLogger()->debug(__METHOD__, print_r($result, true));
+		$this->getLogger()->debug(__METHOD__.' result:{result}', ['result'=>$result]);
 	}
 
 	/**
