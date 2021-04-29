@@ -145,8 +145,8 @@ class OAuth implements IAuthProvider {
 	 * @param string $oauth_verifier Only used if a callback url is specified.
 	 * @return array Contains 'token' and 'tokenSecret'.
 	 */
-	public function requestAccessToken( $oauth_verifier=null ) {
-
+	public function requestAccessToken( $oauth_verifier=null )
+	{
 		// Required if a custom callback url is specified
 		$this->_requestOAuthVerifier = $oauth_verifier ;
 

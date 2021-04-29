@@ -2,14 +2,12 @@
 /**
  * An OAuth tool for Yapafo OSM_OAuth.
  */
-//
-// Loading Yapafo library
-//
 
 require_once('../vendor/autoload.php');
 
 use Cyrille37\OSM\Yapafo\OSM_Api ;
 use Cyrille37\OSM\Yapafo\Auth\OAuth ;
+use Cyrille37\OSM\Yapafo\Tools\Config ;
 
 //
 // Let's go !
@@ -29,22 +27,19 @@ $authAccessTokenSecret = null;
 
 if( empty($consumerKey) )
 {
-	$oauth = new OAuth($consumerKey, $consumerSecret, array(
-		// for DEV server
-		'base_url' => OAuth::BASE_URL_DEV
-	));
+	$oauth = new OAuth($consumerKey, $consumerSecret, [
+		'base_url' => Config::get('oauth_url')
+		]);
 }
 else
 {
-	$oauth = new OAuth($consumerKey, $consumerSecret, array(
-			// for DEV server
-			'base_url' => OAuth::BASE_URL_DEV
-		));
-	$osmApi = new OSM_Api(array(
-			'url' => OSM_Api::URL_DEV_UK
-		));
+	$oauth = new OAuth($consumerKey, $consumerSecret, [
+			'base_url' => Config::get('oauth_url')
+		]);
+	$osmApi = new OSM_Api([
+			'url' => Config::get('osm_api_url')
+		]);
 	$osmApi->setCredentials($oauth);
-
 
 	if (empty($authReqToken) && empty($authReqTokenSecret))
 	{

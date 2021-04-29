@@ -1,49 +1,32 @@
 <?php
 /**
- * An OAuth example for Yapafo OSM_OAuth.
+ * 
  */
-$OSM_Api_filename = __DIR__ . '/../lib/OSM/Api.php';
-if (!file_exists($OSM_Api_filename))
-{
-	echo 'ERROR, Could not find OSM/Api.php ("' . $OSM_Api_filename . '")' . "\n";
-}
-require_once($OSM_Api_filename);
+
+require_once('../vendor/autoload.php');
+
+use Cyrille37\OSM\Yapafo\OSM_Api ;
+use Cyrille37\OSM\Yapafo\Auth\OAuth ;
+use Cyrille37\OSM\Yapafo\Exceptions\HttpException;
+use Cyrille37\OSM\Yapafo\Tools\Config ;
 
 session_start();
 
-include(__DIR__ . '/secrets.php');
-$consumer_key = $AUTH_OAUTH_CONSUMER_KEY_DEV;
-$consumer_secret = $AUTH_OAUTH_CONSUMER_SECRET_DEV;
-$requestTokenUrl = OSM_Auth_OAuth::REQUEST_TOKEN_URL_DEV;
-$accessTokenUrl = OSM_Auth_OAuth::ACCESS_TOKEN_URL_DEV;
-$authorizeUrl = OSM_Auth_OAuth::AUTHORIZE_TOKEN_URL_DEV;
-
-$api_url = OSM_Api::URL_DEV_UK;
-
-$applicationName = str_replace('.php', '', basename(__FILE__));
-
-_wl('Running ' . $applicationName);
+$consumer_key = Config::get('osm_api_consumer_key');
+$consumer_secret = Config::get('osm_api_consumer_secret');
 
 //
 // Create or retreive the OSM_Api instance
 //
 if (!isset($_SESSION['api']))
 {
-	_wl('Create API instance');
-	$api = new OSM_Api(array(
-			'appName' => $applicationName, 'url' => $api_url
-		));
+	$api = new OSM_Api([
+			'url' => Config::get('osm_api_url')
+		]);
 	$api->setCredentials(
-		new OSM_Auth_OAuth($consumer_key, $consumer_secret,
-			array(
-				'requestTokenUrl' => $requestTokenUrl,
-				'accessTokenUrl' => $accessTokenUrl,
-				'authorizeUrl' => $authorizeUrl,
-				// You can set the url in the application configuration on osm.org website
-				// or specify it here.
-				'callback_url'=> 'http://localhost/dev.www/Cartographie/OSM/yapafo/examples/OAuthWebUsage.php'
-			)
-		)
+		new OAuth( $consumer_key, $consumer_secret, [
+			'base_url' => Config::get('oauth_url')
+		])
 	);
 	$_SESSION['api'] = $api;
 	$oauth = $api->getCredentials();
@@ -92,7 +75,7 @@ if (isset($_REQUEST['go']))
 			// try to get a access token
 			$oauth->requestAccessToken();
 		}
-		catch (OSM_HttpException $ex)
+		catch (HttpException $ex)
 		{
 			_wl('Could not get access. http:' . $ex->getHttpCode());
 			// if it fails, 
