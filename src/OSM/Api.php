@@ -32,7 +32,7 @@ class OSM_Api {
 	const URL_DEV_UK = 'http://api06.dev.openstreetmap.org/api/0.6';
 	//deprecated: const OSMAPI_URL_PROD_PROXY_LETTUFE = 'http://beta.letuffe.org/api/0.6';
 	const URL_PROD_FR = 'http://api.openstreetmap.fr/api/0.6';
-	const URL_PROD_UK = 'http://api.openstreetmap.org/api/0.6';
+	const URL_PROD_UK = 'https://api.openstreetmap.org/api/0.6';
 	const OBJTYPE_NODE = 'node';
 	const OBJTYPE_WAY = 'way';
 	const OBJTYPE_RELATION = 'relation';
@@ -55,7 +55,7 @@ class OSM_Api {
 		'appName' => '', // name for the application using the API
 		'log' => array(
 			'logger' => null ,
-			'level' => LogLevel::WARNING
+			'level' => LogLevel::DEBUG
 		),
 		'oapi_url' => self::OAPI_URL_FR
 	);
@@ -70,19 +70,6 @@ class OSM_Api {
 	 * @var OSM_Auth_IAuthProvider
 	 */
 	protected $_authProvider;
-	/**
-	 * array(
-	 * 	'allow_read_prefs',		// read user preferences
-	 * 	'allow_write_prefs',	// modify user preferences
-	 * 	'allow_write_diary',	// create diary entries, comments and make friends
-	 * 	'allow_write_api',		// modify the map
-	 * 	'allow_read_gpx',			// allow_read_gpx
-	 * 	'allow_write_gpx'			// upload GPS traces
-	 * )
-	 * 
-	 * @var array 
-	 */
-	protected $_cachedPermissions = null;
 
 	protected $_relations = array();
 	protected $_ways = array();
@@ -231,7 +218,7 @@ class OSM_Api {
 			default:
 				throw new OSM_Exception('Unknow howto handle http method "' . $method . '"');
 		}
-		$url .= '/' . $relativeUrl;
+		$url .= $relativeUrl;
 
 		$this->getLogger()->notice( '{method} {http_method} {url}', ['method'=>__METHOD__, 'http_method'=>$method, 'url'=>$url]);
 
@@ -243,35 +230,26 @@ class OSM_Api {
 			'Content-type: text/xml'
 		);
 
-		if ($this->_authProvider != null)
+		if( $this->_authProvider != null )
 		{
 			$this->_authProvider->addHeaders($headers, $url, $method);
 		}
 
-		if ($data == null)
-		{
-			$opts = array('http' =>
-				array(
-					'method' => $method,
-					'user_agent' => $this->_getUserAgent(),
-					'header' => /* implode("\r\n", $headers) */$headers,
-				)
-			);
-		}
-		else
+		$opts = [
+			'http' => [
+				'method' => $method,
+				'user_agent' => $this->_getUserAgent(),
+				'header' => /* implode("\r\n", $headers) */$headers,
+			]
+		];
+		if( $data != null)
 		{
 			//$postdata = http_build_query(array('data' => $data));
 			$postdata = $data;
-
-			$opts = array('http' =>
-				array(
-					'method' => $method,
-					'user_agent' => $this->_getUserAgent(),
-					'header' => /* implode("\r\n", $headers) */$headers,
-					'content' => $postdata
-				)
-			);
+			$opts['http']['content'] = $postdata ;
 		}
+
+		$this->getLogger()->debug(__METHOD__.' opts:{opts}', ['opts'=>$opts]);
 
 		$context = stream_context_create($opts);
 
@@ -687,7 +665,7 @@ class OSM_Api {
 			$this->_oapiAddMetadata($xmlQuery);
 		}
 
-		$this->getLogger->notice('{_m} url:{url} query:{query}', ['_m'=>__METHOD__,'url'=>$this->_options['oapi_url'], 'query'=>$xmlQuery]);
+		$this->getLogger()->notice('{_m} url:{url} query:{query}', ['_m'=>__METHOD__,'url'=>$this->_options['oapi_url'], 'query'=>$xmlQuery]);
 
 		$postdata = http_build_query(array('data' => $xmlQuery));
 
@@ -728,7 +706,7 @@ class OSM_Api {
 	 */
 	protected function _oapiAddMetadata(&$xmlQuery) {
 
-		$this->getLogger->debug('{_m}', ['_m'=>__METHOD__]);
+		$this->getLogger()->debug('{_m}', ['_m'=>__METHOD__]);
 
 		$x = new \SimpleXMLElement($xmlQuery);
 		$xPrints = $x->xpath('//print');
@@ -848,7 +826,7 @@ class OSM_Api {
 	 */
 	public function saveChanges($comment) {
 
-		$this->getLogger->notice('{_m} comment:"{comment}"', ['_m'=>__METHOD__, 'comment'=>$comment]);
+		$this->getLogger()->notice('{_m} comment:"{comment}"', ['_m'=>__METHOD__, 'comment'=>$comment]);
 
 		if ($this->_authProvider == null)
 		{
@@ -857,7 +835,7 @@ class OSM_Api {
 
 		if ($this->_options['simulation'])
 		{
-			$this->getLogger->notice(__METHOD__.' Simulation Mode, not saving'
+			$this->getLogger()->notice(__METHOD__.' Simulation Mode, not saving'
 				. ($this->_options['outputFolder'] != null
 				? ' but look inside folder ' . $this->_options['outputFolder']
 				: ''));
@@ -868,10 +846,10 @@ class OSM_Api {
 
 		if ($dirtyObjectsCount == 0)
 		{
-			$this->getLogger->notice(__METHOD__.' No dirty object, abort save');
+			$this->getLogger()->notice(__METHOD__.' No dirty object, abort save');
 			return false;
 		}
-		$this->getLogger->notice(__METHOD__.' Has '.$dirtyObjectsCount.' dirty objects');
+		$this->getLogger()->notice(__METHOD__.' Has '.$dirtyObjectsCount.' dirty objects');
 
 		$changeSet = $this->_createChangeSet($comment);
 
@@ -909,7 +887,7 @@ class OSM_Api {
 
 		if ($this->_options['simulation'])
 		{
-			$this->getLogger->info(__METHOD__.' Simulation Mode, set changeset id to 999');
+			$this->getLogger()->info(__METHOD__.' Simulation Mode, set changeset id to 999');
 			$result = 999;
 		}
 		else
@@ -917,7 +895,7 @@ class OSM_Api {
 			$result = $this->_httpApi($relativeUrl, ChangeSet::getCreateXmlStr($comment, $this->_getUserAgent()), 'PUT');
 		}
 
-		$this->getLogger->debug('{_m} result:{result}', ['_m'=>__METHOD__, 'result'=>$result]);
+		$this->getLogger()->debug('{_m} result:{result}', ['_m'=>__METHOD__, 'result'=>$result]);
 
 		$changeSet = new ChangeSet($result);
 		return $changeSet;
@@ -955,7 +933,7 @@ class OSM_Api {
 			$result = $this->_httpApi($relativeUrl, $xmlStr, 'POST');
 		}
 
-		$this->getLogger->debug(__METHOD__, print_r($result, true));
+		$this->getLogger()->debug(__METHOD__, print_r($result, true));
 	}
 
 	/**
@@ -1155,7 +1133,8 @@ class OSM_Api {
 
 	/**
 	 * After an authorization, client should call this method to clear permissions cache. 
-	 * @todo It's not nice to leave the client with that job. The Api should manage this case itself... But I do not find any idea...
+	 * @todo It's not nice to leave the client with that job.
+	 * The Api should manage this case itself... But I do not find any idea...
 	 */
 	public function clearCachedAuthPermissions()
 	{
@@ -1167,21 +1146,36 @@ class OSM_Api {
 	 * 
 	 * https://github.com/openstreetmap/openstreetmap-website/pull/45
 	 * 
-	 * @param bool $force
+	 * @param bool $force Default is false: reuse previous results without asking to server.
 	 */
-	public function getAuthPermissions($force = false) {
+	public function getAuthPermissions($force = false)
+	{
+		/**
+		 * array(
+		 * 	'allow_read_prefs',		// read user preferences
+		 * 	'allow_write_prefs',	// modify user preferences
+		 * 	'allow_write_diary',	// create diary entries, comments and make friends
+		 * 	'allow_write_api',		// modify the map
+		 * 	'allow_read_gpx',			// allow_read_gpx
+		 * 	'allow_write_gpx'			// upload GPS traces
+		 * )
+		 * @var array 
+		 */
+		static $cachedPermissions ;
 
-		if (!$force && $this->_cachedPermissions != null)
+		//$this->getLogger()->debug('{_m} force:{force} perms:{perms}', ['_m'=>__METHOD__, 'force'=>$force, 'perms'=>$cachedPermissions]);
+
+		if( (! $force) && ($cachedPermissions !== null) )
 		{
-			return $this->_cachedPermissions;
+			return $cachedPermissions;
 		}
 
 		$result = $this->_httpApi('/permissions');
-		$this->getLogger->debug(__METHOD__.' result:{result}', ['result'=>$result]);
 
 		/*
+			$this->getLogger()->debug(__METHOD__.' result:{result}', ['result'=>$result]);
 		  <?xml version="1.0" encoding="UTF-8"?>
-		  <osm generator="OpenStreetMap Server" version="0.6">
+		  <osm version="0.6" generator="OpenStreetMap server" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
 		  <permissions>
 		  <permission name="allow_read_prefs"/>
 		  <permission name="allow_write_prefs"/>
@@ -1194,23 +1188,13 @@ class OSM_Api {
 		$x = new \SimpleXMLElement($result);
 		$perms = $x->xpath('/osm/permissions/permission');
 
-		$this->_cachedPermissions = array();
-		foreach ($perms as $perm)
+		$cachedPermissions = [];
+		foreach( $perms as $perm )
 		{
-			$this->_cachedPermissions[] = (string) $perm['name'];
+			$cachedPermissions[] = (string) $perm['name'];
 		}
 
-		/*
-		  protected $_cachedPermissions = array(
-		  'allow_read_prefs', // read user preferences
-		  'allow_write_prefs', // modify user preferences
-		  'allow_write_diary', // create diary entries, comments and make friends
-		  'allow_write_api', // modify the map
-		  'allow_read_gpx', // allow_read_gpx
-		  'allow_write_gpx'	 // upload GPS traces
-		  );
-		 */
-		return $this->_cachedPermissions;
+		return $cachedPermissions;
 	}
 
 	/**
@@ -1269,7 +1253,7 @@ class OSM_Api {
 
 		$result = $this->_httpApi('/user/details');
 
-		$this->getLogger->debug(__METHOD__.' result:{result}', ['result'=>$result]);
+		$this->getLogger()->debug(__METHOD__.' result:{result}', ['result'=>$result]);
 
 		return UserDetails::createFromXmlString($result);
 	}
@@ -1279,7 +1263,7 @@ class OSM_Api {
 	 *
 	 * @return array
 	 */
-	public function &getUserPreferences() {
+	public function getUserPreferences() {
 
 		if ($this->_authProvider == null)
 		{
@@ -1288,7 +1272,7 @@ class OSM_Api {
 
 		$result = $this->_httpApi('/user/preferences');
 
-		$this->getLogger->debug(__METHOD__.' result:{result}', ['result'=>$result]);
+		$this->getLogger()->debug(__METHOD__.' result:{result}', ['result'=>$result]);
 
 		$prefs = array();
 
@@ -1317,7 +1301,7 @@ class OSM_Api {
 		$result = $this->_httpApi(
 			'/user/preferences/' . rawurlencode(utf8_encode($key)), rawurlencode(utf8_encode($value)), 'PUT');
 
-		$this->getLogger->debug(__METHOD__.' result:{result}', ['result'=>$result]);
+		$this->getLogger()->debug(__METHOD__.' result:{result}', ['result'=>$result]);
 	}
 
 }

@@ -7,14 +7,15 @@ use Cyrille37\OSM\Yapafo\Exceptions\HttpException ;
 /**
  * Class OSM_OAuth implement OAuth (Open Authorization)
  *
- * http://oauth.net/documentation/
- * http://tools.ietf.org/html/rfc5849
  * http://wiki.openstreetmap.org/wiki/OAuth
+ * http://oauth.net/documentation/
+ * https://oauth.net/core/1.0a/
+ * http://tools.ietf.org/html/rfc5849
  */
 class OAuth implements IAuthProvider {
 
-	const BASE_URL_PROD = 'https://www.openstreetmap.org/oauth';
-	const BASE_URL_DEV = 'https://master.apis.dev.openstreetmap.org/oauth';
+	const BASE_URL_PROD = 'https://www.openstreetmap.org';
+	const BASE_URL_DEV = 'https://master.apis.dev.openstreetmap.org';
 
 	const PROTOCOL_VERSION = '1.0';
 	const SIGNATURE_METHOD = 'HMAC-SHA1';
@@ -22,9 +23,9 @@ class OAuth implements IAuthProvider {
 
 	protected $_options = array(
 		'base_url' => self::BASE_URL_DEV,
-		'requestTokenUrl' => '/request_token',
-		'accessTokenUrl' => '/access_token',
-		'authorizeUrl' => '/authorize',
+		'requestTokenUrl' => '/oauth/request_token',
+		'accessTokenUrl' => '/oauth/access_token',
+		'authorizeUrl' => '/oauth/authorize',
 		'callback_url' => null ,
 	);
 	protected $_consKey;
@@ -44,11 +45,12 @@ class OAuth implements IAuthProvider {
 
 	public function __construct($consumerKey, $consumerSecret, $options = array()) {
 
+		/*
 		if (empty($consumerKey))
 			throw new OSM_Exception('Credential "consumerKey" must be set');
 		if (empty($consumerSecret))
 			throw new OSM_Exception('Credential "consumerSecret" must be set');
-
+		*/
 		// Check that all options exist then override defaults
 		foreach ($options as $k => $v)
 		{
@@ -59,6 +61,11 @@ class OAuth implements IAuthProvider {
 
 		$this->_consKey = $consumerKey;
 		$this->_consSec = $consumerSecret;
+	}
+
+	public function getOptions()
+	{
+		return $this->_options ;
 	}
 
 	public function setAccessToken($token, $tokenSecret) {
@@ -185,10 +192,7 @@ class OAuth implements IAuthProvider {
 			]
 		];
 
-		if ($params == null)
-		{
-		}
-		else
+		if ($params != null)
 		{
 			//$postdata = http_build_query(array('data' => $params));
 			$postdata = $params;
@@ -263,10 +267,10 @@ class OAuth implements IAuthProvider {
 		if( isset($this->_options['callback_url']))
 		{
 			$oauth['oauth_callback'] = $this->_options['callback_url'] ;
-		}
-		if( isset($this->_requestOAuthVerifier))
-		{
-			$oauth['oauth_verifier'] = $this->_requestOAuthVerifier ;
+			if( isset($this->_requestOAuthVerifier))
+			{
+				$oauth['oauth_verifier'] = $this->_requestOAuthVerifier ;
+			}
 		}
 
 		// encoding
@@ -318,8 +322,8 @@ class OAuth implements IAuthProvider {
 		return rawurlencode(utf8_encode($string));
 	}
 
-	protected function _normalizeUrl($url = null) {
-
+	protected function _normalizeUrl( $url )
+	{
 		$urlParts = parse_url($url);
 		$scheme = strtolower($urlParts['scheme']);
 		$host = strtolower($urlParts['host']);
@@ -329,7 +333,7 @@ class OAuth implements IAuthProvider {
 			$port = intval($urlParts['port']);
 
 		$retval = $scheme . '://' . $host;
-		if ($port > 0 && ($scheme === 'http' && $port !== 80) || ($scheme === 'https' && $port !== 443))
+		if ($port > 0 /*&& ($scheme === 'http' && $port !== 80) || ($scheme === 'https' && $port !== 443)*/)
 		{
 			$retval .= ':' . $port;
 		}

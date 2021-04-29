@@ -27,14 +27,14 @@ $authReqTokenSecret = isset($_REQUEST['authReqTokenSecret']) ? $_REQUEST['authRe
 $authAccessToken = null;
 $authAccessTokenSecret = null;
 
-if (!empty($consumerKey) && !empty($consumerSecret))
+if( !empty($consumerKey) && !empty($consumerSecret) )
 {
 	$oauth = new OAuth($consumerKey, $consumerSecret, array(
 			// for DEV server
-			'base_url' => OAuth::BASE_URL_DEV
+			'base_url' => OAuth::BASE_URL_PROD
 		));
 	$osmApi = new OSM_Api(array(
-			'url' => OSM_Api::URL_DEV_UK
+			'url' => OSM_Api::URL_PROD_UK
 		));
 	$osmApi->setCredentials($oauth);
 
@@ -54,6 +54,16 @@ if (!empty($consumerKey) && !empty($consumerSecret))
 		$authAccessTokenSecret = $authCredentials['tokenSecret'];
 	}
 }
+else
+{
+	$oauth = new OAuth($consumerKey, $consumerSecret, array(
+		// for DEV server
+		'base_url' => OAuth::BASE_URL_PROD
+	));
+}
+
+$oauth_options = $oauth->getOptions();
+
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
@@ -81,62 +91,63 @@ if (!empty($consumerKey) && !empty($consumerSecret))
 		<h1>OSM OAuth request access</h1>
 
 		<ol>
-			<li>Create an application credentials aka "Consumer Key" and "Consumer
+			<li>The first step is to create an application credentials aka "Consumer Key" and "Consumer
 				Secret" at
-				<a href="http://osm.org/user/[YOUR USERNAME]/oauth_clients">
-					http://osm.org/user/[YOUR USERNAME]/oauth_clients</a>.
+				<a href="<?php echo $oauth_options['base_url'] ?>/user/[YOUR USERNAME]/oauth_clients">
+				<?php echo $oauth_options['base_url'] ?>/user/[YOUR USERNAME]/oauth_clients</a>.
 			</li>
-			<li>Fill them here:
+			<li>Then fill them here:
 				<form method="POST">
-					<label for="consumerKey">Consumer Key:</label> <input
-						name="consumerKey" type="text" value="<?php echo $consumerKey; ?>"
-						size="64" /> <br /> <label for="consumerSecret">Consumer Secret:</label>
-					<input name="consumerSecret" type="text"
-								 value="<?php echo $consumerSecret; ?>" size="64" /> <br /> <input
-								 type="submit" value="Ask authorization url" />
-								 <?php
-								 if (!empty($authUrl))
-								 {
-									 ?>
+					<label for="consumerKey">Consumer Key:</label>
+					<input name="consumerKey" type="text" value="<?php echo $consumerKey; ?>" size="64" />
+					<br/>
+					<label for="consumerSecret">Consumer Secret:</label>
+					<input name="consumerSecret" type="text" value="<?php echo $consumerSecret; ?>" size="64" />
+					<br /> <input type="submit" value="Ask authorization url" />
+					<?php if (!empty($authUrl)) { ?>
+						<!-- Got an Authorization result -->
 						<p>
-							Let's go to <a href="<?php echo $authUrl ?>"><?php echo $authUrl ?></a>
+							Let's go to <a href="<?php echo $authUrl ?>" target="_blank"><?php echo $authUrl ?></a>
 							to Accept the application authorization request.<br />
 							Then come back here to process the next step.
 						</p>
-						<?php
-					}
-					?>
+					<?php } ?>
 				</form>
+				<p>
+					
+				</p>
 			</li>
 			<li>
-				<form method="POST">
-					The Access Token will be used by the application to use your account
-					for her self. <br />
-					<input type="hidden" name="consumerKey" value="<?php echo $consumerKey; ?>" size="64" />
-					<input type="hidden" name="consumerSecret" value="<?php echo $consumerSecret; ?>" size="64" />
-					<input type="hidden" name="authReqToken" value="<?php echo $authReqToken; ?>" />
-					<input type="hidden" name="authReqTokenSecret" value="<?php echo $authReqTokenSecret; ?>" />
-					<input type="submit" value="Get access token" />
-				</form> <?php
-					if (!empty($authAccessToken))
-					{
-						?>
+				<?php if( empty($authAccessToken) ) { ?>
+					<!-- Need to ask a access token -->
+					<form method="POST">
+						The Access Token will be used by the application to use your account
+						for her self. <br />
+						<input type="hidden" name="consumerKey" value="<?php echo $consumerKey; ?>" size="64" />
+						<input type="hidden" name="consumerSecret" value="<?php echo $consumerSecret; ?>" size="64" />
+						<input type="hidden" name="authReqToken" value="<?php echo $authReqToken; ?>" />
+						<input type="hidden" name="authReqTokenSecret" value="<?php echo $authReqTokenSecret; ?>" />
+						<input type="submit" value="Get access token" />
+					</form>
+				<?php } else { ?>
+					<!-- Got an access token -->
 					<p>
 						<label for="authAccessToken">Access Token:</label>
 						<input name="authAccessToken" type="text" readonly="readonly"
-							value="<?php echo $authAccessToken; ?>" size="64" /> <br />
+							value="<?php echo $authAccessToken; ?>" size="64" />
+						<br />
 						<label for="authAccessTokenSecret">Access Token Secret:</label>
 						<input name="authAccessTokenSecret" type="text" readonly="readonly"
 							value="<?php echo $authAccessTokenSecret; ?>" size="64" />
 					</p>
-
+					<p>You given to this token those capabilities:</p>
 					<ul>
-						<li>Allowed to read user preferences: <?php echo ($osmApi->isAllowedToReadPrefs() ? '<i>allowed</i>' : '<b>forbidden</b>'); ?></li>
-						<li>Allowed to write user preferences: <?php echo ($osmApi->isAllowedToWritePrefs() ? '<i>allowed</i>' : '<b>forbidden</b>'); ?></li>
-						<li>Allowed to access (read/write) user diary: <?php echo ($osmApi->isAllowedToWriteDiary() ? '<i>allowed</i>' : '<b>forbidden</b>'); ?></li>
-						<li>Allowed to write api (change the map): <?php echo ($osmApi->isAllowedToWriteApi() ? '<i>allowed</i>' : '<b>forbidden</b>'); ?></li>
-						<li>Allowed to load user gpx traces: <?php echo ($osmApi->isAllowedToReadGpx() ? '<i>allowed</i>' : '<b>forbidden</b>'); ?></li>
-						<li>Allowed to upload user gpx traces: <?php echo ($osmApi->isAllowedToWriteGpx() ? '<i>allowed</i>' : '<b>forbidden</b>'); ?></li>
+						<li>Read user preferences: <b><?php echo ($osmApi->isAllowedToReadPrefs(true) ? 'allowed' : 'forbidden'); ?></b></li>
+						<li>Write user preferences: <b><?php echo ($osmApi->isAllowedToWritePrefs() ? 'allowed' : 'forbidden'); ?></b></li>
+						<li>Access (read/write) user diary: <b><?php echo ($osmApi->isAllowedToWriteDiary() ? 'allowed' : 'forbidden'); ?></b></li>
+						<li>Write api (change the map): <b><?php echo ($osmApi->isAllowedToWriteApi() ? 'allowed' : 'forbidden'); ?></b></li>
+						<li>Load user gpx traces: <b><?php echo ($osmApi->isAllowedToReadGpx() ? 'allowed' : 'forbidden'); ?></b></li>
+						<li>Upload user gpx traces: <b><?php echo ($osmApi->isAllowedToWriteGpx() ? 'allowed' : 'forbidden'); ?></b></li>
 					</ul>
 					<?php
 				}

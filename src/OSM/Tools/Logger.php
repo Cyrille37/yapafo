@@ -43,25 +43,6 @@ class Logger extends AbstractLogger
 		$this->logLevel = $this->computeLogLevel($logLevel);
 	}
 
-	protected function interpolate($message, array $context = array())
-	{
-		// build a replacement array with braces around the context keys
-		$replace = array();
-		foreach ($context as $key => $val) {
-			// check that the value can be cast to string
-			if( ! is_array($val) && (!is_object($val) || method_exists($val, '__toString')) )
-			{
-			}
-			else
-			{
-				$val = print_r($val,true);
-			}
-			$replace['{' . $key . '}'] = $val;
-		}
-		// interpolate replacement values into the message and return
-		return strtr($message, $replace);
-	}
-
 	/**
 	 * Undocumented function
 	 *
@@ -111,6 +92,40 @@ class Logger extends AbstractLogger
 		if( $logLevel > $this->logLevel )
 			return ;
 		$msg = $this->interpolate($message, $context);
-		fwrite(STDERR, '['.strtoupper($level).'] '.$msg."\n");
+		if( defined('STDERR'))
+			fwrite(STDERR, '['.strtoupper($level).'] '.$msg."\n");
+		else
+			error_log( '['.strtoupper($level).'] '.$msg );
+	}
+
+	protected function interpolate($message, array $context = array())
+	{
+		// build a replacement array with braces around the context keys
+		$replace = array();
+		foreach ($context as $key => $val)
+		{
+			switch( gettype($val) )
+			{
+				case 'boolean':
+					$val = $val ? 'True':'False';
+					break;
+				case 'NULL':
+					$val = 'Null';
+					break;
+				default:
+					// check that the value can be cast to string
+					if( ! is_array($val) && (!is_object($val) || method_exists($val, '__toString')) )
+					{
+					}
+					else
+					{
+						$val = print_r($val,true);
+					}
+
+			}
+			$replace['{' . $key . '}'] = $val;
+		}
+		// interpolate replacement values into the message and return
+		return strtr($message, $replace);
 	}
 }
