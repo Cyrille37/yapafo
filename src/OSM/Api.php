@@ -10,6 +10,7 @@ use Cyrille37\OSM\Yapafo\Objects\Node;
 use Cyrille37\OSM\Yapafo\Objects\Relation;
 use Cyrille37\OSM\Yapafo\Objects\UserDetails;
 use Cyrille37\OSM\Yapafo\Objects\Way;
+use Cyrille37\OSM\Yapafo\Tools\Config;
 use Cyrille37\OSM\Yapafo\Tools\Logger;
 use Psr\Log\LogLevel;
 
@@ -45,7 +46,7 @@ class OSM_Api {
 	//const OAPI_URL_LETUFFE = 'http://overpassapi.letuffe.org/api/interpreter';
 	const OAPI_URL_DE = 'http://www.overpass-api.de/api/interpreter';
 
-	protected $_options = array(
+	protected $_options = [
 		// simulation is set by default to avoid (protected against) unwanted write !
 		'simulation' => true,
 		'url' => self::URL_PROD_FR,
@@ -53,12 +54,12 @@ class OSM_Api {
 		// to store every network communications (load/save) in a file.
 		'outputFolder' => null,
 		'appName' => '', // name for the application using the API
-		'log' => array(
+		'log' => [
 			'logger' => null ,
 			'level' => LogLevel::DEBUG
-		),
+		],
 		'oapi_url' => self::OAPI_URL_FR
-	);
+	];
 	protected $_stats = array(
 		'requestCount' => 0,
 		'loadedBytes' => 0
@@ -97,6 +98,8 @@ class OSM_Api {
 
 	public function __construct(array $options = array() )
 	{
+		$this->_options['log']['level'] = Config::get('log_level');
+
 		// Check that all options exist then override defaults
 		foreach ($options as $k => $v)
 		{

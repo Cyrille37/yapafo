@@ -3,7 +3,7 @@
  * An OAuth tool for Yapafo OSM_OAuth.
  */
 
-require_once('../vendor/autoload.php');
+require_once( __DIR__.'/../vendor/autoload.php');
 
 use Cyrille37\OSM\Yapafo\OSM_Api ;
 use Cyrille37\OSM\Yapafo\Auth\OAuth ;

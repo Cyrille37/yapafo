@@ -4,6 +4,7 @@ namespace Cyrille37\OSM\Yapafo\Tools ;
 use Cyrille37\OSM\Yapafo\Auth\OAuth;
 use Cyrille37\OSM\Yapafo\OSM_Api ;
 use Dotenv\Dotenv ;
+use Psr\Log\LogLevel;
 
 /**
  * Singleton to read configuration from .env.
@@ -17,6 +18,7 @@ class Config
         'osm_api_secret' => null ,
         'osm_api_consumer_key' => null ,
         'osm_api_consumer_secret' => null ,
+        'log_level' => LogLevel::NOTICE,
     ];
 
     protected function __construct( $dir )
