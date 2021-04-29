@@ -882,7 +882,17 @@ class OSM_Api {
 
 		$this->_closeChangeSet($changeSet);
 
+		// issue #17 ??
+		$this->_clearObjects();
+
 		return true;
+	}
+
+	protected function _clearObjects()
+	{
+		$this->_relations = null ;
+		$this->_ways = null ;
+		$this->_nodes = null ;
 	}
 
 	/**
