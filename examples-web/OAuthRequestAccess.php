@@ -27,14 +27,21 @@ $authReqTokenSecret = isset($_REQUEST['authReqTokenSecret']) ? $_REQUEST['authRe
 $authAccessToken = null;
 $authAccessTokenSecret = null;
 
-if( !empty($consumerKey) && !empty($consumerSecret) )
+if( empty($consumerKey) )
+{
+	$oauth = new OAuth($consumerKey, $consumerSecret, array(
+		// for DEV server
+		'base_url' => OAuth::BASE_URL_DEV
+	));
+}
+else
 {
 	$oauth = new OAuth($consumerKey, $consumerSecret, array(
 			// for DEV server
-			'base_url' => OAuth::BASE_URL_PROD
+			'base_url' => OAuth::BASE_URL_DEV
 		));
 	$osmApi = new OSM_Api(array(
-			'url' => OSM_Api::URL_PROD_UK
+			'url' => OSM_Api::URL_DEV_UK
 		));
 	$osmApi->setCredentials($oauth);
 
@@ -53,13 +60,6 @@ if( !empty($consumerKey) && !empty($consumerSecret) )
 		$authAccessToken = $authCredentials['token'];
 		$authAccessTokenSecret = $authCredentials['tokenSecret'];
 	}
-}
-else
-{
-	$oauth = new OAuth($consumerKey, $consumerSecret, array(
-		// for DEV server
-		'base_url' => OAuth::BASE_URL_PROD
-	));
 }
 
 $oauth_options = $oauth->getOptions();
@@ -142,12 +142,13 @@ $oauth_options = $oauth->getOptions();
 					</p>
 					<p>You given to this token those capabilities:</p>
 					<ul>
-						<li>Read user preferences: <b><?php echo ($osmApi->isAllowedToReadPrefs(true) ? 'allowed' : 'forbidden'); ?></b></li>
-						<li>Write user preferences: <b><?php echo ($osmApi->isAllowedToWritePrefs() ? 'allowed' : 'forbidden'); ?></b></li>
-						<li>Access (read/write) user diary: <b><?php echo ($osmApi->isAllowedToWriteDiary() ? 'allowed' : 'forbidden'); ?></b></li>
-						<li>Write api (change the map): <b><?php echo ($osmApi->isAllowedToWriteApi() ? 'allowed' : 'forbidden'); ?></b></li>
-						<li>Load user gpx traces: <b><?php echo ($osmApi->isAllowedToReadGpx() ? 'allowed' : 'forbidden'); ?></b></li>
-						<li>Upload user gpx traces: <b><?php echo ($osmApi->isAllowedToWriteGpx() ? 'allowed' : 'forbidden'); ?></b></li>
+						<li>Read user preferences: <b><?php echo ($osmApi->isAllowedTo(OSM_Api::PERMS_READ_PREFS, true) ? 'allowed' : 'forbidden'); ?></b></li>
+						<li>Write user preferences: <b><?php echo ($osmApi->isAllowedTo(OSM_Api::PERMS_WRITE_PREFS) ? 'allowed' : 'forbidden'); ?></b></li>
+						<li>Access write user diary: <b><?php echo ($osmApi->isAllowedTo(OSM_Api::PERMS_WRITE_DIARY) ? 'allowed' : 'forbidden'); ?></b></li>
+						<li>Write api (change the map): <b><?php echo ($osmApi->isAllowedTo(OSM_Api::PERMS_WRITE_API) ? 'allowed' : 'forbidden'); ?></b></li>
+						<li>Load user gpx traces: <b><?php echo ($osmApi->isAllowedTo(OSM_Api::PERMS_READ_GPX) ? 'allowed' : 'forbidden'); ?></b></li>
+						<li>Upload user gpx traces: <b><?php echo ($osmApi->isAllowedTo(OSM_Api::PERMS_WRITE_GPX) ? 'allowed' : 'forbidden'); ?></b></li>
+						<li>Modify user map notes: <b><?php echo ($osmApi->isAllowedTo(OSM_Api::PERMS_WRITE_NOTE) ? 'allowed' : 'forbidden'); ?></b></li>
 					</ul>
 					<?php
 				}

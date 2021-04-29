@@ -29,7 +29,7 @@ class OSM_Api {
 
 	const VERSION = '0.3';
 	const USER_AGENT = 'http://yapafo.net';
-	const URL_DEV_UK = 'http://api06.dev.openstreetmap.org/api/0.6';
+	const URL_DEV_UK = 'https://master.apis.dev.openstreetmap.org/api/0.6';
 	//deprecated: const OSMAPI_URL_PROD_PROXY_LETTUFE = 'http://beta.letuffe.org/api/0.6';
 	const URL_PROD_FR = 'http://api.openstreetmap.fr/api/0.6';
 	const URL_PROD_UK = 'https://api.openstreetmap.org/api/0.6';
@@ -1156,8 +1156,9 @@ class OSM_Api {
 		 * 	'allow_write_prefs',	// modify user preferences
 		 * 	'allow_write_diary',	// create diary entries, comments and make friends
 		 * 	'allow_write_api',		// modify the map
-		 * 	'allow_read_gpx',			// allow_read_gpx
-		 * 	'allow_write_gpx'			// upload GPS traces
+		 * 	'allow_read_gpx',		// allow_read_gpx
+		* 	'allow_write_gpx'		// upload GPS traces
+		 *  'allow_write_notes'		// modify notes
 		 * )
 		 * @var array 
 		 */
@@ -1173,16 +1174,18 @@ class OSM_Api {
 		$result = $this->_httpApi('/permissions');
 
 		/*
-			$this->getLogger()->debug(__METHOD__.' result:{result}', ['result'=>$result]);
-		  <?xml version="1.0" encoding="UTF-8"?>
-		  <osm version="0.6" generator="OpenStreetMap server" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+		$this->getLogger()->debug(__METHOD__.' result:{result}', ['result'=>$result]);
+		<osm version="0.6" generator="OpenStreetMap server" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
 		  <permissions>
-		  <permission name="allow_read_prefs"/>
-		  <permission name="allow_write_prefs"/>
-		  <permission name="allow_write_api"/>
-		  <permission name="allow_read_gpx"/>
+			<permission name="allow_read_prefs"/>
+			<permission name="allow_write_prefs"/>
+			<permission name="allow_write_diary"/>
+			<permission name="allow_write_api"/>
+			<permission name="allow_read_gpx"/>
+			<permission name="allow_write_gpx"/>
+			<permission name="allow_write_notes"/>
 		  </permissions>
-		  </osm>
+		</osm>
 		 */
 
 		$x = new \SimpleXMLElement($result);
@@ -1197,46 +1200,20 @@ class OSM_Api {
 		return $cachedPermissions;
 	}
 
+	const PERMS_READ_PREFS = 'allow_read_prefs';
+	const PERMS_WRITE_PREFS = 'allow_write_prefs';
+	const PERMS_WRITE_DIARY = 'allow_write_diary' ;
+	const PERMS_WRITE_API = 'allow_write_api' ;
+	const PERMS_READ_GPX = 'allow_read_gpx' ;
+	const PERMS_WRITE_GPX = 'allow_write_gpx' ;
+	const PERMS_WRITE_NOTE = 'allow_write_notes' ;
+
 	/**
 	 * @return bool allow_read_prefs
 	 */
-	public function isAllowedToReadPrefs() {
-		return in_array('allow_read_prefs', $this->getAuthPermissions());
-	}
-
-	/**
-	 * @return bool allow_write_prefs
-	 */
-	public function isAllowedToWritePrefs() {
-		return in_array('allow_write_prefs', $this->getAuthPermissions());
-	}
-
-	/**
-	 * @return bool allow_write_diary
-	 */
-	public function isAllowedToWriteDiary() {
-		return in_array('allow_write_diary', $this->getAuthPermissions());
-	}
-
-	/**
-	 * @return bool allow_write_api
-	 */
-	public function isAllowedToWriteApi() {
-		return in_array('allow_write_api', $this->getAuthPermissions());
-	}
-
-	/**
-	 * @return bool allow_read_gpx
-	 */
-	public function isAllowedToReadGpx() {
-		return in_array('allow_read_gpx', $this->getAuthPermissions());
-	}
-
-	/**
-	 * @return bool allow_write_gpx
-	 */
-	public function isAllowedToWriteGpx() {
-		return in_array('allow_write_gpx', $this->getAuthPermissions());
+	public function isAllowedTo( $perms, $force=false )
+	{
+		return in_array( $perms, $this->getAuthPermissions($force) );
 	}
 
 	/**

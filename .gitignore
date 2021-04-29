@@ -2,17 +2,21 @@
 # ignore tests generated files
 #
 
+.env
+
 en_vrac
+tests.old
+
+# composer
+
+/vendor/
 
 # Netbeans project stuff:
 
-nbproject
+/nbproject/
 
 # Eclipse project stuff:
 
-.settings
-.buildpath
-.project
-/nbproject/private/
-
-/vendor/
+/.settings/
+/.buildpath
+/.project
