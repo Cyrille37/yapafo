@@ -1,6 +1,7 @@
 <?php
 namespace Cyrille37\OSM\Yapafo\Objects ;
 
+use Cyrille37\OSM\Tools\Polygon;
 use Cyrille37\OSM\Yapafo\Exceptions\Exception as OSM_Exception ;
 use Cyrille37\OSM\Yapafo\OSM_Api;
 use Cyrille37\OSM\Yapafo\Tools\Logger;
@@ -12,6 +13,11 @@ use Cyrille37\OSM\Yapafo\Tools\Logger;
  */
 class Relation extends OSM_Object implements IXml
 {
+	const ROLE_OUTER = 'outer';
+
+	/**
+	 * @var Member[]
+	 */
 	protected $_members = array();
 
 	public static function fromXmlObj(\SimpleXMLElement $xmlObj)
@@ -95,9 +101,10 @@ class Relation extends OSM_Object implements IXml
 
 		switch ($memberType)
 		{
+			case OSM_Object::OBJTYPE_RELATION:
 			case OSM_Object::OBJTYPE_WAY:
 			case OSM_Object::OBJTYPE_NODE:
-				return true;
+					return true;
 		}
 		return false;
 	}
@@ -150,7 +157,7 @@ class Relation extends OSM_Object implements IXml
 	 * Find members of a certain type.
 	 * 
 	 * @param string $type
-	 * @return OSM_Objects_Member[]
+	 * @return Member[]
 	 * @throws {@link InvalidArgumentException} if invalid type.
 	 */
 	public function &findMembersByType($type) {
@@ -172,7 +179,7 @@ class Relation extends OSM_Object implements IXml
 	 * 
 	 * @param string $type
 	 * @param string $role 
-	 * @return OSM_Objects_Member[]
+	 * @return Member[]
 	 * @throws {@link InvalidArgumentException} if invalid type.
 	 */
 	public function &findMembersByTypeAndRole($type, $role) {
@@ -192,7 +199,7 @@ class Relation extends OSM_Object implements IXml
 	 *
 	 * @param string $memberType
 	 * @param string $nodeId
-	 * @return OSM_Objects_Member 
+	 * @return Member 
 	 */
 	public function getMember($memberType, $refId) {
 
@@ -207,7 +214,7 @@ class Relation extends OSM_Object implements IXml
 	/**
 	 *
 	 * @param string $nodeId
-	 * @return OSM_Objects_Member 
+	 * @return Member
 	 */
 	public function getMemberNode($nodeId) {
 
@@ -304,4 +311,26 @@ class Relation extends OSM_Object implements IXml
 		$this->setDirty();
 	}
 
+	/**
+	 * @return Polygon
+	 */
+	public function getPolygon( OSM_Api $osmApi )
+	{
+		$poly = new Polygon();
+		foreach( $this->findMembersByTypeAndRole(OSM_Object::OBJTYPE_WAY, self::ROLE_OUTER) as $key => $member )
+		{
+			$way = $osmApi->getWay($member->getRef(),true);
+			foreach( $way->getNodesRefs() as $nodeRef )
+			{
+				$node = $osmApi->getNode($nodeRef);
+				$poly->addv( $node->getLat(), $node->getLon() );
+			}
+		}
+		return $poly ;
+	}
+
+	public function getGravityCenter( OSM_Api $osmApi )
+	{
+		return $this->getPolygon( $osmApi )->getGravityCenter();
+	}
 }

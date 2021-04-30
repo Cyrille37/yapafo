@@ -3,11 +3,27 @@ namespace Cyrille37\OSM\Yapafo\Tools ;
 
 use Cyrille37\OSM\Yapafo\Objects\OSM_Object;
 use Cyrille37\OSM\Yapafo\OSM_Api;
+use Cyrille37\OSM\Yapafo\Exceptions\Exception as OSM_Exception ;
+use Cyrille37\OSM\Yapafo\Objects\Way;
 
 class OsmXmlToCsv
 {
-    public static function toCsv( OSM_Api $osmApi, $fp )
+    public static function toCsv( OSM_Api $osmApi, $fp, $options=[] )
     {
+
+        $opts = [
+            'ways_gravitycenter' => false,
+            'relations_gravitycenter' => false
+        ];
+		// Check that all options exists then override defaults
+		foreach ($options as $k => $v)
+		{
+			if (!array_key_exists($k, $opts))
+				throw new OSM_Exception('Unknow option "' . $k . '"');
+			$opts[$k] = $v;
+		}
+
+        // Prefill headers, just for ordering columns
         $headers = ['osm_type','id','lat','lon','version','changeset'];
         $rows = [];
         /**
@@ -32,6 +48,28 @@ class OsmXmlToCsv
                 }
                 $row[$t->getKey()] = $t->getValue() ;
             }
+
+            switch( $obj->getObjectType() )
+            {
+                case OSM_Object::OBJTYPE_WAY:
+                    if( $opts['ways_gravitycenter'])
+                    {
+                        $latLng = ((object)$obj)->getGravityCenter( $osmApi );
+                        $row['lat'] = $latLng[0];
+                        $row['lon'] = $latLng[1];
+                    }
+                    break;
+
+                case OSM_Object::OBJTYPE_RELATION:
+                    if( $opts['relations_gravitycenter'])
+                    {
+                        $latLng = ((object)$obj)->getGravityCenter( $osmApi );
+                        $row['lat'] = $latLng[0];
+                        $row['lon'] = $latLng[1];
+                    }
+                    break;
+            }
+
             $rows[] = $row ;
         }
 

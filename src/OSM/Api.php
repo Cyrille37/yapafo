@@ -651,6 +651,49 @@ class OSM_Api {
 		return $this->getObject($type, $id, $full);
 	}
 
+	public function queryOApiQL($qlQuery)
+	{
+		$this->getLogger()->debug('{_m} url:{url} query:{query}', ['_m'=>__METHOD__, 'qlQuery'=>$qlQuery]);
+
+		$url = $this->_options['oapi_url'];
+		$method = 'POST';
+		$postdata = http_build_query(array('data' => $qlQuery));
+
+		$opts = ['http' =>
+			[
+				'method' => $method,
+				'user_agent' => $this->_getUserAgent(),
+				'header' => 'Content-type: application/x-www-form-urlencoded',
+				'content' => $postdata
+			]
+		];
+		$context = stream_context_create($opts);
+
+		$this->getLogger()->notice( '{method} {http_method} {url}', ['method'=>__METHOD__, 'http_method'=>$method, 'url'=>$url]);
+		$this->getLogger()->debug('{_m} opts:{opts}', ['opts'=>$opts,'_m'=>__METHOD__]);
+
+		$this->_stats['requestCount']++;
+
+		$result = file_get_contents($url, false, $context);
+		if ($result === false)
+		{
+			$e = error_get_last();
+			if (isset($http_response_header))
+			{
+				throw new HttpException($http_response_header);
+			}
+			else
+			{
+				throw new HttpException($e['message']);
+			}
+		}
+
+		$this->_stats['loadedBytes'] += strlen($result);
+
+		$this->createObjectsfromXml($result);
+
+	}
+
 	/**
 	 * Retreive objects with the Overpass-Api and fill objects collection from result.
 	 *

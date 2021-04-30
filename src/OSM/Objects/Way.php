@@ -2,6 +2,8 @@
 namespace Cyrille37\OSM\Yapafo\Objects ;
 
 use Cyrille37\OSM\Yapafo\Exceptions\Exception as OSM_Exception ;
+use Cyrille37\OSM\Tools\Polygon ;
+use Cyrille37\OSM\Yapafo\OSM_Api;
 
 class Way extends OSM_Object implements IXml
 {
@@ -132,4 +134,22 @@ class Way extends OSM_Object implements IXml
 		return( $this->getFirstNodeRef() == $this->getLastNodeRef() );
 	}
 
+	/**
+	 * @return Polygon
+	 */
+	public function getPolygon( OSM_Api $osmApi )
+	{
+		$poly = new Polygon();
+		foreach( $this->_nodeRefs as $id )
+		{
+			$node = $osmApi->getNode($id);
+			$poly->addv( $node->getLat(), $node->getLon() );
+		}
+		return $poly ;
+	}
+
+	public function getGravityCenter( OSM_Api $osmApi )
+	{
+		return $this->getPolygon( $osmApi )->getGravityCenter();
+	}
 }

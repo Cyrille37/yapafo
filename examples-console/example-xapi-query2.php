@@ -11,7 +11,7 @@ $osmapi = new OSM_Api([
     //'log'=>['level'=>LogLevel::NOTICE]
 ]);
 
-$query = '*[place=*][name=Artins]' ;
+$query = '*[place=*][name=Artins][@meta]' ;
 //$query = 'node[amenity=hospital][bbox=-6,50,2,61]';
 //$query = '*[landuse=residential][residential=halting_site]' ;
 
