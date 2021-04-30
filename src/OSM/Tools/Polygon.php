@@ -1,5 +1,5 @@
 <?php
-namespace OSM\Tools;
+namespace Cyrille37\OSM\Tools;
 
 /* ------------------------------------------------------------------------------
  * * File:		polygon.php

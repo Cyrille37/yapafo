@@ -5,7 +5,7 @@
  * and open the template in the editor.
  */
 
-namespace OSM\Tools;
+namespace Cyrille37\OSM\Tools;
 
 /**
  * Description of ShapeFileRecord

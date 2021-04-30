@@ -51,7 +51,7 @@
 ** 1.6  15/05/2010      No change to this file
 */
 
-namespace OSM\Tools;
+namespace Cyrille37\OSM\Tools;
 
 class Segment
 {
