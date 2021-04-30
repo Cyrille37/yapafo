@@ -35,9 +35,6 @@ class OSM_Api {
 	//deprecated: const OSMAPI_URL_PROD_PROXY_LETTUFE = 'http://beta.letuffe.org/api/0.6';
 	const URL_PROD_FR = 'http://api.openstreetmap.fr/api/0.6';
 	const URL_PROD_UK = 'https://api.openstreetmap.org/api/0.6';
-	const OBJTYPE_NODE = 'node';
-	const OBJTYPE_WAY = 'way';
-	const OBJTYPE_RELATION = 'relation';
 
 	/**
 	 * Query form: http://api.openstreetmap.fr/query_form.html
@@ -113,7 +110,6 @@ class OSM_Api {
 		$this->_options['oapi_url'] = Config::get('oapi_url');
 		$this->_options['xapi_url'] = Config::get('xapi_url');
 		$this->_options['log']['level'] = Config::get('log_level');
-
 
 		// Check that all options exist then override defaults
 		foreach ($options as $k => $v)
@@ -313,17 +309,17 @@ class OSM_Api {
 
 		switch ($type)
 		{
-			case self::OBJTYPE_RELATION:
+			case OSM_Object::OBJTYPE_RELATION:
 				if (!$full && array_key_exists($id, $this->_relations))
 					return $this->_relations[$id];
 				break;
 
-			case self::OBJTYPE_WAY:
+			case OSM_Object::OBJTYPE_WAY:
 				if (!$full && array_key_exists($id, $this->_ways))
 					return $this->_ways[$id];
 				break;
 
-			case self::OBJTYPE_NODE:
+			case OSM_Object::OBJTYPE_NODE:
 				if (!$full && array_key_exists($id, $this->_nodes))
 					return $this->_nodes[$id];
 				break;
@@ -334,7 +330,7 @@ class OSM_Api {
 		}
 
 		// Query "full" on a "node" will cause a 404 not found
-		if ($type == self::OBJTYPE_NODE)
+		if ($type == OSM_Object::OBJTYPE_NODE)
 			$full = false;
 
 		$relativeUrl = '/'.$type . '/' . $id . ($full ? '/full' : '' );
@@ -348,15 +344,15 @@ class OSM_Api {
 
 		switch ($type)
 		{
-			case self::OBJTYPE_RELATION:
+			case OSM_Object::OBJTYPE_RELATION:
 				return $this->_relations[$id];
 				break;
 
-			case self::OBJTYPE_WAY:
+			case OSM_Object::OBJTYPE_WAY:
 				return $this->_ways[$id];
 				break;
 
-			case self::OBJTYPE_NODE:
+			case OSM_Object::OBJTYPE_NODE:
 				return $this->_nodes[$id];
 				break;
 		}
@@ -371,7 +367,7 @@ class OSM_Api {
 	 * @return Node
 	 */
 	public function getNode($id) {
-		return $this->getObject(self::OBJTYPE_NODE, $id);
+		return $this->getObject(OSM_Object::OBJTYPE_NODE, $id);
 	}
 
 	/**
@@ -384,7 +380,7 @@ class OSM_Api {
 	 * @return Way
 	 */
 	public function getWay($id, $full = false) {
-		return $this->getObject(self::OBJTYPE_WAY, $id, $full);
+		return $this->getObject(OSM_Object::OBJTYPE_WAY, $id, $full);
 	}
 
 	/**
@@ -397,7 +393,7 @@ class OSM_Api {
 	 * @return Relation
 	 */
 	public function getRelation($id, $full = false) {
-		return $this->getObject(self::OBJTYPE_RELATION, $id, $full);
+		return $this->getObject(OSM_Object::OBJTYPE_RELATION, $id, $full);
 	}
 
 	public function loadOSMFile( $osmFilename )
@@ -442,17 +438,17 @@ class OSM_Api {
 			$this->getLogger()->debug('{_m} type:{type}', ['_m'=>__METHOD__,'type'=>$obj->getName()]);
 			switch ($obj->getName())
 			{
-				case self::OBJTYPE_RELATION :
+				case OSM_Object::OBJTYPE_RELATION :
 					$r = Relation::fromXmlObj($obj);
 					$this->_relations[$r->getId()] = $r;
 					break;
 
-				case self::OBJTYPE_WAY :
+				case OSM_Object::OBJTYPE_WAY :
 					$w = Way::fromXmlObj($obj);
 					$this->_ways[$w->getId()] = $w;
 					break;
 
-				case self::OBJTYPE_NODE :
+				case OSM_Object::OBJTYPE_NODE :
 					$n = Node::fromXmlObj($obj);
 					$this->_nodes[$n->getId()] = $n;
 					break;
@@ -472,17 +468,17 @@ class OSM_Api {
 
 		switch ($type)
 		{
-			case self::OBJTYPE_RELATION:
+			case OSM_Object::OBJTYPE_RELATION:
 				if (array_key_exists($id, $this->_relations))
 					return true;
 				break;
 
-			case self::OBJTYPE_WAY:
+			case OSM_Object::OBJTYPE_WAY:
 				if (array_key_exists($id, $this->_ways))
 					return true;
 				break;
 
-			case self::OBJTYPE_NODE:
+			case OSM_Object::OBJTYPE_NODE:
 				if (array_key_exists($id, $this->_nodes))
 					return true;
 				break;
@@ -494,20 +490,20 @@ class OSM_Api {
 	}
 
 	public function hasNode($id) {
-		return $this->hasObject(self::OBJTYPE_NODE, $id);
+		return $this->hasObject(OSM_Object::OBJTYPE_NODE, $id);
 	}
 
 	public function hasWay($id) {
-		return $this->hasObject(self::OBJTYPE_WAY, $id);
+		return $this->hasObject(OSM_Object::OBJTYPE_WAY, $id);
 	}
 
 	public function hasRelation($id) {
-		return $this->hasObject(self::OBJTYPE_RELATION, $id);
+		return $this->hasObject(OSM_Object::OBJTYPE_RELATION, $id);
 	}
 
 	/**
 	 * Returns all loaded objects.
-	 * @return Object[] List of objects
+	 * @return OSM_Object[] List of objects
 	 */
 	public function &getObjects() {
 
@@ -614,17 +610,17 @@ class OSM_Api {
 
 		switch ($type)
 		{
-			case self::OBJTYPE_RELATION:
+			case OSM_Object::OBJTYPE_RELATION:
 				if (array_key_exists($id, $this->_relations))
 					unset($this->_relations[$id]);
 				break;
 
-			case self::OBJTYPE_WAY:
+			case OSM_Object::OBJTYPE_WAY:
 				if (array_key_exists($id, $this->_ways))
 					unset($this->_ways[$id]);
 				break;
 
-			case self::OBJTYPE_NODE:
+			case OSM_Object::OBJTYPE_NODE:
 				if (array_key_exists($id, $this->_nodes))
 					unset($this->_nodes[$id]);
 				break;
@@ -731,9 +727,13 @@ class OSM_Api {
 	}
 
 	/**
-	 * Documentation:
-	 * - https://wiki.openstreetmap.org/wiki/Xapi
-	 *
+	 * Querying a XAPI instance.
+	 * For each matching relation|way the way|nodes referenced by that relation|way are also returned.
+	 * 
+	 * - API documentation: https://wiki.openstreetmap.org/wiki/Xapi
+	 * - Some xapi implementations differ from the specification.
+	 * - Add "[@meta]" to query if you want metadata (version, timestamp, changeset, user).
+	 * 
 	 * @param string $query
 	 * @return void
 	 */
@@ -1092,7 +1092,7 @@ class OSM_Api {
 	 */
 	public function getRelationWaysOrdered(Relation $relation) {
 
-		$membersWays = $relation->findMembersByType(self::OBJTYPE_WAY);
+		$membersWays = $relation->findMembersByType(OSM_Object::OBJTYPE_WAY);
 
 		$w1 = $membersWays[0];
 		if (!array_key_exists($w1->getRef(), $this->_ways))

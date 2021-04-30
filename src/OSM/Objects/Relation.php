@@ -95,8 +95,8 @@ class Relation extends OSM_Object implements IXml
 
 		switch ($memberType)
 		{
-			case OSM_Api::OBJTYPE_WAY:
-			case OSM_API::OBJTYPE_NODE:
+			case OSM_Object::OBJTYPE_WAY:
+			case OSM_Object::OBJTYPE_NODE:
 				return true;
 		}
 		return false;
@@ -211,7 +211,7 @@ class Relation extends OSM_Object implements IXml
 	 */
 	public function getMemberNode($nodeId) {
 
-		return $this->getMember(OSM_Api::OBJTYPE_NODE, $nodeId);
+		return $this->getMember(OSM_Object::OBJTYPE_NODE, $nodeId);
 	}
 
 	/**
@@ -221,7 +221,7 @@ class Relation extends OSM_Object implements IXml
 	 */
 	public function getMemberWay($wayId) {
 
-		return $this->getMember(OSM_Api::OBJTYPE_WAY, $wayId);
+		return $this->getMember(OSM_Object::OBJTYPE_WAY, $wayId);
 	}
 
 	/**
@@ -233,7 +233,7 @@ class Relation extends OSM_Object implements IXml
 	 */
 	public function addNode(Node $node, $role='') {
 
-		$member = new Member(OSM_Api::OBJTYPE_NODE, $node->getId(), $role);
+		$member = new Member(OSM_Object::OBJTYPE_NODE, $node->getId(), $role);
 		$this->addMember($member);
 		return $this;
 	}
@@ -246,7 +246,7 @@ class Relation extends OSM_Object implements IXml
 	 */
 	public function addWay(Way $way, $role='') {
 
-		$member = new Member(OSM_Api::OBJTYPE_WAY, $way->getId(), $role);
+		$member = new Member(OSM_Object::OBJTYPE_WAY, $way->getId(), $role);
 		$this->addMember($member);
 		return $this;
 	}
