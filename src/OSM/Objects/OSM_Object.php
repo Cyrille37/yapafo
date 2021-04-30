@@ -9,11 +9,19 @@ use Cyrille37\OSM\Yapafo\Tools\Logger;
  *
  * @author cyrille
  */
-class OSM_Object implements IDirty {
-	/**
-	 *
-	 */
+class OSM_Object implements IDirty
+{
 	const OBJTYPE_TAG = 'tag';
+	const OBJTYPE_ND = 'nd';
+	const OBJTYPE_NODE = 'node';
+	const OBJTYPE_WAY = 'way';
+	const OBJTYPE_RELATION = 'relation';
+	const OBJTYPE_MEMBER = 'member';
+
+	const ATTR_VERSION = 'version';
+
+	const ACTION_DELETE = 'delete';
+	const ACTION_MODIFY = 'modify';
 
 	/**
 	 * @var array
@@ -56,7 +64,25 @@ class OSM_Object implements IDirty {
 
 	public function getVersion() {
 
-		return $this->_attrs['version'];
+		return $this->_attrs[self::ATTR_VERSION];
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getObjectType()
+	{
+		switch( get_class($this) )
+		{
+			case Node::class :
+				return self::OBJTYPE_NODE ;
+			case Way::class :
+				return self::OBJTYPE_WAY ;
+			case Relation::class :
+				return self::OBJTYPE_RELATION ;
+			default:
+				throw new OSM_Exception('Unknow type "'.get_class($this).'"');
+		}
 	}
 
 	/**
@@ -84,11 +110,11 @@ class OSM_Object implements IDirty {
 			// 'action' attribute is need by the osm file format.
 			if($this->_deleted)
 			{
-				$this->_attrs["action"] = 'delete';
+				$this->_attrs["action"] = self::ACTION_DELETE;
 			}
 			else
 			{
-				$this->_attrs["action"] = 'modify';
+				$this->_attrs["action"] = self::ACTION_MODIFY;
 			}
 		}
 		else
@@ -169,6 +195,11 @@ class OSM_Object implements IDirty {
 		return null;
 	}
 
+	public function getTags()
+	{
+		return $this->_tags ;
+	}
+
 	public function setTag($key, $value) {
 		if (!array_key_exists($key, $this->_tags))
 			throw new OSM_Exception('Tag "' . $key . '" not found');
@@ -222,6 +253,10 @@ class OSM_Object implements IDirty {
 		if (array_key_exists($key, $this->_attrs))
 			return $this->_attrs[$key];
 		return null;
+	}
+
+	public function getAttributes() {
+		return $this->_attrs ;
 	}
 
 	public function setAttribute($key, $value) {

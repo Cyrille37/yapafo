@@ -5,8 +5,6 @@ use Cyrille37\OSM\Yapafo\Exceptions\Exception as OSM_Exception ;
 
 class Way extends OSM_Object implements IXml
 {
-	const OBJTYPE_ND = 'nd';
-
 	protected $_nodeRefs = array();
 
 	public static function fromXmlObj(\SimpleXMLElement $xmlObj) {

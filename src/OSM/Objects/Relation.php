@@ -12,24 +12,17 @@ use Cyrille37\OSM\Yapafo\Tools\Logger;
  */
 class Relation extends OSM_Object implements IXml
 {
-	/**
-	 * @const string
-	 */
-	const OBJTYPE_MEMBER = 'member';
-
 	protected $_members = array();
 
-	public static function fromXmlObj(\SimpleXMLElement $xmlObj) {
-
+	public static function fromXmlObj(\SimpleXMLElement $xmlObj)
+	{
 		$relation = new Relation();
 
-		$processedElements = $relation->_fromXmlObj($xmlObj);
+		$relation->_fromXmlObj($xmlObj);
 
+		// Only processing "member" child
 		foreach ($xmlObj->children() as $child)
 		{
-			if (in_array($child->getName(), $processedElements))
-				continue;
-
 			Logger::getInstance()->debug('{_m} child:{child}', ['_m'=>__METHOD__, 'child'=>$child->getName()]);
 			switch ($child->getName())
 			{
@@ -39,7 +32,7 @@ class Relation extends OSM_Object implements IXml
 					break;
 
 				default:
-					throw new OSM_Exception('Object "' . $xmlObj->getName() . '" is not supported in relation');
+					//throw new OSM_Exception('Object "' . $child->getName() . '" is not supported in relation');
 			}
 		}
 

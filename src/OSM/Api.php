@@ -47,11 +47,22 @@ class OSM_Api {
 	//const OAPI_URL_LETUFFE = 'http://overpassapi.letuffe.org/api/interpreter';
 	const OAPI_URL_DE = 'http://www.overpass-api.de/api/interpreter';
 
+	/**
+	 * http://www.overpass-api.de/api/xapi
+	 * http://api.openstreetmap.fr/xapi
+	 * deprecated: http://overpassapi.letuffe.org/api/xapi
+	 */
+	const XAPI_URL_DE = 'http://www.overpass-api.de/api/xapi';
+	const XAPI_URL_FR = 'http://api.openstreetmap.fr/xapi';
+	const XAPI_URL_LETTUFE = 'http://overpassapi.letuffe.org/api/xapi';
+
 	protected $_options = [
 		// simulation is set by default to avoid (protected against) unwanted write !
 		'simulation' => null,
 		'url' => null,
 		'url4Write' => null,
+		'oapi_url' => null,
+		'xapi_url' => null,
 		// to store every network communications (load/save) in a file.
 		'outputFolder' => null,
 		'appName' => '', // name for the application using the API
@@ -59,7 +70,6 @@ class OSM_Api {
 			'logger' => null ,
 			'level' => LogLevel::DEBUG
 		],
-		'oapi_url' => self::OAPI_URL_FR
 	];
 	protected $_stats = array(
 		'requestCount' => 0,
@@ -73,9 +83,9 @@ class OSM_Api {
 	 */
 	protected $_authProvider;
 
-	protected $_relations = array();
-	protected $_ways = array();
-	protected $_nodes = array();
+	protected $_relations = [];
+	protected $_ways = [];
+	protected $_nodes = [];
 	protected $_newIdCounter = -1;
 
 	/**
@@ -95,12 +105,15 @@ class OSM_Api {
 	 */
 	protected $_logger ;
 
-	public function __construct(array $options = array() )
+	public function __construct( $options = [] )
 	{
 		$this->_options['simulation'] = Config::get('simulation');
 		$this->_options['url'] = Config::get('osm_api_url');
 		$this->_options['url4Write'] = Config::get('osm_api_url_4write');
+		$this->_options['oapi_url'] = Config::get('oapi_url');
+		$this->_options['xapi_url'] = Config::get('xapi_url');
 		$this->_options['log']['level'] = Config::get('log_level');
+
 
 		// Check that all options exist then override defaults
 		foreach ($options as $k => $v)
@@ -120,18 +133,6 @@ class OSM_Api {
 		}
 
 		$this->getLogger()->debug('{method} {options}',['method'=>__METHOD__,'options'=>$this->_options]);
-
-		// Set the Servers url
-
-		if (empty($this->_options['url']))
-		{
-			throw new OSM_Exception('Option "url" must be set.');
-		}
-
-		if (empty($this->_options['oapi_url']))
-		{
-			throw new OSM_Exception('Option "oapi_url" must be set.');
-		}
 
 		if (!empty($this->_options['outputFolder']))
 		{
@@ -277,8 +278,8 @@ class OSM_Api {
 			{
 				$ex = new HttpException($e['message']);
 			}
-				if( $ex->getMessage() != 'HTTP/1.1 200 OK' )
-					throw $ex ;
+			if( $ex->getMessage() != 'HTTP/1.1 200 OK' )
+				throw $ex ;
 		}
 
 		if ($this->_options['outputFolder'] != null)
@@ -635,7 +636,7 @@ class OSM_Api {
 	}
 
 	public function removeAllObjects() {
-		$this->_relations = $this->_ways = $this->_nodes = array();
+		$this->_relations = $this->_ways = $this->_nodes = [];
 	}
 
 	/**
@@ -663,30 +664,34 @@ class OSM_Api {
 	 * @param string $xmlQuery
 	 * @param string $withMeta To get metadata which are needed for saving back data (Version, User...).
 	 */
-	public function queryOApi($xmlQuery, $withMeta = true) {
-
-		if ($withMeta)
+	public function queryOApiXml($xmlQuery, $withMeta = true)
+	{
+		if( $withMeta )
 		{
 			$this->_oapiAddMetadata($xmlQuery);
 		}
+		$this->getLogger()->debug('{_m} url:{url} query:{query}', ['_m'=>__METHOD__, 'query'=>$xmlQuery]);
 
-		$this->getLogger()->notice('{_m} url:{url} query:{query}', ['_m'=>__METHOD__,'url'=>$this->_options['oapi_url'], 'query'=>$xmlQuery]);
-
+		$url = $this->_options['oapi_url'];
+		$method = 'POST';
 		$postdata = http_build_query(array('data' => $xmlQuery));
 
-		$opts = array('http' =>
-			array(
-				'method' => 'POST',
+		$opts = ['http' =>
+			[
+				'method' => $method,
 				'user_agent' => $this->_getUserAgent(),
 				'header' => 'Content-type: application/x-www-form-urlencoded',
 				'content' => $postdata
-			)
-		);
+			]
+		];
 		$context = stream_context_create($opts);
+
+		$this->getLogger()->notice( '{method} {http_method} {url}', ['method'=>__METHOD__, 'http_method'=>$method, 'url'=>$url]);
+		$this->getLogger()->debug('{_m} opts:{opts}', ['opts'=>$opts,'_m'=>__METHOD__]);
 
 		$this->_stats['requestCount']++;
 
-		$result = @file_get_contents($this->_options['oapi_url'], false, $context);
+		$result = file_get_contents($url, false, $context);
 		if ($result === false)
 		{
 			$e = error_get_last();
@@ -709,8 +714,8 @@ class OSM_Api {
 	 *
 	 * @param string $xmlQuery
 	 */
-	protected function _oapiAddMetadata(&$xmlQuery) {
-
+	protected function _oapiAddMetadata( &$xmlQuery )
+	{
 		$this->getLogger()->debug('{_m}', ['_m'=>__METHOD__]);
 
 		$x = new \SimpleXMLElement($xmlQuery);
@@ -723,6 +728,50 @@ class OSM_Api {
 			}
 		}
 		$xmlQuery = $x->asXml();
+	}
+
+	/**
+	 * Documentation:
+	 * - https://wiki.openstreetmap.org/wiki/Xapi
+	 *
+	 * @param string $query
+	 * @return void
+	 */
+	public function queryXApi( $query )
+	{
+		$this->_logger->debug( __METHOD__.' Query:{query}', ['query'=>$query]);
+
+		$url = $this->_options['xapi_url'];
+		$method = 'GET';
+
+		$opts = array('http' =>
+			array(
+				'method' => $method,
+				'user_agent' => $this->_getUserAgent(),
+			)
+		);
+		$context = stream_context_create($opts);
+
+		$this->getLogger()->notice( '{_m} {http_method} {url}', ['_m'=>__METHOD__, 'http_method'=>$method, 'url'=>$url]);
+
+		$result = file_get_contents( $url . '?' . urlencode($query), false, $context);
+
+		if ($result === false)
+		{
+			$e = error_get_last();
+			if (isset($http_response_header))
+			{
+				throw new HttpException($http_response_header);
+			}
+			else
+			{
+				throw new HttpException($e['message']);
+			}
+		}
+
+		$this->_stats['loadedBytes'] += strlen($result);
+
+		$this->createObjectsfromXml($result);
 	}
 
 	/**
@@ -890,9 +939,7 @@ class OSM_Api {
 
 	protected function _clearObjects()
 	{
-		$this->_relations = null ;
-		$this->_ways = null ;
-		$this->_nodes = null ;
+		$this->_relations = $this->_ways = $this->_nodes = [];
 	}
 
 	/**

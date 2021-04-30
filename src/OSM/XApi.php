@@ -57,14 +57,6 @@ class OSM_XApi
 			$this->_logger = Logger::getInstance( $this->_options['log']['level'] );
 		}
 
-		if (!empty($options['cache']))
-		{
-			if (!method_exists($options['cache'], 'load'))
-				throw new OSM_Exception('Cache engine is not compatible, miss method load()');
-			if (!method_exists($options['cache'], 'save'))
-				throw new OSM_Exception('Cache engine is not compatible, miss method save()');
-		}
-
 	}
 
 	public function request( $query )
