@@ -117,4 +117,19 @@ class Way extends OSM_Object implements IXml
 		return $this->_nodeRefs[count($this->_nodeRefs) - 1];
 	}
 
+	/**
+	 * Is this way a closed way (closed polyline) ?
+	 * 
+	 * In a closed way the last node of the way is identical with the first node.
+	 * A closed way may be interpreted either as a closed polyline, or as an area, or both, depending on its tags.
+	 *
+	 * https://wiki.openstreetmap.org/wiki/Way
+	 * 
+	 * @return boolean
+	 */
+	public function isClosedWay()
+	{
+		return( $this->getFirstNodeRef() == $this->getLastNodeRef() );
+	}
+
 }
