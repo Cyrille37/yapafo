@@ -39,7 +39,7 @@ class OSM_Api {
 	/**
 	 * Instances: https://wiki.openstreetmap.org/wiki/Overpass_API#Public_Overpass_API_instances
 	 */
-	const OAPI_URL_FR = 'https://api.openstreetmap.fr/oapi/interpreter';
+	const OAPI_URL_FR = 'https://overpass.openstreetmap.fr/api/interpreter';
 	const OAPI_URL_RU = 'https://overpass.openstreetmap.ru/api/interpreter';
 	//const OAPI_URL_LETUFFE = 'http://overpassapi.letuffe.org/api/interpreter';
 	const OAPI_URL_DE = 'https://overpass-api.de/api/interpreter';
