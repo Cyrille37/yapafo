@@ -150,6 +150,13 @@ class Way extends OSM_Object implements IXml
 
 	public function getGravityCenter( OSM_Api $osmApi )
 	{
-		return $this->getPolygon( $osmApi )->getGravityCenter();
+		try
+		{
+			return $this->getPolygon( $osmApi )->getGravityCenter();
+		}
+		catch(\Exception $ex )
+		{
+		}
+		return null ;
 	}
 }

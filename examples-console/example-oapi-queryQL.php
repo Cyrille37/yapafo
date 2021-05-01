@@ -26,4 +26,4 @@ $osmapi = new OSM_Api([
 $osmapi->queryOApiQL( $qlQuery );
 
 _dbg( 'Result: '.$osmapi->getXmlDocument() );
-_dbg( 'Found '.count( $osmapi->getObjects() ).' objects' );
+_dbg( 'Stats: '.print_r($osmapi->getStats(),true ) );

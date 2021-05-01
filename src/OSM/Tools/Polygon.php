@@ -770,6 +770,8 @@ class Polygon {
 		while ($p->id() != $this->first->id());
 
 		$a = $sA / 2.0;
+		if( $a == 0 )
+			throw new \Exception( __METHOD__.' $a is 0');
 		$gX = (1 / (6*$a)) * $sX ;
 		$gY = (1 / (6*$a)) * $sY ;
 

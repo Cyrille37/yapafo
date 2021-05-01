@@ -13,7 +13,8 @@ class OsmXmlToCsv
 
         $opts = [
             'ways_gravitycenter' => false,
-            'relations_gravitycenter' => false
+            'relations_gravitycenter' => false,
+            'without_nodes' => false ,
         ];
 		// Check that all options exists then override defaults
 		foreach ($options as $k => $v)
@@ -31,6 +32,29 @@ class OsmXmlToCsv
          */
         foreach( $osmApi->getObjects() as $obj )
         {
+            //
+            // Pre filters
+            //
+            switch( $obj->getObjectType() )
+            {
+                case OSM_Object::OBJTYPE_WAY:
+                    break;
+
+                case OSM_Object::OBJTYPE_RELATION:                    
+                    break;
+
+                case OSM_Object::OBJTYPE_NODE:
+                    if( $opts['without_nodes'] )
+                    {
+                        continue ;
+                    }
+                    break;
+            }
+
+            //
+            // Columns processing
+            //
+
             $row = ['osm_type'=>$obj->getObjectType()];
             foreach( $obj->getAttributes() as $k => $v )
             {
@@ -49,14 +73,21 @@ class OsmXmlToCsv
                 $row[$t->getKey()] = $t->getValue() ;
             }
 
+            //
+            // Post filters
+            //
+
             switch( $obj->getObjectType() )
             {
                 case OSM_Object::OBJTYPE_WAY:
                     if( $opts['ways_gravitycenter'])
                     {
                         $latLng = ((object)$obj)->getGravityCenter( $osmApi );
-                        $row['lat'] = $latLng[0];
-                        $row['lon'] = $latLng[1];
+                        if( $latLng )
+                        {
+                            $row['lat'] = $latLng[0];
+                            $row['lon'] = $latLng[1];
+                        }
                     }
                     break;
 
@@ -68,9 +99,13 @@ class OsmXmlToCsv
                         $row['lon'] = $latLng[1];
                     }
                     break;
+
+                case OSM_Object::OBJTYPE_NODE:
+                    break;
             }
 
-            $rows[] = $row ;
+            if( $row )
+                $rows[] = $row ;
         }
 
         fputcsv($fp, $headers);

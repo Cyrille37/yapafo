@@ -37,12 +37,13 @@ class OSM_Api {
 	const URL_PROD_UK = 'https://api.openstreetmap.org/api/0.6';
 
 	/**
-	 * Query form: http://api.openstreetmap.fr/query_form.html
+	 * Instances: https://wiki.openstreetmap.org/wiki/Overpass_API#Public_Overpass_API_instances
 	 */
-	const OAPI_URL_FR = 'http://api.openstreetmap.fr/oapi/interpreter';
-	const OAPI_URL_RU = 'http://overpass.osm.rambler.ru/';
+	const OAPI_URL_FR = 'https://api.openstreetmap.fr/oapi/interpreter';
+	const OAPI_URL_RU = 'https://overpass.openstreetmap.ru/api/interpreter';
 	//const OAPI_URL_LETUFFE = 'http://overpassapi.letuffe.org/api/interpreter';
-	const OAPI_URL_DE = 'http://www.overpass-api.de/api/interpreter';
+	const OAPI_URL_DE = 'https://overpass-api.de/api/interpreter';
+	const OAPI_URL_CH = 'https://overpass.osm.ch/api/interpreter';
 
 	/**
 	 * http://www.overpass-api.de/api/xapi
@@ -84,12 +85,6 @@ class OSM_Api {
 	protected $_ways = [];
 	protected $_nodes = [];
 	protected $_newIdCounter = -1;
-
-	/**
-	 * Works with $_options['outputFolder']. It's used to construct the filename.
-	 * @var int
-	 */
-	protected $_outputWriteCount = 0;
 
 	/**
 	 * Store all xml Objects
@@ -651,6 +646,12 @@ class OSM_Api {
 		return $this->getObject($type, $id, $full);
 	}
 
+	/**
+	 * Undocumented function
+	 *
+	 * @param [type] $qlQuery
+	 * @return void
+	 */
 	public function queryOApiQL($qlQuery)
 	{
 		$this->getLogger()->debug('{_m} url:{url} query:{query}', ['_m'=>__METHOD__, 'qlQuery'=>$qlQuery]);
@@ -661,6 +662,7 @@ class OSM_Api {
 
 		$opts = ['http' =>
 			[
+				'ignore_errors'=>true,
 				'method' => $method,
 				'user_agent' => $this->_getUserAgent(),
 				'header' => 'Content-type: application/x-www-form-urlencoded',
@@ -674,18 +676,28 @@ class OSM_Api {
 
 		$this->_stats['requestCount']++;
 
-		$result = file_get_contents($url, false, $context);
+		if ($this->_options['outputFolder'] != null)
+		{
+			file_put_contents($this->_getOutputFilename('out', $url, $method), $qlQuery);
+		}
+
+		$result = @file_get_contents($url, false, $context);
 		if ($result === false)
 		{
 			$e = error_get_last();
 			if (isset($http_response_header))
 			{
-				throw new HttpException($http_response_header);
+				throw new HttpException('message: '.$e['message'].', http_response_header: '.print_r($http_response_header,true) );
 			}
 			else
 			{
 				throw new HttpException($e['message']);
 			}
+		}
+
+		if ($this->_options['outputFolder'] != null)
+		{
+			file_put_contents($this->_getOutputFilename('in', $url, $method), $result);
 		}
 
 		$this->_stats['loadedBytes'] += strlen($result);
@@ -730,6 +742,11 @@ class OSM_Api {
 
 		$this->_stats['requestCount']++;
 
+		if ($this->_options['outputFolder'] != null)
+		{
+			file_put_contents($this->_getOutputFilename('out', $url, $method), $xmlQuery);
+		}
+
 		$result = file_get_contents($url, false, $context);
 		if ($result === false)
 		{
@@ -742,6 +759,11 @@ class OSM_Api {
 			{
 				throw new HttpException($e['message']);
 			}
+		}
+
+		if ($this->_options['outputFolder'] != null)
+		{
+			file_put_contents($this->_getOutputFilename('in', $url, $method), $result);
 		}
 
 		$this->_stats['loadedBytes'] += strlen($result);
@@ -799,6 +821,13 @@ class OSM_Api {
 
 		$result = file_get_contents( $url . '?' . urlencode($query), false, $context);
 
+		$this->_stats['requestCount']++;
+
+		if ($this->_options['outputFolder'] != null)
+		{
+			file_put_contents($this->_getOutputFilename('out', $url, $method), $xmlQuery);
+		}
+
 		if ($result === false)
 		{
 			$e = error_get_last();
@@ -810,6 +839,11 @@ class OSM_Api {
 			{
 				throw new HttpException($e['message']);
 			}
+		}
+
+		if ($this->_options['outputFolder'] != null)
+		{
+			file_put_contents($this->_getOutputFilename('in', $url, $method), $result);
 		}
 
 		$this->_stats['loadedBytes'] += strlen($result);
@@ -1207,6 +1241,13 @@ class OSM_Api {
 		return $coords ;
 	}
 
+	public function getStats()
+	{
+		// Refresh objects count
+		$this->_stats['Objects'] = count( $this->getObjects() );
+		return $this->_stats;
+	}
+
 	public function getStatsRequestCount() {
 		return $this->_stats['requestCount'];
 	}
@@ -1230,13 +1271,19 @@ class OSM_Api {
 		return $userAgent;
 	}
 
-	protected function _getOutputFilename($inOrOut, $relativeUrl, $method) {
+	protected function _getOutputFilename($inOrOut, $relativeUrl, $method)
+	{
+		/**
+		 * Used to construct the filename.
+		 * @var int
+		 */
+		static $outputWriteCount = 0;
 
 		// file_put_contents($this->_getOutputFilename('in', $relativeUrl, $method, $data))
 
 		return $this->_options['outputFolder'] .
 			DIRECTORY_SEPARATOR . __CLASS__
-			. '_' . sprintf('%04d', ++$this->_outputWriteCount) . '-' . time()
+			. '_' . sprintf('%04d', ++$outputWriteCount) . '-' . time()
 			. '_' . $inOrOut . '-' . $method . '-' . urlencode($relativeUrl) . '.txt';
 	}
 
