@@ -38,6 +38,7 @@ class OSM_Api {
 
 	/**
 	 * Instances: https://wiki.openstreetmap.org/wiki/Overpass_API#Public_Overpass_API_instances
+	 * FR: parse error: Unknown type "nwr"
 	 */
 	const OAPI_URL_FR = 'https://overpass.openstreetmap.fr/api/interpreter';
 	const OAPI_URL_RU = 'https://overpass.openstreetmap.ru/api/interpreter';
