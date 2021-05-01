@@ -46,7 +46,7 @@ class OsmXmlToCsv
                 case OSM_Object::OBJTYPE_NODE:
                     if( $opts['without_nodes'] )
                     {
-                        continue ;
+                        continue 2 ;
                     }
                     break;
             }
