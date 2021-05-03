@@ -45,4 +45,32 @@ class Math
         $d = 2 * atan2(sqrt($a), sqrt(1 - $a));
         return (self::EARTH_RADIUS * $d);
     }
+
+    /**
+     * @param float $lat
+     * @param float $lng
+     * @param float $distance
+     * @return void
+     */
+    public static function computeBB( $lat, $lng, $distance )
+    {
+        $p1 = self::moveCoordinatesByMetres( [$lat,$lng], [-1*$distance,-1*$distance] );
+        $p2 = self::moveCoordinatesByMetres( [$lat,$lng], [$distance,$distance] );
+    	return [ $p1, $p2 ] ;
+    }
+
+    public static function moveCoordinatesByMetres( Array $latLng, Array $distances)
+    {
+	    $lat = $latLng[0];
+	    $lng = $latLng[1];
+        //Coordinate offsets in radians
+        $dLat = $distances[0] / self::EARTH_RADIUS;
+        $dLng = $distances[1] / ( self::EARTH_RADIUS * cos(M_PI * $lat / 180) );
+        //OffsetPosition, decimal degrees
+        $radOnPi = 180 / M_PI ;
+        $lat = $lat + ( $dLat * $radOnPi );
+        $lng = $lng + ( $dLng * $radOnPi );
+    	return [$lat, $lng];
+    }
+
 }

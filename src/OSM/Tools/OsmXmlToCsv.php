@@ -10,11 +10,10 @@ class OsmXmlToCsv
 {
     public static function toCsv( OSM_Api $osmApi, $fp, $options=[] )
     {
-
         $opts = [
             'ways_gravitycenter' => false,
             'relations_gravitycenter' => false,
-            'without_nodes' => false ,
+            'tags' => null ,
         ];
 		// Check that all options exists then override defaults
 		foreach ($options as $k => $v)
@@ -35,19 +34,20 @@ class OsmXmlToCsv
             //
             // Pre filters
             //
+            if( is_array($opts['tags']) )
+            {
+                foreach( $opts['tags'] as $key=>$val )
+                    if( ! $obj->getTag($key,$val) )
+                        continue 2 ;
+            }
+
             switch( $obj->getObjectType() )
             {
                 case OSM_Object::OBJTYPE_WAY:
                     break;
-
                 case OSM_Object::OBJTYPE_RELATION:                    
                     break;
-
                 case OSM_Object::OBJTYPE_NODE:
-                    if( $opts['without_nodes'] )
-                    {
-                        continue 2 ;
-                    }
                     break;
             }
 

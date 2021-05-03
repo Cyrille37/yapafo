@@ -136,42 +136,6 @@ class OSM_Object implements IDirty
 	}
 
 	/**
-	 * Like findTags but return a bool instead of tags.
-	 *
-	 * @param array $searchTags
-	 * @return bool
-	 */
-	public function hasTags(array $searchTags) {
-		$resultTags = $this->findTags($searchTags);
-		if (count($resultTags) == count($searchTags))
-			return true;
-		return false;
-	}
-
-	/**
-	 * Return all tags or tags matching $searchTags
-	 *
-	 * @param array $searchTags Optionnal. If you want to filter the returned tags.
-	 * @return OSM_Objects_Tag[]
-	 * @see findTag()
-	 */
-	public function &findTags(array $searchTags=null) {
-
-		if ($searchTags == null)
-			return $this->_tags;
-
-		$resultTags = array();
-		foreach ($searchTags as $k => $v)
-		{
-			if (($t = $this->getTag($k, $v)) != null)
-			{
-				$resultTags[] = $t;
-			}
-		}
-		return $resultTags;
-	}
-
-	/**
 	 * Retreive a tag by Key.
 	 *
 	 * A value could be provided to enforce the test.
