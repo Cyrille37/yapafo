@@ -10,8 +10,12 @@ require_once(__DIR__.'/../vendor/autoload.php');
 // Functions
 //
 
-function _w($str) {
-  echo $str ;
+function _w(...$str) {
+  $n = count($str);
+  for( $i=0; $i<$n; $i++)
+  {
+    echo $str[$i] , ($i+1<$n ? ' ': '' );
+  }
 }
 
 function _wl($str) {

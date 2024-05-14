@@ -2,6 +2,7 @@
 namespace Cyrille37\OSM\Yapafo\Objects ;
 
 use Cyrille37\OSM\Yapafo\Exceptions\Exception as OSM_Exception ;
+use Cyrille37\OSM\Yapafo\Tools\Logger;
 
 /**
  * Description of UserDetails
@@ -21,10 +22,12 @@ class UserDetails
 		'img'=>null,
 		'languages'=>array()
 	);
-	
+
 	public static function createFromXmlString( $xmlStr )
 	{
-		OSM_ZLog::debug(__METHOD__, 'User details: ', $xmlStr);
+		//OSM_Log::debug(__METHOD__, 'User details: ', $xmlStr);
+		$logger = Logger::getInstance();
+		$logger->debug(__METHOD__, ['User details: '=> $xmlStr]);
 
 		$x = new \SimpleXMLElement( $xmlStr );
 
@@ -66,7 +69,7 @@ class UserDetails
 	{
 		return $this->_details ;
 	}
-	
+
 	public function getId()
 	{
 		return $this->_details['id'] ;
@@ -84,7 +87,7 @@ class UserDetails
 		return $this->_details['description'] ;
 	}
 	/**
-	 * @return array array('pd'=>bool, 'agreed'=>bool) 
+	 * @return array array('pd'=>bool, 'agreed'=>bool)
 	 */
 	public function getTerms()
 	{

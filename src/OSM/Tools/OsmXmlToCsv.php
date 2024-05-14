@@ -1,5 +1,5 @@
 <?php
-namespace Cyrille37\OSM\Yapafo\Tools ;
+namespace Cyrille37\OSM\Yapafo\Tools;
 
 use Cyrille37\OSM\Yapafo\Objects\OSM_Object;
 use Cyrille37\OSM\Yapafo\OSM_Api;
@@ -45,7 +45,7 @@ class OsmXmlToCsv
             {
                 case OSM_Object::OBJTYPE_WAY:
                     break;
-                case OSM_Object::OBJTYPE_RELATION:                    
+                case OSM_Object::OBJTYPE_RELATION:
                     break;
                 case OSM_Object::OBJTYPE_NODE:
                     break;

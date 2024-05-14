@@ -2,7 +2,7 @@
 namespace Cyrille37\OSM\Yapafo\Objects ;
 
 use Cyrille37\OSM\Yapafo\Exceptions\Exception as OSM_Exception ;
-use Cyrille37\OSM\Tools\Polygon ;
+use Cyrille37\OSM\Yapafo\Tools\Polygon ;
 use Cyrille37\OSM\Yapafo\OSM_Api;
 
 class Way extends OSM_Object implements IXml
@@ -36,7 +36,7 @@ class Way extends OSM_Object implements IXml
 	}
 
 	/**
-	 * @return string 
+	 * @return string
 	 */
 	public function asXmlStr() {
 
@@ -63,7 +63,7 @@ class Way extends OSM_Object implements IXml
 	}
 
 	/**
-	 * @param int $nodeId 
+	 * @param int $nodeId
 	 */
 	public function addNodeRef($nodeId) {
 
@@ -121,12 +121,12 @@ class Way extends OSM_Object implements IXml
 
 	/**
 	 * Is this way a closed way (closed polyline) ?
-	 * 
+	 *
 	 * In a closed way the last node of the way is identical with the first node.
 	 * A closed way may be interpreted either as a closed polyline, or as an area, or both, depending on its tags.
 	 *
 	 * https://wiki.openstreetmap.org/wiki/Way
-	 * 
+	 *
 	 * @return boolean
 	 */
 	public function isClosedWay()

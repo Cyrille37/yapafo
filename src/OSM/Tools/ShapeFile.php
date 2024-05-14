@@ -1,5 +1,6 @@
 <?php
-namespace Cyrille37\OSM\Tools;
+
+namespace Cyrille37\OSM\Yapafo\Tools;
 
 /**
  * This class is under GPL Licencense Agreement
@@ -12,7 +13,7 @@ namespace Cyrille37\OSM\Tools;
  * Mexico
  *
  * http://www.phpclasses.org/package/1741-PHP-Read-vectorial-data-from-geographic-shape-files.html
- * 
+ *
  * Class to read SHP files and modify the DBF related information
  * Just create the object and all the records will be saved in $shp->records
  * Each record has the "shp_data" and "dbf_data" arrays with the record information
@@ -35,7 +36,7 @@ namespace Cyrille37\OSM\Tools;
  * Get one record at a time to save memory, means that you can work with very large files.
  * Does not load the information until you tell it too (saves time)
  * Added an option to not read the polygon points can be handy sometimes, and saves time :-)
- * 
+ *
  * Example:
 
   //sets the options to show the polygon points, 'noparts' => true would skip that and save time
@@ -52,7 +53,7 @@ namespace Cyrille37\OSM\Tools;
   var_dump($shp_data);
   $i++;
   }
- * 
+ *
  */
 
 require_once(__DIR__ . DIRECTORY_SEPARATOR . 'ShapeFileRecord.php');
@@ -100,7 +101,7 @@ class ShapeFile {
 		//Set the dbf filename
 		$this->dbf_filename = self::processDBFFileName($this->file_name);
 	}
-	
+
 	/**
 	 *
 	 * @return string
@@ -127,7 +128,7 @@ class ShapeFile {
 	}
 
 	/**
-	 * @return ShapeFileRecord 
+	 * @return ShapeFileRecord
 	 */
 	public function getNext() {
 		if (!feof($this->fp))
@@ -177,7 +178,7 @@ class ShapeFile {
 	  }
 	 */
 
-	// General functions        
+	// General functions
 	private function setError($error) {
 		$this->error_message = $error;
 		if ($this->show_errors)
@@ -210,7 +211,7 @@ class ShapeFile {
 		if( !file_exists($dbf_filename))
 		{
 			$dbf_filename = substr($dbf_filename, 0, strlen($dbf_filename) - 3) . 'DBF';
-			
+
 		}
 		}
 		//_d("Ended up like [$dbf_filename]");

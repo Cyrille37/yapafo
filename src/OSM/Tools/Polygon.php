@@ -1,13 +1,14 @@
 <?php
-namespace Cyrille37\OSM\Tools;
+
+namespace Cyrille37\OSM\Yapafo\Tools;
 
 /* ------------------------------------------------------------------------------
  * * File:		polygon.php
- * * Description:	PHP class for a polygon. 
+ * * Description:	PHP class for a polygon.
  * * Version:		1.6
  * * Author:		Brenor Brophy
  * * Email:		brenor dot brophy at gmail dot com
- * * Homepage:	www.brenorbrophy.com 
+ * * Homepage:	www.brenorbrophy.com
  * *------------------------------------------------------------------------------
  * * COPYRIGHT (c) 2005-2010 BRENOR BROPHY
  * *
@@ -18,9 +19,9 @@ namespace Cyrille37\OSM\Tools;
  * *
  * * http://www.opensource.org/licenses/gpl-license.php
  * *
- * * This program is distributed in the hope that it will be useful, but WITHOUT 
- * * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS 
- * * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. 
+ * * This program is distributed in the hope that it will be useful, but WITHOUT
+ * * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * *------------------------------------------------------------------------------
  * *
  * * Based on the paper "Efficient Clipping of Arbitary Polygons" by Gunther
@@ -80,7 +81,7 @@ class Polygon {
 
 	/**
 	 *
-	 * @var Vertex 
+	 * @var Vertex
 	 */
 	var $first; // Reference to first vertex in the linked list
 	// Polygons are always closed so the last vertex will point back
@@ -212,7 +213,7 @@ class Polygon {
 		//    $ps    $ns
 		$p = $v->Prev(); // Get ref to previous vertex
 		$n = $v->Next(); // Get ref to next vertex
-		$p->setNext($n); // Link previous forward to next 
+		$p->setNext($n); // Link previous forward to next
 		$n->setPrev($p); // Link next back to previous
 		// Segments
 		$ps = $p->Nseg(); // Get ref to previous segment
@@ -279,7 +280,7 @@ class Polygon {
 
 
 
-			
+
 // whose alpha is lower but don't go past
 		// the end vertex
 		// $p <-> $nv <-> $c
@@ -303,7 +304,7 @@ class Polygon {
 	function &nxt(&$v) {
 		$c = $v; // Initialize current vertex
 		while ($c && $c->isIntersect()) // Move until a non-intersection
-			$c = $c->Next(); // vertex if found		
+			$c = $c->Next(); // vertex if found
 		return $c; // return that vertex
 	}
 
@@ -491,7 +492,7 @@ class Polygon {
 				// A value of exactly 0 or 1 means the intersection occurred right at the
 				// start or end of the line segment. For our purposes we will consider this
 				// NOT to be an intersection and we will move the vertex a tiny distance
-				// away from the intersecting line. 
+				// away from the intersecting line.
 				if ((($ua == 0 || $ua == 1 ) && ($ub >= 0 && $ub <= 1)) || (($ub == 0 || $ub == 1) && ($ua >= 0 && $ua <= 1)))
 				{ // Degenerate case - vertex exactly touches a line
 //					print("Perturb: P(".$p1->X().",".$p1->Y().")(".$p2->X().",".$p2->Y().") Q(".$q1->X().",".$q1->Y().")(".$q2->X().",".$q2->Y().") UA(".$ua.") UB(".$ub.")<br>");
@@ -531,7 +532,7 @@ class Polygon {
 			$y1 = $q1->Yc(); // Center of second Arc
 			$r1 = $this->dist($x1, $y1, $q1->X(), $q1->Y()); // Calc the radius
 
-			$dx = $x1 - $x0; // dx and dy are the vertical and horizontal 
+			$dx = $x1 - $x0; // dx and dy are the vertical and horizontal
 			$dy = $y1 - $y0; // distances between the circle centers.
 			$d = sqrt(($dy * $dy) + ($dx * $dx)); // Distance between the centers.
 
@@ -551,7 +552,7 @@ class Polygon {
 			{
 				/*
 				 * * 'xy2' is the point where the line through the circle intersection
-				 * * points crosses the line between the circle centers.  
+				 * * points crosses the line between the circle centers.
 				 */
 				$a = (($r0 * $r0) - ($r1 * $r1) + ($d * $d)) / (2.0 * $d); // Calc the distance from xy0 to xy2.
 				$x2 = $x0 + ($dx * $a / $d); // Determine the coordinates of xy2.
@@ -572,7 +573,7 @@ class Polygon {
 				{
 					$h = sqrt(($r0 * $r0) - ($a * $a)); // Calc the distance from xy2 to either
 					// of the intersection points.
-					$rx = -$dy * ($h / $d); // Now determine the offsets of the 
+					$rx = -$dy * ($h / $d); // Now determine the offsets of the
 					$ry = $dx * ($h / $d); // intersection points from xy2
 					$x[0] = $x2 + $rx;
 					$x[1] = $x2 - $rx; // Calc the absolute intersection points.
@@ -739,7 +740,7 @@ class Polygon {
 
 	/**
 	 * http://math.15873.pagesperso-orange.fr/page9.htm
-	 * 
+	 *
 	 * @return array
 	 */
 	function getGravityCenter() {
@@ -804,7 +805,7 @@ class Polygon {
 		 * * Phase 1 of the algoritm is to find all intersection points between the two
 		 * * polygons. A new Vertex is created for each intersection and it is added to
 		 * * the linked lists for both polygons. The "neighbor" reference in each vertex
-		 * * stores the link between the same intersection point in each polygon. 
+		 * * stores the link between the same intersection point in each polygon.
 		 */
 		do
 		{
@@ -950,7 +951,7 @@ class Polygon {
 
 
 
-				
+
 // of this poly
 			$last = $r; // Save this polygon
 		} // end of while there is another intersection to check
@@ -1163,7 +1164,7 @@ class Polygon {
 			while ($p); // Keep checking polygons as long as they exist
 	}
 
-// end of move polygon	
+// end of move polygon
 	/*
 	 * * Rotate Polygon
 	 * *
@@ -1199,8 +1200,8 @@ class Polygon {
 				while ($v->id() != $p->first->id());
 				$p = $p->NextPoly(); // Get the next polygon in the list
 			}
-			while ($p); // Keep checking polygons as long as they exist	
-		$this->move($xr, $yr); // Move the rotated polygon back 
+			while ($p); // Keep checking polygons as long as they exist
+		$this->move($xr, $yr); // Move the rotated polygon back
 	}
 
 // end of rotate polygon
@@ -1321,7 +1322,7 @@ class Polygon {
 			while ($p); // Keep checking polygons as long as they exist
 	}
 
-// end of scale polygon	
+// end of scale polygon
 	/*
 	 * * translate a Polygon
 	 * *

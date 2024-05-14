@@ -10,11 +10,11 @@ class OApiResponse
 {
 	protected $_xml;
 	protected $_relations, $_ways, $_nodes;
-	protected $_index = array(
+	protected $_index = [
 		'relations' => null,
 		'ways' => null,
 		'nodes' => null
-	);
+	];
 	/**
 	 * @var LoggerInterface
 	 */
@@ -28,7 +28,7 @@ class OApiResponse
 	}
 
 	/**
-	 * @return \SimpleXMLElement 
+	 * @return \SimpleXMLElement
 	 */
 	public function getRoot() {
 		return $this->_xml;
@@ -36,9 +36,9 @@ class OApiResponse
 
 	/**
 	 * Return XML or write XML into a file.
-	 * 
+	 *
 	 * @param string $filename If specified, the function writes the data to the file rather than returning it.
-	 * @return mixed 
+	 * @return mixed
 	 */
 	public function asXML($filename=null) {
 		if( $filename==null)
@@ -48,7 +48,7 @@ class OApiResponse
 	}
 
 	/**
-	 * @return SimpleXMLElement[] 
+	 * @return SimpleXMLElement[]
 	 */
 	public function getRelations() {
 
@@ -62,7 +62,7 @@ class OApiResponse
 	/**
 	 *
 	 * @param string|int $relation_id
-	 * @return SimpleXMLElement 
+	 * @return SimpleXMLElement
 	 */
 	public function getRelation($relation_id) {
 
@@ -133,7 +133,7 @@ class OApiResponse
 
 	/**
 	 * @param string|int $way_id
-	 * @return SimpleXMLElement 
+	 * @return SimpleXMLElement
 	 */
 	public function getWay($way_id) {
 		if ($this->_index['ways'] == null)
@@ -155,7 +155,7 @@ class OApiResponse
 
 	/**
 	 * @param string|SimpleXMLElement $wayIdOrObj
-	 * @return SimpleXMLElement[] 
+	 * @return SimpleXMLElement[]
 	 */
 	public function &getWayNodes($wayIdOrObj) {
 
@@ -227,7 +227,7 @@ class OApiResponse
 
 	/**
 	 * $tags is a array of Key=>Value.
-	 * 
+	 *
 	 * @param array $tags
 	 * @return array
 	 */

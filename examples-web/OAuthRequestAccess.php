@@ -113,7 +113,7 @@ if( isset($data['app_id']))
 
 // Save data back in cookie
 
-setcookie(constant('COOKIE'), serialize($data), time() + 3600);
+setcookie(constant('COOKIE'), serialize($data), time() + (24*3600) );
 
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"

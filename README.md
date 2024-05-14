@@ -31,11 +31,18 @@ Php libraries:
 
 - install dependencies
   - `composer install`
-- A web page to create OAuth Access Token
+- create file `.env` and set
+  - osm_api_url = https://master.apis.dev.openstreetmap.org/api/0.6
+  - oauth_url = https://master.apis.dev.openstreetmap.org
+  - simulation=false
+  - read `.env.example` to know more about configuration
+
+- Use the provided web page to create an OAuth Access Token
   - change directory `cd examples-web`
   - launch the php webserver `php -S localhost:8000`
   - then open a browser at  `http://localhost:8000/OAuthRequestAccess.php`
-- Other command-line examples in `examples-console`
+
+- Explore command-line examples in `examples-console`
 
 ### examples-web
 
@@ -47,6 +54,8 @@ Php libraries:
 - https://github.com/Cyrille37/yapafo/issues
 
 ## References
+
+- https://wiki.openstreetmap.org/wiki/OAuth
 
 - The OAuth 1.0 Protocol : http://tools.ietf.org/html/rfc5849
 - OSM OAuth doc : http://wiki.openstreetmap.org/wiki/OAuth

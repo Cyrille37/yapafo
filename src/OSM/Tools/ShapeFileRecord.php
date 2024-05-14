@@ -5,7 +5,7 @@
  * and open the template in the editor.
  */
 
-namespace Cyrille37\OSM\Tools;
+namespace Cyrille37\OSM\Yapafo\Tools;
 
 /**
  * Description of ShapeFileRecord
@@ -14,7 +14,7 @@ namespace Cyrille37\OSM\Tools;
  */
 class ShapeFileRecord {
 	const DEBUG = false ;
-	
+
 	const INEXISTENT_RECORD_CLASS = "Unable to determine shape record type [%i]";
 	const INEXISTENT_FUNCTION = "Unable to find reading function [%s]";
 	const INEXISTENT_DBF_FILE = "Unable to open (read/write) SHP's DBF file [%s]";
@@ -40,9 +40,10 @@ class ShapeFileRecord {
 		5 => "RecordPolygon",
 		13 => "RecordMultiPointZ",
 		11 => "RecordPointZ");
+	protected $options = [];
 
 	function __construct(&$fp, $file_name, $options) {
-		
+
 		$this->fp = $fp;
 		$this->fpos = ftell($fp);
 		$this->options = $options;
@@ -92,7 +93,7 @@ class ShapeFileRecord {
 	}
 
 	public function getShpData() {
-		
+
 		$function_name = "read" . $this->getRecordClass();
 
 		self::_d("Calling reading function [$function_name] starting at byte ".ftell($this->fp));
@@ -187,7 +188,7 @@ class ShapeFileRecord {
 // 	$data["z"] = ShapeFile::readAndUnpack("d", fread($fp, 8));
 // 	$data["m"] = ShapeFile::readAndUnpack("d", fread($fp, 8));
 		////_d("Returning Point shp_data array = ".getArray($data));
-		
+
 		return $data;
 	}
 
@@ -227,7 +228,7 @@ class ShapeFileRecord {
 		$data = ShapeFile::readBoundingBox($fp);
 		$data['numparts'] = ShapeFile::readAndUnpack('i', fread($fp, 4));
 		$data['numpoints'] = ShapeFile::readAndUnpack('i', fread($fp, 4));
-		
+
 		//_d("PolyLine numparts = ".$data["numparts"]." numpoints = ".$data["numpoints"]);
 		if (isset($options['noparts']) && $options['noparts'] == true)
 		{
@@ -361,7 +362,7 @@ class ShapeFileRecord {
 		$data['y'] = ShapeFile::readAndUnpack('d', fread($fp, 8));
 
 		////_d("Returning Point shp_data array = ".getArray($data));
-		
+
 		return $data;
 	}
 

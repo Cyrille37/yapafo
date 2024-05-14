@@ -1,7 +1,7 @@
 <?php
 namespace Cyrille37\OSM\Yapafo\Objects ;
 
-use Cyrille37\OSM\Tools\Polygon;
+use Cyrille37\OSM\Yapafo\Tools\Polygon;
 use Cyrille37\OSM\Yapafo\Exceptions\Exception as OSM_Exception ;
 use Cyrille37\OSM\Yapafo\OSM_Api;
 use Cyrille37\OSM\Yapafo\Tools\Logger;
@@ -47,7 +47,7 @@ class Relation extends OSM_Object implements IXml
 	}
 
 	/**
-	 * @return string 
+	 * @return string
 	 */
 	public function asXmlStr() {
 
@@ -76,7 +76,7 @@ class Relation extends OSM_Object implements IXml
 
 	/**
 	 * Compute the member's key into the relation members collection.
-	 * 
+	 *
 	 * @param string|Member $memberOrType
 	 * @param string $ref The member's ref. Should be null if $memberOrType instanceof Member .
 	 * @return string
@@ -155,7 +155,7 @@ class Relation extends OSM_Object implements IXml
 
 	/**
 	 * Find members of a certain type.
-	 * 
+	 *
 	 * @param string $type
 	 * @return Member[]
 	 * @throws {@link InvalidArgumentException} if invalid type.
@@ -176,9 +176,9 @@ class Relation extends OSM_Object implements IXml
 
 	/**
 	 * Find members of a certain type and a certain role.
-	 * 
+	 *
 	 * @param string $type
-	 * @param string $role 
+	 * @param string $role
 	 * @return Member[]
 	 * @throws {@link InvalidArgumentException} if invalid type.
 	 */
@@ -199,7 +199,7 @@ class Relation extends OSM_Object implements IXml
 	 *
 	 * @param string $memberType
 	 * @param string $nodeId
-	 * @return Member 
+	 * @return Member
 	 */
 	public function getMember($memberType, $refId) {
 
@@ -224,7 +224,7 @@ class Relation extends OSM_Object implements IXml
 	/**
 	 *
 	 * @param string $nodeId
-	 * @return Member 
+	 * @return Member
 	 */
 	public function getMemberWay($wayId) {
 
@@ -233,7 +233,7 @@ class Relation extends OSM_Object implements IXml
 
 	/**
 	 * Add a node as a new member in the relation.
-	 * 
+	 *
 	 * @param Node $node
 	 * @param type $role
 	 * @return Relation Fluent interface
@@ -301,7 +301,7 @@ class Relation extends OSM_Object implements IXml
 
 	/**
 	 *
-	 * @param Member $member 
+	 * @param Member $member
 	 */
 	public function removeMember(Member $member) {
 

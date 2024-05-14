@@ -102,9 +102,9 @@ class OSM_Object implements IDirty
 	 * @param bool $dirty
 	 */
 	public function setDirty($dirty=true) {
-		
+
 		$this->_dirty = $dirty;
-		
+
 		if( $dirty )
 		{
 			// 'action' attribute is need by the osm file format.
@@ -198,9 +198,9 @@ class OSM_Object implements IDirty
 
 	public function addTags( Array $tags )
 	{
-		foreach ($tags as $tag)
+		foreach ($tags as $key => $value)
 		{
-			$this->addTag($tag);
+			$this->addTag($key, $value);
 		}
 	}
 

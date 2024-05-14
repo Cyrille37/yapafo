@@ -3,14 +3,13 @@ namespace Cyrille37\OSM\Yapafo ;
 
 use Cyrille37\OSM\Yapafo\Exceptions\Exception as OSM_Exception ;
 use Cyrille37\OSM\Yapafo\Exceptions\HttpException ;
-use Cyrille37\OSM\Yapafo\Auth\OAuth ;
-use Cyrille37\OSM\Yapafo\Auth\IAuthProvider ;
 use Cyrille37\OSM\Yapafo\Objects\ChangeSet;
 use Cyrille37\OSM\Yapafo\Objects\Node;
 use Cyrille37\OSM\Yapafo\Objects\OSM_Object;
 use Cyrille37\OSM\Yapafo\Objects\Relation;
 use Cyrille37\OSM\Yapafo\Objects\UserDetails;
 use Cyrille37\OSM\Yapafo\Objects\Way;
+use Cyrille37\OSM\Yapafo\Tools\Polygon;
 use Cyrille37\OSM\Yapafo\Tools\Config;
 use Cyrille37\OSM\Yapafo\Tools\Logger;
 use Psr\Log\LogLevel;
@@ -31,9 +30,10 @@ class OSM_Api {
 
 	const VERSION = '2.0';
 	const USER_AGENT = 'https://github.com/Cyrille37/yapafo';
+
 	const URL_DEV_UK = 'https://master.apis.dev.openstreetmap.org/api/0.6';
 	//deprecated: const OSMAPI_URL_PROD_PROXY_LETTUFE = 'http://beta.letuffe.org/api/0.6';
-	const URL_PROD_FR = 'http://api.openstreetmap.fr/api/0.6';
+	//const URL_PROD_FR = 'http://api.openstreetmap.fr/api/0.6';
 	const URL_PROD_UK = 'https://api.openstreetmap.org/api/0.6';
 
 	/**
@@ -52,22 +52,25 @@ class OSM_Api {
 	 * deprecated: http://overpassapi.letuffe.org/api/xapi
 	 */
 	const XAPI_URL_DE = 'http://www.overpass-api.de/api/xapi';
-	const XAPI_URL_FR = 'http://api.openstreetmap.fr/xapi';
-	const XAPI_URL_LETTUFE = 'http://overpassapi.letuffe.org/api/xapi';
+	//const XAPI_URL_FR = 'http://api.openstreetmap.fr/xapi';
+	//const XAPI_URL_LETTUFE = 'http://overpassapi.letuffe.org/api/xapi';
 
+
+	/**
+	 */
 	protected $_options = [
 		// simulation is set by default to avoid (protected against) unwanted write !
-		'simulation' => null,
-		'url' => null,
-		'url4Write' => null,
-		'oapi_url' => null,
-		'xapi_url' => null,
+		'simulation' => true,
+		'url' => OSM_Api::URL_DEV_UK,
+		'url4Write' =>  OSM_Api::URL_DEV_UK,
+		'oapi_url' => OSM_Api::OAPI_URL_DE,
+		'xapi_url' => OSM_Api::XAPI_URL_DE,
 		// to store every network communications (load/save) in a file.
 		'outputFolder' => null,
 		'appName' => '', // name for the application using the API
 		'log' => [
 			'logger' => null ,
-			'level' => LogLevel::DEBUG
+			'level' => LogLevel::NOTICE
 		],
 	];
 	protected $_stats = array(
@@ -77,10 +80,7 @@ class OSM_Api {
 	protected $_url;
 	protected $_url4Write;
 
-	/**
-	 * @var OSM_Auth_IAuthProvider
-	 */
-	protected $_authProvider;
+	protected $_osm_access_token ;
 
 	protected $_relations = [];
 	protected $_ways = [];
@@ -100,12 +100,20 @@ class OSM_Api {
 
 	public function __construct( $options = [] )
 	{
+		// Retrieve the OAuth Access Token, from Config or $options
+		$this->_osm_access_token = Config::get('osm_access_token');
+		if (array_key_exists('access_token', $options))
+		{
+			$this->_osm_access_token = $options['access_token'];
+			unset($options['access_token']);
+		}
+
 		$this->_options['simulation'] = Config::get('simulation');
-		$this->_options['url'] = Config::get('osm_api_url');
-		$this->_options['url4Write'] = Config::get('osm_api_url_4write');
-		$this->_options['oapi_url'] = Config::get('oapi_url');
-		$this->_options['xapi_url'] = Config::get('xapi_url');
-		$this->_options['log']['level'] = Config::get('log_level');
+		$this->_options['url'] = Config::get('osm_api_url', $this->_options['url'] );
+		$this->_options['url4Write'] = Config::get('osm_api_url_4write', $this->_options['url4Write']);
+		$this->_options['oapi_url'] = Config::get('oapi_url', $this->_options['oapi_url']);
+		$this->_options['xapi_url'] = Config::get('xapi_url', $this->_options['xapi_url']);
+		$this->_options['log']['level'] = Config::get('log_level', $this->_options['log']['level']);
 
 		// Check that all options exist then override defaults
 		foreach ($options as $k => $v)
@@ -148,6 +156,16 @@ class OSM_Api {
 		return ($this->_options['log']['level']==LogLevel::DEBUG);
 	}
 
+	public function setAccesToken($accessToken) {
+
+		$this->_osm_access_token = $accessToken ;
+	}
+
+	public function isAuthenticated()
+	{
+		return $this->_osm_access_token ? true : false ;
+	}
+
 	/**
 	 * @param string $key
 	 * @return mixed
@@ -185,22 +203,6 @@ class OSM_Api {
 		return $this->_loadedXml[count($this->_loadedXml) - 1];
 	}
 
-	/**
-	 * @param IAuthProvider $authProvider
-	 */
-	public function setCredentials(IAuthProvider $authProvider) {
-
-		$this->_authProvider = $authProvider;
-	}
-
-	/**
-	 * @return IAuthProvider 
-	 */
-	public function getCredentials() {
-
-		return $this->_authProvider;
-	}
-
 	protected function _httpApi($relativeUrl, $data = null, $method = 'GET') {
 
 		$url = null;
@@ -228,9 +230,9 @@ class OSM_Api {
 			'Content-type: text/xml'
 		);
 
-		if( $this->_authProvider != null )
+		if( $this->_osm_access_token )
 		{
-			$this->_authProvider->addHeaders($headers, $url, $method);
+			$headers[] = 'Authorization: Bearer ' . $this->_osm_access_token ;
 		}
 
 		$opts = [
@@ -249,8 +251,6 @@ class OSM_Api {
 
 		$this->getLogger()->debug(__METHOD__.' opts:{opts}', ['opts'=>$opts]);
 
-		$context = stream_context_create($opts);
-
 		$this->_stats['requestCount']++;
 
 		if ($this->_options['outputFolder'] != null)
@@ -258,6 +258,7 @@ class OSM_Api {
 			file_put_contents($this->_getOutputFilename('out', $relativeUrl, $method), $data);
 		}
 
+		$context = stream_context_create($opts);
 		$result = @file_get_contents($url, false, $context);
 		if ($result === false || $result == null)
 		{
@@ -795,11 +796,11 @@ class OSM_Api {
 	/**
 	 * Querying a XAPI instance.
 	 * For each matching relation|way the way|nodes referenced by that relation|way are also returned.
-	 * 
+	 *
 	 * - API documentation: https://wiki.openstreetmap.org/wiki/Xapi
 	 * - Some xapi implementations differ from the specification.
 	 * - Add "[@meta]" to query if you want metadata (version, timestamp, changeset, user).
-	 * 
+	 *
 	 * @param string $query
 	 * @return void
 	 */
@@ -826,7 +827,7 @@ class OSM_Api {
 
 		if ($this->_options['outputFolder'] != null)
 		{
-			file_put_contents($this->_getOutputFilename('out', $url, $method), $xmlQuery);
+			file_put_contents($this->_getOutputFilename('out', $url, $method), $query);
 		}
 
 		if ($result === false)
@@ -964,10 +965,8 @@ class OSM_Api {
 
 		$this->getLogger()->notice('{_m} comment:"{comment}"', ['_m'=>__METHOD__, 'comment'=>$comment]);
 
-		if ($this->_authProvider == null)
-		{
+		if( ! $this->isAuthenticated() )
 			throw new OSM_Exception('Must be authenticated');
-		}
 
 		if ($this->_options['simulation'])
 		{
@@ -1051,7 +1050,7 @@ class OSM_Api {
 
 		if ($this->_options['simulation'])
 		{
-			
+
 		}
 		else
 		{
@@ -1065,8 +1064,10 @@ class OSM_Api {
 
 		$xmlStr = $changeSet->getUploadXmlStr($this->_getUserAgent());
 
-		if( $this->isDebug() )
-			file_put_contents('debug.OSM_Api._uploadChangeSet.postdata.xml', $xmlStr);
+		if ($this->_options['outputFolder'])
+		{
+			file_put_contents($this->_getOutputFilename('out', '_uploadChangeSet', 'POST'), $xmlStr);
+		}
 
 		if ($this->_options['simulation'])
 		{
@@ -1092,7 +1093,7 @@ class OSM_Api {
 
 		$poly1 = $this->getPolygon($relation);
 
-		$poly2 = new \OSM\Tools\Polygon();
+		$poly2 = new Polygon();
 		$poly2->addv($node2test->getLat(), $node2test->getLon());
 
 		return $poly1->isPolyInside($poly2);
@@ -1106,7 +1107,7 @@ class OSM_Api {
 	public function getPolygon(Relation $relation) {
 
 		require_once __DIR__.DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'OSM'.DIRECTORY_SEPARATOR.'Tools'.DIRECTORY_SEPARATOR.'Polygon.php';
-		$poly = new \OSM\Tools\Polygon();
+		$poly = new Polygon();
 
 		$ways = $this->getRelationWaysOrdered($relation);
 		$waysCount = count($ways);
@@ -1289,41 +1290,26 @@ class OSM_Api {
 	}
 
 	/**
-	 * After an authorization, client should call this method to clear permissions cache. 
-	 * @todo It's not nice to leave the client with that job.
-	 * The Api should manage this case itself... But I do not find any idea...
-	 */
-	public function clearCachedAuthPermissions()
-	{
-		$this->_cachedPermissions = null ;
-	}
-
-	/**
-	 * Implements GET /api/0.6/permissions
-	 * 
+	 * Implements GET /api/0.6/permissions.
+	 * When NO or INVALID Access Token, no error but a empty permissions set.
+	 *
 	 * https://github.com/openstreetmap/openstreetmap-website/pull/45
-	 * 
+	 *
 	 * @param bool $force Default is false: reuse previous results without asking to server.
 	 */
 	public function getAuthPermissions($force = false)
 	{
 		/**
-		 * array(
-		 * 	'allow_read_prefs',		// read user preferences
-		 * 	'allow_write_prefs',	// modify user preferences
-		 * 	'allow_write_diary',	// create diary entries, comments and make friends
-		 * 	'allow_write_api',		// modify the map
-		 * 	'allow_read_gpx',		// allow_read_gpx
-		* 	'allow_write_gpx'		// upload GPS traces
-		 *  'allow_write_notes'		// modify notes
-		 * )
-		 * @var array 
+		 * @var array
 		 */
 		static $cachedPermissions ;
 
 		//$this->getLogger()->debug('{_m} force:{force} perms:{perms}', ['_m'=>__METHOD__, 'force'=>$force, 'perms'=>$cachedPermissions]);
 
-		if( (! $force) && ($cachedPermissions !== null) )
+		if( ! $this->isAuthenticated() )
+			throw new OSM_Exception('Must be authenticated');
+
+		if( (! $force) && ($cachedPermissions != null) )
 		{
 			return $cachedPermissions;
 		}
@@ -1332,7 +1318,7 @@ class OSM_Api {
 
 		/*
 		$this->getLogger()->debug(__METHOD__.' result:{result}', ['result'=>$result]);
-		<osm version="0.6" generator="OpenStreetMap server" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+		<osm version="0.6">
 		  <permissions>
 			<permission name="allow_read_prefs"/>
 			<permission name="allow_write_prefs"/>
@@ -1342,6 +1328,11 @@ class OSM_Api {
 			<permission name="allow_write_gpx"/>
 			<permission name="allow_write_notes"/>
 		  </permissions>
+		</osm>
+		When Token is INVALID, no error but a empty permissions set
+		<osm version="0.6">
+			<permissions>
+			</permissions>
 		</osm>
 		 */
 
@@ -1364,6 +1355,8 @@ class OSM_Api {
 	const PERMS_READ_GPX = 'allow_read_gpx' ;
 	const PERMS_WRITE_GPX = 'allow_write_gpx' ;
 	const PERMS_WRITE_NOTE = 'allow_write_notes' ;
+	const PERMS_WRITE_REDACTIONS = 'allow_write_redactions';
+	const PERMS_OPENID = 'allow_openid';
 
 	/**
 	 * @return bool allow_read_prefs
@@ -1374,16 +1367,15 @@ class OSM_Api {
 	}
 
 	/**
+	 * HTTP/1.1 401 Unauthorized is not logged in.
 	 *
 	 * @return UserDetails
 	 * @throws OSM_Exception if not authenticated
 	 */
 	public function getUserDetails() {
 
-		if ($this->_authProvider == null)
-		{
+		if( ! $this->isAuthenticated() )
 			throw new OSM_Exception('Must be authenticated');
-		}
 
 		$result = $this->_httpApi('/user/details');
 
@@ -1399,10 +1391,8 @@ class OSM_Api {
 	 */
 	public function getUserPreferences() {
 
-		if ($this->_authProvider == null)
-		{
+		if( ! $this->isAuthenticated() )
 			throw new OSM_Exception('Must be authenticated');
-		}
 
 		$result = $this->_httpApi('/user/preferences');
 
@@ -1427,10 +1417,8 @@ class OSM_Api {
 	 */
 	public function setUserPreference($key, $value) {
 
-		if ($this->_authProvider == null)
-		{
+		if( ! $this->isAuthenticated() )
 			throw new OSM_Exception('Must be authenticated');
-		}
 
 		$result = $this->_httpApi(
 			'/user/preferences/' . rawurlencode(utf8_encode($key)), rawurlencode(utf8_encode($value)), 'PUT');

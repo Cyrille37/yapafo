@@ -12,6 +12,8 @@ use Psr\Log\LogLevel;
 
 $osmapi = new OSM_Api([
     'url' => OSM_Api::URL_PROD_UK,
+    // Because we change the Url, have to erase potential Access Token in Config
+    'access_token' => null,
     'log'=>['level'=>LogLevel::WARNING]
 ]);
 

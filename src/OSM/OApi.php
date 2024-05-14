@@ -12,7 +12,7 @@ use Cyrille37\OSM\Yapafo\OApiResponse ;
  * Overpass API/Language Guide :
  * http://wiki.openstreetmap.org/wiki/Overpass_API
  * http://wiki.openstreetmap.org/wiki/Overpass_API/Language_Guide
- * 
+ *
  * @author cyrille
  */
 class OSM_OApi {
@@ -20,13 +20,11 @@ class OSM_OApi {
 	const VERSION = '2.0';
 	const USER_AGENT = 'https://github.com/Cyrille37/yapafo';
 
-	/**
-	 * Query form: http://api.openstreetmap.fr/query_form.html
-	 */
-	const OAPI_URL_FR = 'https://api.openstreetmap.fr/oapi/interpreter';
+	//const OAPI_URL_FR = 'https://api.openstreetmap.fr/oapi/interpreter';
 	const OAPI_URL_RU = 'https://overpass.osm.rambler.ru/';
-	const OAPI_URL_LETUFFE = 'https://overpassapi.letuffe.org/api/interpreter';
+	//const OAPI_URL_LETUFFE = 'https://overpassapi.letuffe.org/api/interpreter';
 	const OAPI_URL_DE = 'https://www.overpass-api.de/api/interpreter';
+	const OAPI_URL_CH = 'https://overpass.osm.ch/api/interpreter';
 
 	protected $_options = array(
 		'url' => self::OAPI_URL_DE,
@@ -85,7 +83,7 @@ class OSM_OApi {
 	 *
 	 * @param string $xmlQuery
 	 * @param bool $forceNoCache
-	 * @return OApiResponse 
+	 * @return OApiResponse
 	 */
 	public function request($xmlQuery)
 	{

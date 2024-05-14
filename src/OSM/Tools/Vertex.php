@@ -2,11 +2,11 @@
 /*------------------------------------------------------------------------------
 ** File:        vertex.php
 ** Description: PHP class for a polygon vertex. Used as the base object to
-**              build a class of polygons. 
+**              build a class of polygons.
 ** Version:     1.6
 ** Author:      Brenor Brophy
 ** Email:       brenor dot brophy at gmail dot com
-** Homepage:    www.brenorbrophy.com 
+** Homepage:    www.brenorbrophy.com
 **------------------------------------------------------------------------------
 ** COPYRIGHT (c) 2005-2010 BRENOR BROPHY
 **
@@ -17,9 +17,9 @@
 **
 ** http://www.opensource.org/licenses/gpl-license.php
 **
-** This program is distributed in the hope that it will be useful, but WITHOUT 
-** ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS 
-** FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. 
+** This program is distributed in the hope that it will be useful, but WITHOUT
+** ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+** FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 **------------------------------------------------------------------------------
 **
 ** Based on the paper "Efficient Clipping of Arbitary Polygons" by Gunther
@@ -51,7 +51,7 @@
 ** 1.6  15/05/2010      No change to this file
 */
 
-namespace Cyrille37\OSM\Tools;
+namespace Cyrille37\OSM\Yapafo\Tools;
 
 class Segment
 {
@@ -71,7 +71,7 @@ class Segment
         function __construct ($xc=0, $yc=0, $d=0)
         {
                 $this->xc = $xc; $this->yc = $yc; $this->d = $d;
-        }       
+        }
         /*
         ** Return the contents of a segment
         */
@@ -96,10 +96,10 @@ class Vertex
 */
         var $x, $y;                 // Coordinates of the vertex
         var $nextV, $prevV;         // References to the next and previous vetices in the polygon
-        var $nSeg, $pSeg;           // References to next & previous segments
+        protected $nSeg, $pSeg;     // References to next & previous segments
         var $nextPoly;              // Reference to another polygon in a list
         var $intersect;             // TRUE if vertex is an intersection (with another polgon)
-        var $neighbor;              // Ref to the corresponding intersection vertex in another polygon 
+        var $neighbor;              // Ref to the corresponding intersection vertex in another polygon
         var $alpha;                 // Intersection points relative distance from previous vertex
         var $entry;                 // TRUE if intersection is an entry point to another polygon
                                     // FALSE if it is an exit point
@@ -171,7 +171,7 @@ class Vertex
                 else
                         if ($g) return $this->nSeg->Yc(); else return $this->pSeg->Yc();
         }
-				
+
         function d ($g = TRUE)
         {
                 if ($this->isIntersect())
@@ -229,7 +229,7 @@ class Vertex
         function isIntersect (){ return $this->intersect; }
         /*
         ** Set/Test for checked flag
-        */      
+        */
         function setChecked($check = TRUE)
         {
                 $this->checked = $check;
