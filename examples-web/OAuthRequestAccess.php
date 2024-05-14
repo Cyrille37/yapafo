@@ -219,7 +219,13 @@ setcookie(constant('COOKIE'), serialize($data), time() + 3600);
 				?>
 				<h3>Resource owner</h3>
 				<?php
+					/** @var JBelien\OAuth2\Client\Provider\OpenStreetMapResourceOwner $resourceOwner */
 					$resourceOwner = $osmProvider->getResourceOwner($accessToken);
+				?>
+				<p>
+					Resource owner name: <?php echo $resourceOwner->getDisplayName() ?>
+				</p>
+				<?php
 					echo '<pre>', print_r($resourceOwner,true) ,'</pre>';
 				?>
 			</li>
