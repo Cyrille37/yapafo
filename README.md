@@ -4,6 +4,7 @@
 
 ## FEATURES
 
+- use OAuth 2.0
 - Read objects from API, XAPI and Overpass-API.
 - Write objects to API.
 - Authenticate with Basic or OAuth.
@@ -23,6 +24,8 @@ Php libraries:
 
 - [psr/log](https://github.com/php-fig/log)
 - [vlucas/phpdotenv](https://github.com/vlucas/phpdotenv)
+- [jbelien/oauth2-openstreetmap](https://github.com/jbelien/oauth2-openstreetmap)
+  - which is a provider for [league/oauth2-client](https://github.com/thephpleague/oauth2-client)
 
 ## TUTORIALS / EXAMPLES
 

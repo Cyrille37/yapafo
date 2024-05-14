@@ -1,6 +1,6 @@
 <?php
 /**
- * An OAuth tool for Yapafo OSM_OAuth.
+ * An OAuth2 tool for Yapafo.
  */
 
 require_once( __DIR__.'/../vendor/autoload.php');
@@ -9,55 +9,82 @@ use Cyrille37\OSM\Yapafo\OSM_Api ;
 use Cyrille37\OSM\Yapafo\Auth\OAuth ;
 use Cyrille37\OSM\Yapafo\Tools\Config ;
 
-//
-// Let's go !
-//
-// Phase 2
-$consumerKey = isset($_REQUEST['consumerKey']) ? $_REQUEST['consumerKey'] : null;
-$consumerSecret = isset($_REQUEST['consumerSecret']) ? $_REQUEST['consumerSecret'] : null;
+define('COOKIE','osmoauth2');
 
-// Phase 3
-$authUrl = null;
-$authReqToken = isset($_REQUEST['authReqToken']) ? $_REQUEST['authReqToken'] : null;
+/*
+Toto no-confid OOB
 
-$authReqTokenSecret = isset($_REQUEST['authReqTokenSecret']) ? $_REQUEST['authReqTokenSecret'] : null;
+app_id: YnSZLf34I1WKvZJ8ErkBer-kOteRJMf5TNUl4zdhGyE
+app_secret: hVS-YfaP8Sem4BPQOTmUiYUesWCpHH62DaSM_M6Ly0o
+redirect: urn:ietf:wg:oauth:2.0:oob
 
-$authAccessToken = null;
-$authAccessTokenSecret = null;
+*/
 
-if( empty($consumerKey) )
+$data = [
+	'base_url' => 'https://master.apis.dev.openstreetmap.org/',
+	'app_id' => null ,
+	'app_secret' => null,
+	//'app_redirect' => 'https://example.com',
+	'app_redirect' => 'urn:ietf:wg:oauth:2.0:oob',
+	'authorizationUrl' => null ,
+	'accessCode' => null,
+	'oauth2state' => null ,
+	'accessToken' => null,
+	'refreshToken' => null,
+];
+
+// Update data
+
+if( isset($_COOKIE[constant('COOKIE')]))
 {
-	$oauth = new OAuth($consumerKey, $consumerSecret, [
-		'base_url' => Config::get('oauth_url')
-		]);
-}
-else
-{
-	$oauth = new OAuth($consumerKey, $consumerSecret, [
-			'base_url' => Config::get('oauth_url')
-		]);
-	$osmApi = new OSM_Api([
-			'url' => Config::get('osm_api_url')
-		]);
-	$osmApi->setCredentials($oauth);
-
-	if (empty($authReqToken) && empty($authReqTokenSecret))
-	{
-		$authCredentials = $oauth->requestAuthorizationUrl();
-		$authUrl = $authCredentials['url'];
-		$authReqToken = $authCredentials['token'];
-		$authReqTokenSecret = $authCredentials['tokenSecret'];
-	}
-	else
-	{
-		$oauth->setRequestToken($authReqToken, $authReqTokenSecret);
-		$authCredentials = $oauth->requestAccessToken();
-		$authAccessToken = $authCredentials['token'];
-		$authAccessTokenSecret = $authCredentials['tokenSecret'];
-	}
+	$data = unserialize($_COOKIE[constant('COOKIE')]);
 }
 
-$oauth_options = $oauth->getOptions();
+$data['app_id'] = isset($_REQUEST['app_id']) ? $_REQUEST['app_id'] : $data['app_id'];
+$data['app_secret'] = isset($_REQUEST['app_secret']) ? $_REQUEST['app_secret'] : $data['app_secret'];
+$data['accessCode'] = isset($_REQUEST['accessCode']) ? $_REQUEST['accessCode'] : $data['accessCode'];
+
+// Processing OAuth
+
+$osmProvider = null ;
+
+if( isset($data['app_id']))
+{
+	$osmProvider = new \JBelien\OAuth2\Client\Provider\OpenStreetMap([
+		'clientId'     => $data['app_id'],
+		'clientSecret' => $data['app_secret'],
+		'redirectUri'  => $data['app_redirect'],
+		'dev'          => true // Whether to use the OpenStreetMap test environment at https://master.apis.dev.openstreetmap.org/
+	]);
+
+	if( ! isset($data['accessCode']) )
+	{
+
+			// The authorization grant type is not supported by the authorization server
+		//$data['accessToken'] = $osmProvider->getAccessToken('client_credentials');
+
+		// Options are optional, defaults to 'read_prefs' only
+		$options = ['scope' => 'read_prefs read_gpx'];
+		$data['authorizationUrl'] = $osmProvider->getAuthorizationUrl($options);
+		$data['oauth2state'] = $osmProvider->getState();
+	}
+
+	if( isset($data['accessCode']) && (! isset($data['accessToken'])) )
+	{
+		/** @var \League\OAuth2\Client\Token\AccessToken $accessToken */
+		$accessToken = $osmProvider->getAccessToken(
+			'authorization_code', ['code' => $data['accessCode'] ]
+		);
+		$data['accessToken'] = $accessToken->getToken();
+		$data['refreshToken'] = $accessToken->getRefreshToken();
+	}
+
+}
+
+setcookie(constant('COOKIE'), serialize($data), time() + 3600);
+
+print_r($data);
+
 
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
@@ -86,66 +113,44 @@ $oauth_options = $oauth->getOptions();
 		<h1>OSM OAuth request access</h1>
 
 		<ol>
-			<li>The first step is to create an application credentials aka "Consumer Key" and "Consumer
-				Secret" at
-				<a href="<?php echo $oauth_options['base_url'] ?>/user/[YOUR USERNAME]/oauth_clients">
-				<?php echo $oauth_options['base_url'] ?>/user/[YOUR USERNAME]/oauth_clients</a>.
+			<li>The first step is to create an application.
+				<a href="<?php echo $data['base_url'] ?>/oauth2/applications">
+					<?php echo $data['base_url'] ?>/oauth2/applications
+				</a>.
 			</li>
 			<li>Then fill them here:
 				<form method="POST">
-					<label for="consumerKey">Consumer Key:</label>
-					<input name="consumerKey" type="text" value="<?php echo $consumerKey; ?>" size="64" />
+					<label for="app_id">Application ID:</label>
+					<input name="app_id" type="text" value="<?php echo $data['app_id']; ?>" size="64" />
 					<br/>
-					<label for="consumerSecret">Consumer Secret:</label>
-					<input name="consumerSecret" type="text" value="<?php echo $consumerSecret; ?>" size="64" />
+					<label for="app_secret">Application Secret:</label>
+					<input name="app_secret" type="text" value="<?php echo $data['app_secret']; ?>" size="64" />
 					<br /> <input type="submit" value="Ask authorization url" />
-					<?php if (!empty($authUrl)) { ?>
-						<!-- Got an Authorization result -->
-						<p>
-							Let's go to <a href="<?php echo $authUrl ?>" target="_blank"><?php echo $authUrl ?></a>
-							to Accept the application authorization request.<br />
-							Then come back here to process the next step.
-						</p>
-					<?php } ?>
 				</form>
 				<p>
-					
 				</p>
 			</li>
+
+			<?php if( isset($data['authorizationUrl']) ) { ?>
 			<li>
-				<?php if( empty($authAccessToken) ) { ?>
-					<!-- Need to ask a access token -->
-					<form method="POST">
-						The Access Token will be used by the application to use your account
-						for her self. <br />
-						<input type="hidden" name="consumerKey" value="<?php echo $consumerKey; ?>" size="64" />
-						<input type="hidden" name="consumerSecret" value="<?php echo $consumerSecret; ?>" size="64" />
-						<input type="hidden" name="authReqToken" value="<?php echo $authReqToken; ?>" />
-						<input type="hidden" name="authReqTokenSecret" value="<?php echo $authReqTokenSecret; ?>" />
-						<input type="submit" value="Get access token" />
-					</form>
-				<?php } else { ?>
-					<!-- Got an access token -->
-					<p>
-						<label for="authAccessToken">Access Token:</label>
-						<input name="authAccessToken" type="text" readonly="readonly"
-							value="<?php echo $authAccessToken; ?>" size="64" />
-						<br />
-						<label for="authAccessTokenSecret">Access Token Secret:</label>
-						<input name="authAccessTokenSecret" type="text" readonly="readonly"
-							value="<?php echo $authAccessTokenSecret; ?>" size="64" />
-					</p>
-					<p>You given to this token those capabilities:</p>
-					<ul>
-						<li>Read user preferences: <b><?php echo ($osmApi->isAllowedTo(OSM_Api::PERMS_READ_PREFS, true) ? 'allowed' : 'forbidden'); ?></b></li>
-						<li>Write user preferences: <b><?php echo ($osmApi->isAllowedTo(OSM_Api::PERMS_WRITE_PREFS) ? 'allowed' : 'forbidden'); ?></b></li>
-						<li>Access write user diary: <b><?php echo ($osmApi->isAllowedTo(OSM_Api::PERMS_WRITE_DIARY) ? 'allowed' : 'forbidden'); ?></b></li>
-						<li>Write api (change the map): <b><?php echo ($osmApi->isAllowedTo(OSM_Api::PERMS_WRITE_API) ? 'allowed' : 'forbidden'); ?></b></li>
-						<li>Load user gpx traces: <b><?php echo ($osmApi->isAllowedTo(OSM_Api::PERMS_READ_GPX) ? 'allowed' : 'forbidden'); ?></b></li>
-						<li>Upload user gpx traces: <b><?php echo ($osmApi->isAllowedTo(OSM_Api::PERMS_WRITE_GPX) ? 'allowed' : 'forbidden'); ?></b></li>
-						<li>Modify user map notes: <b><?php echo ($osmApi->isAllowedTo(OSM_Api::PERMS_WRITE_NOTE) ? 'allowed' : 'forbidden'); ?></b></li>
-					</ul>
-					<?php
+				Visit url <a href="<?php echo $data['authorizationUrl']?>"><?php echo $data['authorizationUrl']?></a>
+				and copy here the code :
+				<form method="POST">
+					<label for="accessCode">Access Code:</label>
+					<input id="accessCode" name="accessCode" type="text" value="<?php echo $data['accessCode']; ?>" size="64" />
+					<br />
+					<input type="submit" value="Ask access token" />
+				</form>
+			</li>
+			<?php } ?>
+
+			<li>
+				<?php if( ! empty($data['accessToken']) ) { ?>
+
+
+				<?php
+					$resourceOwner = $osmProvider->getResourceOwner($data['accessToken']);
+					echo '<pre>', print_r($resourceOwner,true) ,'</pre>';
 				}
 				?>
 			</li>
