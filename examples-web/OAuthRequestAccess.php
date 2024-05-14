@@ -12,11 +12,6 @@ use Cyrille37\OSM\Yapafo\Tools\Config ;
 define('COOKIE','osmoauth2');
 
 /*
-Toto no-confid OOB
-
-app_id: YnSZLf34I1WKvZJ8ErkBer-kOteRJMf5TNUl4zdhGyE
-app_secret: hVS-YfaP8Sem4BPQOTmUiYUesWCpHH62DaSM_M6Ly0o
-redirect: urn:ietf:wg:oauth:2.0:oob
 
 */
 
