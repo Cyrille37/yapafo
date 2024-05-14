@@ -20,6 +20,7 @@
 require_once( __DIR__.'/../vendor/autoload.php');
 
 use JBelien\OAuth2\Client\Provider\OpenStreetMap ;
+use  League\OAuth2\Client\Token\AccessToken ;
 
 // To store data locally
 define('COOKIE','osmoauth2');
@@ -105,7 +106,7 @@ if( isset($data['app_id']))
 		);
 		//$data['accessToken'] = $accessToken->getToken();
 		//$data['refreshToken'] = $accessToken->getRefreshToken();
-		$data['accessToken'] = serialize($accessToken);
+		$data['accessToken'] = serialize($accessToken->jsonSerialize());
 	}
 
 }
@@ -204,8 +205,15 @@ setcookie(constant('COOKIE'), serialize($data), time() + 3600);
 			<?php if( ! empty($data['accessToken']) ) { ?>
 			<li>
 				<h3>Access</h3>
-				<?php $accessToken = unserialize($data['accessToken']); ?>
-				<p>The access token : <?php echo $accessToken->getToken(); ?></p>
+				<?php
+					/** @var \League\OAuth2\Client\Token\AccessToken $accessToken */
+					$accessToken = new AccessToken(unserialize($data['accessToken']));
+				?>
+				<ul>
+					<li>Access token : <?php echo $accessToken->getToken(); ?></li>
+					<li>Refresh token : <?php echo $accessToken->getRefreshToken(); ?></li>
+					<li>Expires time : <?php echo $accessToken->getExpires(); ?> <?php echo (date($accessToken->getExpires())); ?></li>
+				</ul>
 				<?php
 					echo '<pre>', print_r($accessToken,true) ,'</pre>';
 				?>
