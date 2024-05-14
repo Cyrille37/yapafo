@@ -26,9 +26,12 @@ Php libraries:
 
 ## TUTORIALS / EXAMPLES
 
+- install dependencies
+  - `composer install`
 - A web page to create OAuth Access Token
-  - launch a browser at  `examples-web/OAuthRequestAccess.php`
-  - like with `php -S localhost:8000` 
+  - change directory `cd examples-web`
+  - launch the php webserver `php -S localhost:8000`
+  - then open a browser at  `http://localhost:8000/OAuthRequestAccess.php`
 - Other command-line examples in `examples-console`
 
 ### examples-web

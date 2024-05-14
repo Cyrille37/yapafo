@@ -32,7 +32,7 @@ class Config
         {
             $dir = __DIR__.'/../../..';
         }
-        $dotenv = Dotenv::createImmutable($dir);
+        $dotenv = Dotenv::create($dir);
         $dotenv->load();
     }
 
