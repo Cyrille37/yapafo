@@ -11,7 +11,7 @@ use Cyrille37\OSM\Yapafo\Tools\OsmXmlToCsv;
 use Psr\Log\LogLevel;
 
 $osmapi = new OSM_Api([
-    'url' => OSM_Api::URL_PROD_UK,
+    'url' => OSM_Api::URL_PROD_UK.OSM_Api::URL_PATH_API,
     // Because we change the Url, have to erase potential Access Token in Config
     'access_token' => null,
     'log'=>['level'=>LogLevel::WARNING]

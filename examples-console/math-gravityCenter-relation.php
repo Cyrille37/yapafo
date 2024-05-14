@@ -9,7 +9,7 @@ use Cyrille37\OSM\Yapafo\OSM_Api ;
 use Cyrille37\OSM\Yapafo\Objects\Relation ;
 
 $osmApi = new OSM_Api([
-    'url' => OSM_Api::URL_PROD_UK,
+    'url' => OSM_Api::URL_PROD_UK.OSM_Api::URL_PATH_API,
     // Because we change the Url, have to erase potential Access Token in Config
     'access_token' => null,
     //'log'=>['level'=>LogLevel::NOTICE]

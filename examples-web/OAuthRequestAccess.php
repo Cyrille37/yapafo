@@ -21,6 +21,7 @@ require_once( __DIR__.'/../vendor/autoload.php');
 
 use JBelien\OAuth2\Client\Provider\OpenStreetMap ;
 use  League\OAuth2\Client\Token\AccessToken ;
+use Cyrille37\OSM\Yapafo\OSM_Api;
 
 // To store data locally
 define('COOKIE','osmoauth2');
@@ -34,7 +35,7 @@ $data = [
 	'app_id' => null ,
 	'app_secret' => null,
 	//'app_redirect' => 'https://example.com',
-	'app_redirect' => 'urn:ietf:wg:oauth:2.0:oob',
+	'app_redirect' => OSM_Api::OAUTH2_NO_REDIRECT_URL,
 	'authorizationUrl' => null ,
 	'accessCode' => null,
 	'oauth2state' => null ,
@@ -167,8 +168,8 @@ setcookie(constant('COOKIE'), serialize($data), time() + (24*3600) );
 						<li><input type="checkbox" name="scopes[]" value="write_prefs" <?php echo in_array('write_prefs',$data['scopes']) ? 'checked' : '' ?> /> write_prefs: Modifier les préférences de l’utilisateur</li>
 						<li><input type="checkbox" name="scopes[]" value="write_diary" <?php echo in_array('write_diary',$data['scopes']) ? 'checked' : '' ?> /> write_diary: Créer des entrées de journal, des commentaires et se faire des amis</li>
 						<li><input type="checkbox" name="scopes[]" value="write_api" <?php echo in_array('write_api',$data['scopes']) ? 'checked' : '' ?> /> write_api: Modifier la carte</li>
-						<li><input type="checkbox" name="scopes[]" value="read_gpx" <?php echo in_array('read_gpx',$data['scopes']) ? 'checked' : '' ?> /> read_gpx: Lire les traces GPX privées</li>
-						<li><input type="checkbox" name="scopes[]" value="write_gpx" <?php echo in_array('write_gpx',$data['scopes']) ? 'checked' : '' ?> /> write_gpx: Mettre à jour les traces GPX</li>
+						<li><input type="checkbox" name="scopes[]" value="read_gpx" <?php echo in_array('read_gpx',$data['scopes']) ? 'checked' : '' ?> /> read_gpx: Lire les traces GPS privées</li>
+						<li><input type="checkbox" name="scopes[]" value="write_gpx" <?php echo in_array('write_gpx',$data['scopes']) ? 'checked' : '' ?> /> write_gpx: Mettre à jour les traces GPS</li>
 						<li><input type="checkbox" name="scopes[]" value="write_notes" <?php echo in_array('write_notes',$data['scopes']) ? 'checked' : '' ?> /> write_notes: Modifier les notes</li>
 						<li><input type="checkbox" name="scopes[]" value="write_redactions" <?php echo in_array('write_redactions',$data['scopes']) ? 'checked' : '' ?> /> write_redactions: Caviarder les données cartographiques</li>
 						<li><input type="checkbox" name="scopes[]" value="openid" <?php echo in_array('openid',$data['scopes']) ? 'checked' : '' ?> /> openid: Se connecter à OpenStreetMap</li>

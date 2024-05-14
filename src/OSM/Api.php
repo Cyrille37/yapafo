@@ -1,8 +1,9 @@
 <?php
-namespace Cyrille37\OSM\Yapafo ;
 
-use Cyrille37\OSM\Yapafo\Exceptions\Exception as OSM_Exception ;
-use Cyrille37\OSM\Yapafo\Exceptions\HttpException ;
+namespace Cyrille37\OSM\Yapafo;
+
+use Cyrille37\OSM\Yapafo\Exceptions\Exception as OSM_Exception;
+use Cyrille37\OSM\Yapafo\Exceptions\HttpException;
 use Cyrille37\OSM\Yapafo\Objects\ChangeSet;
 use Cyrille37\OSM\Yapafo\Objects\Node;
 use Cyrille37\OSM\Yapafo\Objects\OSM_Object;
@@ -26,15 +27,19 @@ use Psr\Log\LogLevel;
  *
  * @author cyrille
  */
-class OSM_Api {
+class OSM_Api
+{
 
 	const VERSION = '2.0';
 	const USER_AGENT = 'https://github.com/Cyrille37/yapafo';
 
-	const URL_DEV_UK = 'https://master.apis.dev.openstreetmap.org/api/0.6';
+	//const URL_DEV_UK = 'https://master.apis.dev.openstreetmap.org/api/0.6';
+	const URL_DEV_UK = 'https://master.apis.dev.openstreetmap.org';
 	//deprecated: const OSMAPI_URL_PROD_PROXY_LETTUFE = 'http://beta.letuffe.org/api/0.6';
 	//const URL_PROD_FR = 'http://api.openstreetmap.fr/api/0.6';
-	const URL_PROD_UK = 'https://api.openstreetmap.org/api/0.6';
+	const URL_PROD_UK = 'https://api.openstreetmap.org';
+
+	const URL_PATH_API = '/api/0.6' ;
 
 	/**
 	 * Instances: https://wiki.openstreetmap.org/wiki/Overpass_API#Public_Overpass_API_instances
@@ -55,21 +60,44 @@ class OSM_Api {
 	//const XAPI_URL_FR = 'http://api.openstreetmap.fr/xapi';
 	//const XAPI_URL_LETTUFE = 'http://overpassapi.letuffe.org/api/xapi';
 
+	const OAUTH2_NO_REDIRECT_URL = 'urn:ietf:wg:oauth:2.0:oob';
+
+	// List of permissions/scopes : https://wiki.openstreetmap.org/wiki/API_v0.6#List_of_permissions
+
+	const PERMS_READ_PREFS = 'allow_read_prefs';
+	const PERMS_WRITE_PREFS = 'allow_write_prefs';
+	const PERMS_WRITE_DIARY = 'allow_write_diary';
+	const PERMS_WRITE_API = 'allow_write_api';
+	const PERMS_READ_GPX = 'allow_read_gpx';
+	const PERMS_WRITE_GPX = 'allow_write_gpx';
+	const PERMS_WRITE_NOTE = 'allow_write_notes';
+	const PERMS_WRITE_REDACTIONS = 'allow_write_redactions';
+	const PERMS_OPENID = 'allow_openid';
+
+	const SCOPES4HUMANS = [
+		'1' => ['value' => 'read_prefs', 'desc' => 'Read user preferences'],
+		'2' => ['value' => 'write_prefs', 'desc' => 'Write user preferences'],
+		'3' => ['value' => 'write_diary', 'desc' => 'Create diary entries, comments and make friends'],
+		'4' => ['value' => 'write_api', 'desc' => 'Modify the map'],
+		'5' => ['value' => 'read_gpx', 'desc' => 'Read private GPS traces'],
+		'6' => ['value' => 'write_gpx', 'desc' => 'Upload GPS traces'],
+		'7' => ['value' => 'write_notes', 'desc' => 'Modify notes'],
+	];
 
 	/**
 	 */
 	protected $_options = [
 		// simulation is set by default to avoid (protected against) unwanted write !
 		'simulation' => true,
-		'url' => OSM_Api::URL_DEV_UK,
-		'url4Write' =>  OSM_Api::URL_DEV_UK,
+		'url' => OSM_Api::URL_DEV_UK.OSM_Api::URL_PATH_API,
+		'url4Write' =>  OSM_Api::URL_DEV_UK.OSM_Api::URL_PATH_API,
 		'oapi_url' => OSM_Api::OAPI_URL_DE,
 		'xapi_url' => OSM_Api::XAPI_URL_DE,
 		// to store every network communications (load/save) in a file.
 		'outputFolder' => null,
 		'appName' => '', // name for the application using the API
 		'log' => [
-			'logger' => null ,
+			'logger' => null,
 			'level' => LogLevel::NOTICE
 		],
 	];
@@ -80,7 +108,7 @@ class OSM_Api {
 	protected $_url;
 	protected $_url4Write;
 
-	protected $_osm_access_token ;
+	protected $_osm_access_token;
 
 	protected $_relations = [];
 	protected $_ways = [];
@@ -96,48 +124,41 @@ class OSM_Api {
 	/**
 	 * @var \Psr\Log\LoggerInterface
 	 */
-	protected $_logger ;
+	protected $_logger;
 
-	public function __construct( $options = [] )
+	public function __construct($options = [])
 	{
 		// Retrieve the OAuth Access Token, from Config or $options
 		$this->_osm_access_token = Config::get('osm_access_token');
-		if (array_key_exists('access_token', $options))
-		{
+		if (array_key_exists('access_token', $options)) {
 			$this->_osm_access_token = $options['access_token'];
 			unset($options['access_token']);
 		}
 
 		$this->_options['simulation'] = Config::get('simulation');
-		$this->_options['url'] = Config::get('osm_api_url', $this->_options['url'] );
+		$this->_options['url'] = Config::get('osm_api_url', $this->_options['url']);
 		$this->_options['url4Write'] = Config::get('osm_api_url_4write', $this->_options['url4Write']);
 		$this->_options['oapi_url'] = Config::get('oapi_url', $this->_options['oapi_url']);
 		$this->_options['xapi_url'] = Config::get('xapi_url', $this->_options['xapi_url']);
 		$this->_options['log']['level'] = Config::get('log_level', $this->_options['log']['level']);
 
 		// Check that all options exist then override defaults
-		foreach ($options as $k => $v)
-		{
+		foreach ($options as $k => $v) {
 			if (!array_key_exists($k, $this->_options))
 				throw new OSM_Exception('Unknow option "' . $k . '"');
 			$this->_options[$k] = $v;
 		}
 
-		if( isset($this->_options['log']['logger']) )
-		{
+		if (isset($this->_options['log']['logger'])) {
 			$this->_logger = $this->_options['log']['logger'];
-		}
-		else
-		{
-			$this->_logger = Logger::getInstance( $this->_options['log']['level'] );
+		} else {
+			$this->_logger = Logger::getInstance($this->_options['log']['level']);
 		}
 
-		$this->getLogger()->debug('{method} {options}',['method'=>__METHOD__,'options'=>$this->_options]);
+		$this->getLogger()->debug('{method} {options}', ['method' => __METHOD__, 'options' => $this->_options]);
 
-		if (!empty($this->_options['outputFolder']))
-		{
-			if (!is_writable($this->_options['outputFolder']))
-			{
+		if (!empty($this->_options['outputFolder'])) {
+			if (!is_writable($this->_options['outputFolder'])) {
 				throw new OSM_Exception('Option "outputFolder" is set but the folder is not writable.');
 			}
 		}
@@ -148,29 +169,31 @@ class OSM_Api {
 	 */
 	public function getLogger()
 	{
-		return $this->_logger ;
+		return $this->_logger;
 	}
 
 	public function isDebug()
 	{
-		return ($this->_options['log']['level']==LogLevel::DEBUG);
+		return ($this->_options['log']['level'] == LogLevel::DEBUG);
 	}
 
-	public function setAccesToken($accessToken) {
+	public function setAccesToken($accessToken)
+	{
 
-		$this->_osm_access_token = $accessToken ;
+		$this->_osm_access_token = $accessToken;
 	}
 
 	public function isAuthenticated()
 	{
-		return $this->_osm_access_token ? true : false ;
+		return $this->_osm_access_token ? true : false;
 	}
 
 	/**
 	 * @param string $key
 	 * @return mixed
 	 */
-	public function getOption($key) {
+	public function getOption($key)
+	{
 		if (!array_key_exists($key, $this->_options))
 			return null;
 		return $this->_options[$key];
@@ -181,7 +204,8 @@ class OSM_Api {
 	 * @param mixed $value
 	 * @return OSM_Api fluent interface
 	 */
-	public function setOption($key, $value) {
+	public function setOption($key, $value)
+	{
 		if (!array_key_exists($key, $this->_options))
 			throw new OSM_Exception('Unknow Api option "' . $key . '"');
 		$this->_options[$key] = $key;
@@ -191,7 +215,8 @@ class OSM_Api {
 	/**
 	 * @return \SimpleXMLElement
 	 */
-	public function getLastLoadedXmlObject() {
+	public function getLastLoadedXmlObject()
+	{
 		return simplexml_load_string($this->_loadedXml[count($this->_loadedXml) - 1]);
 	}
 
@@ -199,15 +224,16 @@ class OSM_Api {
 	 *
 	 * @return string
 	 */
-	public function getLastLoadedXmlString() {
+	public function getLastLoadedXmlString()
+	{
 		return $this->_loadedXml[count($this->_loadedXml) - 1];
 	}
 
-	protected function _httpApi($relativeUrl, $data = null, $method = 'GET') {
+	protected function _httpApi($relativeUrl, $data = null, $method = 'GET')
+	{
 
 		$url = null;
-		switch ($method)
-		{
+		switch ($method) {
 			case 'GET':
 				$url = $this->_options['url'];
 				break;
@@ -220,7 +246,7 @@ class OSM_Api {
 		}
 		$url .= $relativeUrl;
 
-		$this->getLogger()->notice( '{method} {http_method} {url}', ['method'=>__METHOD__, 'http_method'=>$method, 'url'=>$url]);
+		$this->getLogger()->notice('{method} {http_method} {url}', ['method' => __METHOD__, 'http_method' => $method, 'url' => $url]);
 
 		$headers = array(
 			// Failed with PUT :
@@ -230,53 +256,45 @@ class OSM_Api {
 			'Content-type: text/xml'
 		);
 
-		if( $this->_osm_access_token )
-		{
-			$headers[] = 'Authorization: Bearer ' . $this->_osm_access_token ;
+		if ($this->_osm_access_token) {
+			$headers[] = 'Authorization: Bearer ' . $this->_osm_access_token;
 		}
 
 		$opts = [
 			'http' => [
 				'method' => $method,
 				'user_agent' => $this->_getUserAgent(),
-				'header' => /* implode("\r\n", $headers) */$headers,
+				'header' => /* implode("\r\n", $headers) */ $headers,
 			]
 		];
-		if( $data != null)
-		{
+		if ($data != null) {
 			//$postdata = http_build_query(array('data' => $data));
 			$postdata = $data;
-			$opts['http']['content'] = $postdata ;
+			$opts['http']['content'] = $postdata;
 		}
 
-		$this->getLogger()->debug(__METHOD__.' opts:{opts}', ['opts'=>$opts]);
+		$this->getLogger()->debug(__METHOD__ . ' opts:{opts}', ['opts' => $opts]);
 
 		$this->_stats['requestCount']++;
 
-		if ($this->_options['outputFolder'] != null)
-		{
+		if ($this->_options['outputFolder'] != null) {
 			file_put_contents($this->_getOutputFilename('out', $relativeUrl, $method), $data);
 		}
 
 		$context = stream_context_create($opts);
 		$result = @file_get_contents($url, false, $context);
-		if ($result === false || $result == null)
-		{
+		if ($result === false || $result == null) {
 			$e = error_get_last();
-			if (isset($http_response_header))
-			{
+			if (isset($http_response_header)) {
 				$ex = new HttpException($http_response_header);
-			}
-			else
-			{
+			} else {
 				$ex = new HttpException($e['message']);
 			}
-			if( $ex->getMessage() != 'HTTP/1.1 200 OK' )
-				throw $ex ;
+			if ($ex->getMessage() != 'HTTP/1.1 200 OK')
+				throw $ex;
 		}
 
-		if ($this->_options['outputFolder'] != null)
-		{
+		if ($this->_options['outputFolder'] != null) {
 			file_put_contents($this->_getOutputFilename('in', $relativeUrl, $method), $result);
 		}
 
@@ -295,17 +313,16 @@ class OSM_Api {
 	 * @param boolean $full
 	 * @return Object
 	 */
-	public function getObject($type, $id, $full = false) {
+	public function getObject($type, $id, $full = false)
+	{
 
-		$this->getLogger()->debug('{method} type:{type} id:{id} full:{full}', ['method'=>__METHOD__, 'type'=>$type, 'id'=>$id,'full'=>$full]);
+		$this->getLogger()->debug('{method} type:{type} id:{id} full:{full}', ['method' => __METHOD__, 'type' => $type, 'id' => $id, 'full' => $full]);
 
-		if (!preg_match('/\d+/', $id))
-		{
+		if (!preg_match('/\d+/', $id)) {
 			throw new OSM_Exception('Invalid object Id');
 		}
 
-		switch ($type)
-		{
+		switch ($type) {
 			case OSM_Object::OBJTYPE_RELATION:
 				if (!$full && array_key_exists($id, $this->_relations))
 					return $this->_relations[$id];
@@ -330,17 +347,16 @@ class OSM_Api {
 		if ($type == OSM_Object::OBJTYPE_NODE)
 			$full = false;
 
-		$relativeUrl = '/'.$type . '/' . $id . ($full ? '/full' : '' );
+		$relativeUrl = '/' . $type . '/' . $id . ($full ? '/full' : '');
 
 		$result = $this->_httpApi($relativeUrl, null, 'GET');
 
-		$this->getLogger()->debug('{_m} {result}', ['_m'=>__METHOD__, 'result'=>$result ]);
+		$this->getLogger()->debug('{_m} {result}', ['_m' => __METHOD__, 'result' => $result]);
 
 		//return $this->createObjectsfromXml($type, $result, $full);
 		$this->createObjectsfromXml($result);
 
-		switch ($type)
-		{
+		switch ($type) {
 			case OSM_Object::OBJTYPE_RELATION:
 				return $this->_relations[$id];
 				break;
@@ -363,7 +379,8 @@ class OSM_Api {
 	 * @param string $id
 	 * @return Node
 	 */
-	public function getNode($id) {
+	public function getNode($id)
+	{
 		return $this->getObject(OSM_Object::OBJTYPE_NODE, $id);
 	}
 
@@ -376,7 +393,8 @@ class OSM_Api {
 	 * @param bool $full With its nodes (true) or not (false=default)
 	 * @return Way
 	 */
-	public function getWay($id, $full = false) {
+	public function getWay($id, $full = false)
+	{
 		return $this->getObject(OSM_Object::OBJTYPE_WAY, $id, $full);
 	}
 
@@ -389,16 +407,17 @@ class OSM_Api {
 	 * @param bool $full true for loading all relation's members
 	 * @return Relation
 	 */
-	public function getRelation($id, $full = false) {
+	public function getRelation($id, $full = false)
+	{
 		return $this->getObject(OSM_Object::OBJTYPE_RELATION, $id, $full);
 	}
 
-	public function loadOSMFile( $osmFilename )
+	public function loadOSMFile($osmFilename)
 	{
-		if( ! file_exists($osmFilename) )
-			throw new \Exception('File not found "'.$osmFilename.'"');
+		if (!file_exists($osmFilename))
+			throw new \Exception('File not found "' . $osmFilename . '"');
 
-		$this->createObjectsfromXml( file_get_contents($osmFilename) );
+		$this->createObjectsfromXml(file_get_contents($osmFilename));
 	}
 
 	/**
@@ -408,18 +427,16 @@ class OSM_Api {
 	 */
 	public function createObjectsfromXml($xmlStr)
 	{
-		$this->getLogger()->debug('{_m} {xml}', ['_m'=>__METHOD__, 'xml'=>$xmlStr]);
+		$this->getLogger()->debug('{_m} {xml}', ['_m' => __METHOD__, 'xml' => $xmlStr]);
 
-		if (empty($xmlStr))
-		{
+		if (empty($xmlStr)) {
 			throw new OSM_Exception('Xml string could not be empty');
 		}
 
 		$xmlObj = simplexml_load_string($xmlStr);
 
-		if ($xmlObj == null)
-		{
-			$this->getLogger()->error('{_m} Failed to parse xml {xml}', ['_m'=>__METHOD__, 'xml'=>$xmlStr ]);
+		if ($xmlObj == null) {
+			$this->getLogger()->error('{_m} Failed to parse xml {xml}', ['_m' => __METHOD__, 'xml' => $xmlStr]);
 			throw new OSM_Exception('Failed to parse xml');
 		}
 
@@ -430,22 +447,20 @@ class OSM_Api {
 		 * @var \SimpleXMLElement $obj
 		 */
 		$objects = $xmlObj->xpath('/osm/*');
-		foreach( $objects as $obj )
-		{
-			$this->getLogger()->debug('{_m} type:{type}', ['_m'=>__METHOD__,'type'=>$obj->getName()]);
-			switch ($obj->getName())
-			{
-				case OSM_Object::OBJTYPE_RELATION :
+		foreach ($objects as $obj) {
+			$this->getLogger()->debug('{_m} type:{type}', ['_m' => __METHOD__, 'type' => $obj->getName()]);
+			switch ($obj->getName()) {
+				case OSM_Object::OBJTYPE_RELATION:
 					$r = Relation::fromXmlObj($obj);
 					$this->_relations[$r->getId()] = $r;
 					break;
 
-				case OSM_Object::OBJTYPE_WAY :
+				case OSM_Object::OBJTYPE_WAY:
 					$w = Way::fromXmlObj($obj);
 					$this->_ways[$w->getId()] = $w;
 					break;
 
-				case OSM_Object::OBJTYPE_NODE :
+				case OSM_Object::OBJTYPE_NODE:
 					$n = Node::fromXmlObj($obj);
 					$this->_nodes[$n->getId()] = $n;
 					break;
@@ -461,10 +476,10 @@ class OSM_Api {
 		}
 	}
 
-	public function hasObject($type, $id) {
+	public function hasObject($type, $id)
+	{
 
-		switch ($type)
-		{
+		switch ($type) {
 			case OSM_Object::OBJTYPE_RELATION:
 				if (array_key_exists($id, $this->_relations))
 					return true;
@@ -486,15 +501,18 @@ class OSM_Api {
 		return false;
 	}
 
-	public function hasNode($id) {
+	public function hasNode($id)
+	{
 		return $this->hasObject(OSM_Object::OBJTYPE_NODE, $id);
 	}
 
-	public function hasWay($id) {
+	public function hasWay($id)
+	{
 		return $this->hasObject(OSM_Object::OBJTYPE_WAY, $id);
 	}
 
-	public function hasRelation($id) {
+	public function hasRelation($id)
+	{
 		return $this->hasObject(OSM_Object::OBJTYPE_RELATION, $id);
 	}
 
@@ -502,7 +520,8 @@ class OSM_Api {
 	 * Returns all loaded objects.
 	 * @return OSM_Object[] List of objects
 	 */
-	public function &getObjects() {
+	public function &getObjects()
+	{
 
 		$result = array_merge(array_values($this->_relations), array_values($this->_ways), array_values($this->_nodes));
 		return $result;
@@ -512,7 +531,8 @@ class OSM_Api {
 	 * Returns all loaded relations
 	 * @return Relation[]
 	 */
-	public function getRelations() {
+	public function getRelations()
+	{
 		return array_values($this->_relations);
 	}
 
@@ -520,7 +540,8 @@ class OSM_Api {
 	 * Returns all loaded ways
 	 * @return Way[]
 	 */
-	public function getWays() {
+	public function getWays()
+	{
 		return array_values($this->_ways);
 	}
 
@@ -528,7 +549,8 @@ class OSM_Api {
 	 * Returns all loaded nodes
 	 * @return Node[]
 	 */
-	public function getNodes() {
+	public function getNodes()
+	{
 		return array_values($this->_nodes);
 	}
 
@@ -538,10 +560,13 @@ class OSM_Api {
 	 * @param array $searchTags is a array of Key=>Value.
 	 * @return Object[]
 	 */
-	public function &getObjectsByTags(array $searchTags) {
+	public function &getObjectsByTags(array $searchTags)
+	{
 
 		$results = array_merge(
-			$this->getRelationsByTags($searchTags), $this->getWaysByTags($searchTags), $this->getNodesByTags($searchTags)
+			$this->getRelationsByTags($searchTags),
+			$this->getWaysByTags($searchTags),
+			$this->getNodesByTags($searchTags)
 		);
 		return $results;
 	}
@@ -552,11 +577,11 @@ class OSM_Api {
 	 * @param array $tags is a array of Key=>Value.
 	 * @return Node[]
 	 */
-	public function &getRelationsByTags(array $searchTags) {
+	public function &getRelationsByTags(array $searchTags)
+	{
 
 		$results = array();
-		foreach ($this->_relations as $obj)
-		{
+		foreach ($this->_relations as $obj) {
 			if ($obj->hasTags($searchTags))
 				$results[] = $obj;
 		}
@@ -569,11 +594,11 @@ class OSM_Api {
 	 * @param array $tags is a array of Key=>Value.
 	 * @return Node[]
 	 */
-	public function &getWaysByTags(array $searchTags) {
+	public function &getWaysByTags(array $searchTags)
+	{
 
 		$results = array();
-		foreach ($this->_ways as $obj)
-		{
+		foreach ($this->_ways as $obj) {
 			if ($obj->hasTags($searchTags))
 				$results[] = $obj;
 		}
@@ -586,11 +611,11 @@ class OSM_Api {
 	 * @param array $tags is a array of Key=>Value.
 	 * @return Node[]
 	 */
-	public function &getNodesByTags(array $searchTags) {
+	public function &getNodesByTags(array $searchTags)
+	{
 
 		$results = array();
-		foreach ($this->_nodes as $obj)
-		{
+		foreach ($this->_nodes as $obj) {
 			if ($obj->hasTags($searchTags))
 				$results[] = $obj;
 		}
@@ -603,10 +628,10 @@ class OSM_Api {
 	 * @param string $type
 	 * @param int $id
 	 */
-	public function removeObject($type, $id) {
+	public function removeObject($type, $id)
+	{
 
-		switch ($type)
-		{
+		switch ($type) {
 			case OSM_Object::OBJTYPE_RELATION:
 				if (array_key_exists($id, $this->_relations))
 					unset($this->_relations[$id]);
@@ -628,7 +653,8 @@ class OSM_Api {
 		}
 	}
 
-	public function removeAllObjects() {
+	public function removeAllObjects()
+	{
 		$this->_relations = $this->_ways = $this->_nodes = [];
 	}
 
@@ -642,7 +668,8 @@ class OSM_Api {
 	 * @param bool $full
 	 * @return Object the reverted object
 	 */
-	public function reloadObject($type, $id, $full = false) {
+	public function reloadObject($type, $id, $full = false)
+	{
 
 		$this->removeObject($type, $id);
 		return $this->getObject($type, $id, $full);
@@ -656,15 +683,16 @@ class OSM_Api {
 	 */
 	public function queryOApiQL($qlQuery)
 	{
-		$this->getLogger()->debug('{_m} url:{url} query:{query}', ['_m'=>__METHOD__, 'qlQuery'=>$qlQuery]);
+		$this->getLogger()->debug('{_m} url:{url} query:{query}', ['_m' => __METHOD__, 'qlQuery' => $qlQuery]);
 
 		$url = $this->_options['oapi_url'];
 		$method = 'POST';
 		$postdata = http_build_query(array('data' => $qlQuery));
 
-		$opts = ['http' =>
+		$opts = [
+			'http' =>
 			[
-				'ignore_errors'=>true,
+				'ignore_errors' => true,
 				'method' => $method,
 				'user_agent' => $this->_getUserAgent(),
 				'header' => 'Content-type: application/x-www-form-urlencoded',
@@ -673,39 +701,32 @@ class OSM_Api {
 		];
 		$context = stream_context_create($opts);
 
-		$this->getLogger()->notice( '{method} {http_method} {url}', ['method'=>__METHOD__, 'http_method'=>$method, 'url'=>$url]);
-		$this->getLogger()->debug('{_m} opts:{opts}', ['opts'=>$opts,'_m'=>__METHOD__]);
+		$this->getLogger()->notice('{method} {http_method} {url}', ['method' => __METHOD__, 'http_method' => $method, 'url' => $url]);
+		$this->getLogger()->debug('{_m} opts:{opts}', ['opts' => $opts, '_m' => __METHOD__]);
 
 		$this->_stats['requestCount']++;
 
-		if ($this->_options['outputFolder'] != null)
-		{
+		if ($this->_options['outputFolder'] != null) {
 			file_put_contents($this->_getOutputFilename('out', $url, $method), $qlQuery);
 		}
 
 		$result = @file_get_contents($url, false, $context);
-		if ($result === false)
-		{
+		if ($result === false) {
 			$e = error_get_last();
-			if (isset($http_response_header))
-			{
-				throw new HttpException('message: '.$e['message'].', http_response_header: '.print_r($http_response_header,true) );
-			}
-			else
-			{
+			if (isset($http_response_header)) {
+				throw new HttpException('message: ' . $e['message'] . ', http_response_header: ' . print_r($http_response_header, true));
+			} else {
 				throw new HttpException($e['message']);
 			}
 		}
 
-		if ($this->_options['outputFolder'] != null)
-		{
+		if ($this->_options['outputFolder'] != null) {
 			file_put_contents($this->_getOutputFilename('in', $url, $method), $result);
 		}
 
 		$this->_stats['loadedBytes'] += strlen($result);
 
 		$this->createObjectsfromXml($result);
-
 	}
 
 	/**
@@ -719,17 +740,17 @@ class OSM_Api {
 	 */
 	public function queryOApiXml($xmlQuery, $withMeta = true)
 	{
-		if( $withMeta )
-		{
+		if ($withMeta) {
 			$this->_oapiAddMetadata($xmlQuery);
 		}
-		$this->getLogger()->debug('{_m} url:{url} query:{query}', ['_m'=>__METHOD__, 'query'=>$xmlQuery]);
+		$this->getLogger()->debug('{_m} url:{url} query:{query}', ['_m' => __METHOD__, 'query' => $xmlQuery]);
 
 		$url = $this->_options['oapi_url'];
 		$method = 'POST';
 		$postdata = http_build_query(array('data' => $xmlQuery));
 
-		$opts = ['http' =>
+		$opts = [
+			'http' =>
 			[
 				'method' => $method,
 				'user_agent' => $this->_getUserAgent(),
@@ -739,32 +760,26 @@ class OSM_Api {
 		];
 		$context = stream_context_create($opts);
 
-		$this->getLogger()->notice( '{method} {http_method} {url}', ['method'=>__METHOD__, 'http_method'=>$method, 'url'=>$url]);
-		$this->getLogger()->debug('{_m} opts:{opts}', ['opts'=>$opts,'_m'=>__METHOD__]);
+		$this->getLogger()->notice('{method} {http_method} {url}', ['method' => __METHOD__, 'http_method' => $method, 'url' => $url]);
+		$this->getLogger()->debug('{_m} opts:{opts}', ['opts' => $opts, '_m' => __METHOD__]);
 
 		$this->_stats['requestCount']++;
 
-		if ($this->_options['outputFolder'] != null)
-		{
+		if ($this->_options['outputFolder'] != null) {
 			file_put_contents($this->_getOutputFilename('out', $url, $method), $xmlQuery);
 		}
 
 		$result = file_get_contents($url, false, $context);
-		if ($result === false)
-		{
+		if ($result === false) {
 			$e = error_get_last();
-			if (isset($http_response_header))
-			{
+			if (isset($http_response_header)) {
 				throw new HttpException($http_response_header);
-			}
-			else
-			{
+			} else {
 				throw new HttpException($e['message']);
 			}
 		}
 
-		if ($this->_options['outputFolder'] != null)
-		{
+		if ($this->_options['outputFolder'] != null) {
 			file_put_contents($this->_getOutputFilename('in', $url, $method), $result);
 		}
 
@@ -777,16 +792,14 @@ class OSM_Api {
 	 *
 	 * @param string $xmlQuery
 	 */
-	protected function _oapiAddMetadata( &$xmlQuery )
+	protected function _oapiAddMetadata(&$xmlQuery)
 	{
-		$this->getLogger()->debug('{_m}', ['_m'=>__METHOD__]);
+		$this->getLogger()->debug('{_m}', ['_m' => __METHOD__]);
 
 		$x = new \SimpleXMLElement($xmlQuery);
 		$xPrints = $x->xpath('//print');
-		foreach ($xPrints as $xPrint)
-		{
-			if ($xPrint['mode'] == null)
-			{
+		foreach ($xPrints as $xPrint) {
+			if ($xPrint['mode'] == null) {
 				$xPrint->addAttribute('mode', 'meta');
 			}
 		}
@@ -804,14 +817,15 @@ class OSM_Api {
 	 * @param string $query
 	 * @return void
 	 */
-	public function queryXApi( $query )
+	public function queryXApi($query)
 	{
-		$this->_logger->debug( __METHOD__.' Query:{query}', ['query'=>$query]);
+		$this->_logger->debug(__METHOD__ . ' Query:{query}', ['query' => $query]);
 
 		$url = $this->_options['xapi_url'];
 		$method = 'GET';
 
-		$opts = array('http' =>
+		$opts = array(
+			'http' =>
 			array(
 				'method' => $method,
 				'user_agent' => $this->_getUserAgent(),
@@ -819,32 +833,26 @@ class OSM_Api {
 		);
 		$context = stream_context_create($opts);
 
-		$this->getLogger()->notice( '{_m} {http_method} {url}', ['_m'=>__METHOD__, 'http_method'=>$method, 'url'=>$url]);
+		$this->getLogger()->notice('{_m} {http_method} {url}', ['_m' => __METHOD__, 'http_method' => $method, 'url' => $url]);
 
-		$result = file_get_contents( $url . '?' . urlencode($query), false, $context);
+		$result = file_get_contents($url . '?' . urlencode($query), false, $context);
 
 		$this->_stats['requestCount']++;
 
-		if ($this->_options['outputFolder'] != null)
-		{
+		if ($this->_options['outputFolder'] != null) {
 			file_put_contents($this->_getOutputFilename('out', $url, $method), $query);
 		}
 
-		if ($result === false)
-		{
+		if ($result === false) {
 			$e = error_get_last();
-			if (isset($http_response_header))
-			{
+			if (isset($http_response_header)) {
 				throw new HttpException($http_response_header);
-			}
-			else
-			{
+			} else {
 				throw new HttpException($e['message']);
 			}
 		}
 
-		if ($this->_options['outputFolder'] != null)
-		{
+		if ($this->_options['outputFolder'] != null) {
 			file_put_contents($this->_getOutputFilename('in', $url, $method), $result);
 		}
 
@@ -861,7 +869,8 @@ class OSM_Api {
 	 * @param array $tags
 	 * @return Node
 	 */
-	public function addNewNode($lat = 0, $lon = 0, array $tags = null) {
+	public function addNewNode($lat = 0, $lon = 0, array $tags = null)
+	{
 
 		$node = new Node($this->_newIdCounter--, $lat, $lon, $tags);
 		$this->_nodes[$node->getId()] = $node;
@@ -875,7 +884,8 @@ class OSM_Api {
 	 * @param array $tags
 	 * @return Way
 	 */
-	public function addNewWay(array $nodes = null, array $tags = null) {
+	public function addNewWay(array $nodes = null, array $tags = null)
+	{
 
 		$way = new Way($this->_newIdCounter--);
 		if (is_array($nodes))
@@ -892,7 +902,8 @@ class OSM_Api {
 	 * @param array $tags
 	 * @return Relation
 	 */
-	public function addNewRelation(array $members = null, array $tags = null) {
+	public function addNewRelation(array $members = null, array $tags = null)
+	{
 
 		$relation = new Relation($this->_newIdCounter--);
 		if (is_array($members))
@@ -906,18 +917,17 @@ class OSM_Api {
 	 *
 	 * @return OSM_Object[]
 	 */
-	public function &getDirtyObjects() {
+	public function &getDirtyObjects()
+	{
 
 		$dirtyObjects = array();
 
 		// union of objects
 		$objects = $this->_relations + $this->_ways + $this->_nodes;
 
-		foreach ($objects as $obj)
-		{
-			$this->getLogger()->debug('{_m} Object {class}/{id} is dirty:{dirty}', ['_m'=>__METHOD__, 'class'=>get_class($obj), 'id'=>$obj->getId(), 'dirty'=>$obj->isDirty() ]);
-			if( $obj->isDirty() )
-			{
+		foreach ($objects as $obj) {
+			$this->getLogger()->debug('{_m} Object {class}/{id} is dirty:{dirty}', ['_m' => __METHOD__, 'class' => get_class($obj), 'id' => $obj->getId(), 'dirty' => $obj->isDirty()]);
+			if ($obj->isDirty()) {
 				$dirtyObjects[] = $obj;
 			}
 		}
@@ -930,21 +940,17 @@ class OSM_Api {
 	 * @param bool $onlyDirtyObjects To get only modified objects (added, modified or deleted)
 	 * @return string Xml document as a string.
 	 */
-	public function getXmlDocument($onlyDirtyObjects = false) {
+	public function getXmlDocument($onlyDirtyObjects = false)
+	{
 		$xml = '<osm version="0.6" upload="true" generator="' . $this->_getUserAgent() . '">' . "\n";
 		// union of objects
 		$objects = $this->_relations + $this->_ways + $this->_nodes;
-		foreach ($objects as $obj)
-		{
-			if ($onlyDirtyObjects)
-			{
-				if ($obj->isDirty())
-				{
+		foreach ($objects as $obj) {
+			if ($onlyDirtyObjects) {
+				if ($obj->isDirty()) {
 					$xml .= $obj->asXmlStr() . "\n";
 				}
-			}
-			else
-			{
+			} else {
 				$xml .= $obj->asXmlStr() . "\n";
 			}
 		}
@@ -961,45 +967,40 @@ class OSM_Api {
 	 * @return bool true if has saved something, false if nothing to save.
 	 * @throws OSM_Exception if not authenticated
 	 */
-	public function saveChanges($comment) {
+	public function saveChanges($comment)
+	{
 
-		$this->getLogger()->notice('{_m} comment:"{comment}"', ['_m'=>__METHOD__, 'comment'=>$comment]);
+		$this->getLogger()->notice('{_m} comment:"{comment}"', ['_m' => __METHOD__, 'comment' => $comment]);
 
-		if( ! $this->isAuthenticated() )
+		if (!$this->isAuthenticated())
 			throw new OSM_Exception('Must be authenticated');
 
-		if ($this->_options['simulation'])
-		{
-			$this->getLogger()->notice(__METHOD__.' Simulation Mode, not saving'
+		if ($this->_options['simulation']) {
+			$this->getLogger()->notice(__METHOD__ . ' Simulation Mode, not saving'
 				. ($this->_options['outputFolder'] != null
-				? ' but look inside folder ' . $this->_options['outputFolder']
-				: ''));
+					? ' but look inside folder ' . $this->_options['outputFolder']
+					: ''));
 		}
 
 		$dirtyObjects = $this->getDirtyObjects();
 		$dirtyObjectsCount = count($dirtyObjects);
 
-		if ($dirtyObjectsCount == 0)
-		{
-			$this->getLogger()->notice(__METHOD__.' No dirty object, abort save');
+		if ($dirtyObjectsCount == 0) {
+			$this->getLogger()->notice(__METHOD__ . ' No dirty object, abort save');
 			return false;
 		}
-		$this->getLogger()->notice(__METHOD__.' Has '.$dirtyObjectsCount.' dirty objects');
+		$this->getLogger()->notice(__METHOD__ . ' Has ' . $dirtyObjectsCount . ' dirty objects');
 
 		$changeSet = $this->_createChangeSet($comment);
 
 		$changeSetId = $changeSet->getId();
 
-		foreach ($dirtyObjects as $obj)
-		{
+		foreach ($dirtyObjects as $obj) {
 			//OSM_ZLog::debug(__METHOD__,print_r($obj,true));
 
-			if ($obj->isDeleted())
-			{
+			if ($obj->isDeleted()) {
 				$changeSet->deleteObject($obj);
-			}
-			else
-			{
+			} else {
 				$changeSet->addObject($obj);
 			}
 		}
@@ -1024,61 +1025,53 @@ class OSM_Api {
 	 * @param string $comment
 	 * @return ChangeSet
 	 */
-	protected function _createChangeSet($comment) {
+	protected function _createChangeSet($comment)
+	{
 
 		$relativeUrl = '/changeset/create';
 
-		if ($this->_options['simulation'])
-		{
-			$this->getLogger()->info(__METHOD__.' Simulation Mode, set changeset id to 999');
+		if ($this->_options['simulation']) {
+			$this->getLogger()->info(__METHOD__ . ' Simulation Mode, set changeset id to 999');
 			$result = 999;
-		}
-		else
-		{
+		} else {
 			$result = $this->_httpApi($relativeUrl, ChangeSet::getCreateXmlStr($comment, $this->_getUserAgent()), 'PUT');
 		}
 
-		$this->getLogger()->debug('{_m} result:{result}', ['_m'=>__METHOD__, 'result'=>$result]);
+		$this->getLogger()->debug('{_m} result:{result}', ['_m' => __METHOD__, 'result' => $result]);
 
 		$changeSet = new ChangeSet($result);
 		return $changeSet;
 	}
 
-	protected function _closeChangeSet($changeSet) {
+	protected function _closeChangeSet($changeSet)
+	{
 
 		$relativeUrl = '/changeset/' . $changeSet->getId() . '/close';
 
-		if ($this->_options['simulation'])
-		{
-
-		}
-		else
-		{
+		if ($this->_options['simulation']) {
+		} else {
 			$result = $this->_httpApi($relativeUrl, null, 'PUT');
 		}
 	}
 
-	protected function _uploadChangeSet($changeSet) {
+	protected function _uploadChangeSet($changeSet)
+	{
 
 		$relativeUrl = '/changeset/' . $changeSet->getId() . '/upload';
 
 		$xmlStr = $changeSet->getUploadXmlStr($this->_getUserAgent());
 
-		if ($this->_options['outputFolder'])
-		{
+		if ($this->_options['outputFolder']) {
 			file_put_contents($this->_getOutputFilename('out', '_uploadChangeSet', 'POST'), $xmlStr);
 		}
 
-		if ($this->_options['simulation'])
-		{
+		if ($this->_options['simulation']) {
 			$result = 'Simulation, no call to Api';
-		}
-		else
-		{
+		} else {
 			$result = $this->_httpApi($relativeUrl, $xmlStr, 'POST');
 		}
 
-		$this->getLogger()->debug(__METHOD__.' result:{result}', ['result'=>$result]);
+		$this->getLogger()->debug(__METHOD__ . ' result:{result}', ['result' => $result]);
 	}
 
 	/**
@@ -1089,7 +1082,8 @@ class OSM_Api {
 	 * @param Relation $relation
 	 * @return bool
 	 */
-	public function isNodeInsideRelationPolygon(Node $node2test, Relation $relation) {
+	public function isNodeInsideRelationPolygon(Node $node2test, Relation $relation)
+	{
 
 		$poly1 = $this->getPolygon($relation);
 
@@ -1104,9 +1098,10 @@ class OSM_Api {
 	 * @param Relation $relation
 	 * @return \OSM\Tools\Polygon
 	 */
-	public function getPolygon(Relation $relation) {
+	public function getPolygon(Relation $relation)
+	{
 
-		require_once __DIR__.DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'OSM'.DIRECTORY_SEPARATOR.'Tools'.DIRECTORY_SEPARATOR.'Polygon.php';
+		require_once __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'OSM' . DIRECTORY_SEPARATOR . 'Tools' . DIRECTORY_SEPARATOR . 'Polygon.php';
 		$poly = new Polygon();
 
 		$ways = $this->getRelationWaysOrdered($relation);
@@ -1114,36 +1109,27 @@ class OSM_Api {
 
 
 		$lastviewNodeId = 0;
-		if ($ways[0]->getFirstNodeRef() == $ways[$waysCount - 1]->getFirstNodeRef() || $ways[0]->getFirstNodeRef() == $ways[$waysCount - 1]->getLastNodeRef())
-		{
+		if ($ways[0]->getFirstNodeRef() == $ways[$waysCount - 1]->getFirstNodeRef() || $ways[0]->getFirstNodeRef() == $ways[$waysCount - 1]->getLastNodeRef()) {
 			$lastviewNodeId = $ways[0]->getFirstNodeRef();
-		}
-		else
-		{
+		} else {
 			$lastviewNodeId = $ways[0]->getLastNodeRef();
 		}
 
-		for ($wi = 0; $wi < $waysCount; $wi++)
-		{
+		for ($wi = 0; $wi < $waysCount; $wi++) {
 			$way = $ways[$wi];
 			$nodeRefs = $way->getNodesRefs();
-			if ($lastviewNodeId == $way->getFirstNodeRef())
-			{
+			if ($lastviewNodeId == $way->getFirstNodeRef()) {
 				// à l'endroit
 				//echo 'draw '.$way->getId() .' -> '."\n";
-				for ($i = 0; $i < count($nodeRefs); $i++)
-				{
+				for ($i = 0; $i < count($nodeRefs); $i++) {
 					$nodeRef = $nodeRefs[$i];
 					$node = $this->_nodes[$nodeRef];
 					$poly->addv($node->getLat(), $node->getLon());
 				}
-			}
-			else
-			{
+			} else {
 				// à l'envers
 				//echo 'draw '.$way->getId() .' <- '."\n";
-				for ($i = count($nodeRefs) - 1; $i >= 0; $i--)
-				{
+				for ($i = count($nodeRefs) - 1; $i >= 0; $i--) {
 					$nodeRef = $nodeRefs[$i];
 					$node = $this->_nodes[$nodeRef];
 					$poly->addv($node->getLat(), $node->getLon());
@@ -1151,12 +1137,9 @@ class OSM_Api {
 			}
 
 			$toto = ($wi + 1) % $waysCount;
-			if ($nodeRef == $ways[$toto]->getLastNodeRef())
-			{
+			if ($nodeRef == $ways[$toto]->getLastNodeRef()) {
 				$lastviewNodeId = $ways[$toto]->getLastNodeRef();
-			}
-			else
-			{
+			} else {
 				$lastviewNodeId = $ways[$toto]->getFirstNodeRef();
 			}
 		}
@@ -1169,13 +1152,13 @@ class OSM_Api {
 	 * @param Relation $relation
 	 * @return Way[]
 	 */
-	public function getRelationWaysOrdered(Relation $relation) {
+	public function getRelationWaysOrdered(Relation $relation)
+	{
 
 		$membersWays = $relation->findMembersByType(OSM_Object::OBJTYPE_WAY);
 
 		$w1 = $membersWays[0];
-		if (!array_key_exists($w1->getRef(), $this->_ways))
-		{
+		if (!array_key_exists($w1->getRef(), $this->_ways)) {
 			throw new OSM_Exception('Way not loaded, you must load the full relation.');
 		}
 
@@ -1185,25 +1168,20 @@ class OSM_Api {
 		$ww1 = $this->_ways[$w1->getRef()];
 		$waysOrderedIds[$ww1->getId()] = $ww1;
 		$waysOrdered[] = $ww1;
-		for ($i = 0; $i < count($membersWays); $i++)
-		{
-			if (!array_key_exists($w1->getRef(), $this->_ways))
-			{
+		for ($i = 0; $i < count($membersWays); $i++) {
+			if (!array_key_exists($w1->getRef(), $this->_ways)) {
 				throw new OSM_Exception('Way not loaded, you must load the full relation.');
 			}
 			$ww1 = $this->_ways[$w1->getRef()];
-			for ($j = 0; $j < count($membersWays); $j++)
-			{
+			for ($j = 0; $j < count($membersWays); $j++) {
 				$w2 = $membersWays[$j];
 				if ($w1->getRef() == $w2->getRef())
 					continue;
-				if (array_key_exists($w2->getRef(), $waysOrderedIds))
-				{
+				if (array_key_exists($w2->getRef(), $waysOrderedIds)) {
 					continue;
 				}
 
-				if (!array_key_exists($w2->getRef(), $this->_ways))
-				{
+				if (!array_key_exists($w2->getRef(), $this->_ways)) {
 					throw new OSM_Exception('Way not loaded, you must load the full relation.');
 				}
 				$ww2 = $this->_ways[$w2->getRef()];
@@ -1213,8 +1191,7 @@ class OSM_Api {
 				$nId2F = $ww2->getFirstNodeRef();
 				$nId2L = $ww2->getLastNodeRef();
 
-				if ($nId1F == $nId2F || $nId1F == $nId2L || $nId1L == $nId2F || $nId1L == $nId2L)
-				{
+				if ($nId1F == $nId2F || $nId1F == $nId2L || $nId1L == $nId2F || $nId1L == $nId2L) {
 					$waysOrderedIds[$ww2->getId()] = $ww2;
 					$waysOrdered[] = $ww2;
 					$w1 = $w2;
@@ -1230,31 +1207,32 @@ class OSM_Api {
 	 * Return all way's nodes coordinates
 	 * @return array
 	 */
-	public function &getWayNodesCoordinates( Way $way )
+	public function &getWayNodesCoordinates(Way $way)
 	{
 		$coords = array();
 		$nodesRef = $way->getNodesRefs();
-		$n = count( $nodesRef );
-		for( $i=0; $i<$n; $i++ )
-		{
-			$node = $this->getNode( $nodesRef[$i] );
-			$coords[] = array( $node->getLon(), $node->getLat() );
+		$n = count($nodesRef);
+		for ($i = 0; $i < $n; $i++) {
+			$node = $this->getNode($nodesRef[$i]);
+			$coords[] = array($node->getLon(), $node->getLat());
 		}
-		return $coords ;
+		return $coords;
 	}
 
 	public function getStats()
 	{
 		// Refresh objects count
-		$this->_stats['Objects'] = count( $this->getObjects() );
+		$this->_stats['Objects'] = count($this->getObjects());
 		return $this->_stats;
 	}
 
-	public function getStatsRequestCount() {
+	public function getStatsRequestCount()
+	{
 		return $this->_stats['requestCount'];
 	}
 
-	public function getStatsLoadedBytes() {
+	public function getStatsLoadedBytes()
+	{
 		return $this->_stats['loadedBytes'];
 	}
 
@@ -1263,10 +1241,10 @@ class OSM_Api {
 	 * This appears as the editor's name in the changeset properties (key "crated_by")
 	 * @return string user agent string
 	 */
-	protected function _getUserAgent() {
+	protected function _getUserAgent()
+	{
 		$userAgent = "";
-		if ($this->_options['appName'] != "")
-		{
+		if ($this->_options['appName'] != "") {
 			$userAgent .= $this->_options['appName'] . ' / ';
 		}
 		$userAgent .= self::USER_AGENT . ' v' . self::VERSION;
@@ -1302,15 +1280,14 @@ class OSM_Api {
 		/**
 		 * @var array
 		 */
-		static $cachedPermissions ;
+		static $cachedPermissions;
 
 		//$this->getLogger()->debug('{_m} force:{force} perms:{perms}', ['_m'=>__METHOD__, 'force'=>$force, 'perms'=>$cachedPermissions]);
 
-		if( ! $this->isAuthenticated() )
+		if (!$this->isAuthenticated())
 			throw new OSM_Exception('Must be authenticated');
 
-		if( (! $force) && ($cachedPermissions != null) )
-		{
+		if ((!$force) && ($cachedPermissions != null)) {
 			return $cachedPermissions;
 		}
 
@@ -1340,30 +1317,19 @@ class OSM_Api {
 		$perms = $x->xpath('/osm/permissions/permission');
 
 		$cachedPermissions = [];
-		foreach( $perms as $perm )
-		{
+		foreach ($perms as $perm) {
 			$cachedPermissions[] = (string) $perm['name'];
 		}
 
 		return $cachedPermissions;
 	}
 
-	const PERMS_READ_PREFS = 'allow_read_prefs';
-	const PERMS_WRITE_PREFS = 'allow_write_prefs';
-	const PERMS_WRITE_DIARY = 'allow_write_diary' ;
-	const PERMS_WRITE_API = 'allow_write_api' ;
-	const PERMS_READ_GPX = 'allow_read_gpx' ;
-	const PERMS_WRITE_GPX = 'allow_write_gpx' ;
-	const PERMS_WRITE_NOTE = 'allow_write_notes' ;
-	const PERMS_WRITE_REDACTIONS = 'allow_write_redactions';
-	const PERMS_OPENID = 'allow_openid';
-
 	/**
 	 * @return bool allow_read_prefs
 	 */
-	public function isAllowedTo( $perms, $force=false )
+	public function isAllowedTo($perms, $force = false)
 	{
-		return in_array( $perms, $this->getAuthPermissions($force) );
+		return in_array($perms, $this->getAuthPermissions($force));
 	}
 
 	/**
@@ -1372,14 +1338,15 @@ class OSM_Api {
 	 * @return UserDetails
 	 * @throws OSM_Exception if not authenticated
 	 */
-	public function getUserDetails() {
+	public function getUserDetails()
+	{
 
-		if( ! $this->isAuthenticated() )
+		if (!$this->isAuthenticated())
 			throw new OSM_Exception('Must be authenticated');
 
 		$result = $this->_httpApi('/user/details');
 
-		$this->getLogger()->debug(__METHOD__.' result:{result}', ['result'=>$result]);
+		$this->getLogger()->debug(__METHOD__ . ' result:{result}', ['result' => $result]);
 
 		return UserDetails::createFromXmlString($result);
 	}
@@ -1389,20 +1356,20 @@ class OSM_Api {
 	 *
 	 * @return array
 	 */
-	public function getUserPreferences() {
+	public function getUserPreferences()
+	{
 
-		if( ! $this->isAuthenticated() )
+		if (!$this->isAuthenticated())
 			throw new OSM_Exception('Must be authenticated');
 
 		$result = $this->_httpApi('/user/preferences');
 
-		$this->getLogger()->debug(__METHOD__.' result:{result}', ['result'=>$result]);
+		$this->getLogger()->debug(__METHOD__ . ' result:{result}', ['result' => $result]);
 
 		$prefs = array();
 
 		$x = new \SimpleXMLElement($result);
-		foreach ($x->preferences->children() as $p)
-		{
+		foreach ($x->preferences->children() as $p) {
 			$prefs[(string) $p['k']] = (string) $p['v'];
 		}
 
@@ -1415,15 +1382,18 @@ class OSM_Api {
 	 * @param string $key
 	 * @param string $value
 	 */
-	public function setUserPreference($key, $value) {
+	public function setUserPreference($key, $value)
+	{
 
-		if( ! $this->isAuthenticated() )
+		if (!$this->isAuthenticated())
 			throw new OSM_Exception('Must be authenticated');
 
 		$result = $this->_httpApi(
-			'/user/preferences/' . rawurlencode(utf8_encode($key)), rawurlencode(utf8_encode($value)), 'PUT');
+			'/user/preferences/' . rawurlencode(utf8_encode($key)),
+			rawurlencode(utf8_encode($value)),
+			'PUT'
+		);
 
-		$this->getLogger()->debug(__METHOD__.' result:{result}', ['result'=>$result]);
+		$this->getLogger()->debug(__METHOD__ . ' result:{result}', ['result' => $result]);
 	}
-
 }
