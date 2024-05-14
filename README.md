@@ -4,17 +4,61 @@
 
 ## FEATURES
 
-- use OAuth 2.0
-- Read objects from API, XAPI and Overpass-API.
-- Write objects to API.
-- Authenticate with Basic or OAuth.
-- The class instance and its osm objects are serializable.
-- A bit of geometry stuff (is node inside/outside polygon)
+- Read (query) objects from **API**, **XAPI** and **Overpass**.
+- Write (create, update, delete) objects on **API**.
+- Authenticate with Basic or **OAuth 2**.
+- Class for osm objects are **serializable**.
+- A bit of **geometry** stuff are available locally (on query result)
+  - is node inside/outside polygon
+  - get gravity center for relation or way
 - ...
+
+## TUTORIALS / EXAMPLES
+
+- install dependencies
+  - `composer install`
+
+By default:
+  - API operations are done on Osm developement instance at `master.apis.dev.openstreetmap.org` ;
+    - Write operations are carried out in "simulation" mode, so that no queries are made.
+  - Overpass queries are done on `overpass-api.de` ;
+  - XAPI  queries are done on `overpass-api.de`.
+
+To overide those default behaviors, create file `.env` and set
+  - `simulation=false` to really write on API
+  - `osm_api_url = https://api.openstreetmap.org/api/0.6` to query and update on production OSM instance
+
+Read `.env.example` to know more about configuration.
+
+### Generate an Access Token
+
+The command-line `oauth/oauth-console.php` will drive you on getting an OAuth2 Access Token, launch it and read the instructions.
+the command consists of several stages:
+1. choose the OSM server instance
+2. choose the permissions you need
+3. enter Application ID and Secret, with help to create one if needed
+4. get an authorization code
+5. finally, get the precious Access Token you need to access some services as an authenticated user.
+
+To facilitate the procedure for obtaining the token, a Web page is **currently under construction** at `oatuh/OAuthRequestAccess.php`
+
+### examples-console
+
+Look at the code to learn more abour Yapafo.
+
+### examples-web
+
+Work in progress
+
+## BUG and Request
+
+- https://github.com/Cyrille37/yapafo/issues
 
 ## REQUIREMENTS
 
-Requirements are covered in `composer.json`.
+Requirements are covered by `composer.json`.
+
+Php >=7.4 et <8.3.
 
 Php extensions:
 
@@ -27,37 +71,8 @@ Php libraries:
 - [jbelien/oauth2-openstreetmap](https://github.com/jbelien/oauth2-openstreetmap)
   - which is a provider for [league/oauth2-client](https://github.com/thephpleague/oauth2-client)
 
-## TUTORIALS / EXAMPLES
-
-- install dependencies
-  - `composer install`
-- create file `.env` and set
-  - osm_api_url = https://master.apis.dev.openstreetmap.org/api/0.6
-  - oauth_url = https://master.apis.dev.openstreetmap.org
-  - simulation=false
-  - read `.env.example` to know more about configuration
-
-- Use the provided web page to create an OAuth Access Token
-  - change directory `cd examples-web`
-  - launch the php webserver `php -S localhost:8000`
-  - then open a browser at  `http://localhost:8000/OAuthRequestAccess.php`
-
-- Explore command-line examples in `examples-console`
-
-### examples-web
-
-- the tool examples/OAuthRequestAccess.php is an easy way to get OAuth Access Token (and understand the protocol phases ;-)
-- Overpass-API requests are shown in examples/OApiQuery.php and ApiOApiQuery.php
-
-## BUG and Request
-
-- https://github.com/Cyrille37/yapafo/issues
-
 ## References
 
-- https://wiki.openstreetmap.org/wiki/OAuth
-
-- The OAuth 1.0 Protocol : http://tools.ietf.org/html/rfc5849
+- The OAuth 2 Protocol : https://oauth.net/2/ and https://datatracker.ietf.org/doc/html/rfc6749
 - OSM OAuth doc : http://wiki.openstreetmap.org/wiki/OAuth
 - [PSR-3: Logger Interface](https://www.php-fig.org/psr/psr-3/)
-
