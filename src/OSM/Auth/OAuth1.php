@@ -5,14 +5,14 @@ use Cyrille37\OSM\Yapafo\Exceptions\Exception as OSM_Exception ;
 use Cyrille37\OSM\Yapafo\Exceptions\HttpException ;
 
 /**
- * Class OSM_OAuth implement OAuth (Open Authorization)
+ * Class OSM_OAuth implement OAuth 1 (Open Authorization)
  *
  * http://wiki.openstreetmap.org/wiki/OAuth
  * http://oauth.net/documentation/
  * https://oauth.net/core/1.0a/
  * http://tools.ietf.org/html/rfc5849
  */
-class OAuth implements IAuthProvider {
+class OAuth1 implements IAuthProvider {
 
 	const BASE_URL_PROD = 'https://www.openstreetmap.org';
 	const BASE_URL_DEV = 'https://master.apis.dev.openstreetmap.org';

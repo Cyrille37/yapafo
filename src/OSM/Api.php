@@ -34,7 +34,11 @@ class OSM_Api
 	const USER_AGENT = 'https://github.com/Cyrille37/yapafo';
 
 	//const URL_DEV_UK = 'https://master.apis.dev.openstreetmap.org/api/0.6';
-	const URL_DEV_UK = 'https://master.apis.dev.openstreetmap.org';
+	/**
+	 * doc: https://wiki.openstreetmap.org/wiki/Sandbox_for_editing
+	 * alias https://master.apis.dev.openstreetmap.org
+	 */
+	const URL_DEV_UK = 'https://api06.dev.openstreetmap.org';
 	//deprecated: const OSMAPI_URL_PROD_PROXY_LETTUFE = 'http://beta.letuffe.org/api/0.6';
 	//const URL_PROD_FR = 'http://api.openstreetmap.fr/api/0.6';
 	const URL_PROD_UK = 'https://api.openstreetmap.org';
