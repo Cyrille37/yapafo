@@ -9,6 +9,7 @@
             "email": "cyrille@giquello.fr"
         }
     ],
+    "bin": ["bin/osm-oauth-console.php"],
     "require": {
         "php":">=7.4 <8.3",
         "ext-simplexml":">=5",
