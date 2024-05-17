@@ -7,7 +7,7 @@
  */
 error_reporting(-1);
 
-require_once(__DIR__ . '/../vendor/autoload.php');
+require_once( $_composer_autoload_path ?? __DIR__ . '/../vendor/autoload.php' );
 
 use Cyrille37\OSM\Yapafo\OSM_Api;
 use JBelien\OAuth2\Client\Provider\OpenStreetMap as OAuth2OsmProvider;
