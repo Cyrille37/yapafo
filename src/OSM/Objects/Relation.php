@@ -163,7 +163,7 @@ class Relation extends OSM_Object implements IXml
 	public function &findMembersByType($type) {
 
 		if (!self::isValidMemberType($type))
-			throw new \InvalidArgumentException('Invalid type "' . $type . '"');
+			throw new \InvalidArgumentException('Unkow type "' . $type . '"');
 
 		$members = array();
 		foreach ($this->_members as $member)

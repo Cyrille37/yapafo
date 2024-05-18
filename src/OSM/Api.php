@@ -49,7 +49,7 @@ class OSM_Api
 	 * Instances: https://wiki.openstreetmap.org/wiki/Overpass_API#Public_Overpass_API_instances
 	 * FR: parse error: Unknown type "nwr"
 	 */
-	const OAPI_URL_FR = 'https://overpass.openstreetmap.fr/api/interpreter';
+	//const OAPI_URL_FR = 'https://overpass.openstreetmap.fr/api/interpreter';
 	const OAPI_URL_RU = 'https://overpass.openstreetmap.ru/api/interpreter';
 	//const OAPI_URL_LETUFFE = 'http://overpassapi.letuffe.org/api/interpreter';
 	const OAPI_URL_DE = 'https://overpass-api.de/api/interpreter';
@@ -93,12 +93,14 @@ class OSM_Api
 	protected $_options = [
 		// simulation is set by default to avoid (protected against) unwanted write !
 		'simulation' => true,
-		'url' => OSM_Api::URL_DEV_UK.OSM_Api::URL_PATH_API,
-		'url4Write' =>  OSM_Api::URL_DEV_UK.OSM_Api::URL_PATH_API,
+		'url' => OSM_Api::URL_DEV_UK,
+		'url4Write' =>  OSM_Api::URL_DEV_UK,
 		'oapi_url' => OSM_Api::OAPI_URL_DE,
 		'xapi_url' => OSM_Api::XAPI_URL_DE,
 		// to store every network communications (load/save) in a file.
 		'outputFolder' => null,
+		// to store every network result in file, to avoid overloading services.
+		'cacheFolder' => null,
 		'appName' => '', // name for the application using the API
 		'log' => [
 			'logger' => null,
@@ -140,11 +142,13 @@ class OSM_Api
 		}
 
 		$this->_options['simulation'] = Config::get('simulation');
-		$this->_options['url'] = Config::get('osm_api_url', $this->_options['url']);
-		$this->_options['url4Write'] = Config::get('osm_api_url_4write', $this->_options['url4Write']);
+		$this->_options['url'] = Config::get('osm_api_url', $this->_options['url']).OSM_Api::URL_PATH_API;
+		$this->_options['url4Write'] = Config::get('osm_api_url_4write', $this->_options['url4Write']).OSM_Api::URL_PATH_API;
 		$this->_options['oapi_url'] = Config::get('oapi_url', $this->_options['oapi_url']);
 		$this->_options['xapi_url'] = Config::get('xapi_url', $this->_options['xapi_url']);
-		$this->_options['log']['level'] = Config::get('log_level', $this->_options['log']['level']);
+		$this->_options['log']['level'] = Config::get('osm_log_level', $this->_options['log']['level']);
+		$this->_options['outputFolder'] = Config::get('osm_api_outputFolder', $this->_options['outputFolder']);
+		$this->_options['cacheFolder'] = Config::get('osm_api_cacheFolder', $this->_options['cacheFolder']);
 
 		// Check that all options exist then override defaults
 		foreach ($options as $k => $v) {
@@ -163,7 +167,12 @@ class OSM_Api
 
 		if (!empty($this->_options['outputFolder'])) {
 			if (!is_writable($this->_options['outputFolder'])) {
-				throw new OSM_Exception('Option "outputFolder" is set but the folder is not writable.');
+				throw new OSM_Exception('Option "outputFolder" is set but the folder "'.$this->_options['outputFolder'].'" is not writable.');
+			}
+		}
+		if (!empty($this->_options['cacheFolder'])) {
+			if (!is_writable($this->_options['cacheFolder'])) {
+				throw new OSM_Exception('Option "cacheFolder" is set but the folder "'.$this->_options['cacheFolder'].'" is not writable.');
 			}
 		}
 	}
@@ -183,7 +192,6 @@ class OSM_Api
 
 	public function setAccesToken($accessToken)
 	{
-
 		$this->_osm_access_token = $accessToken;
 	}
 
@@ -235,7 +243,6 @@ class OSM_Api
 
 	protected function _httpApi($relativeUrl, $data = null, $method = 'GET')
 	{
-
 		$url = null;
 		switch ($method) {
 			case 'GET':
@@ -285,8 +292,25 @@ class OSM_Api
 			file_put_contents($this->_getOutputFilename('out', $relativeUrl, $method), $data);
 		}
 
-		$context = stream_context_create($opts);
-		$result = @file_get_contents($url, false, $context);
+		$cacheFile = $this->_getCacheFilename($relativeUrl, $method, $data);
+		$result = null ;
+		if ($this->_options['cacheFolder'] != null) {
+			if( file_exists($cacheFile) )
+			{
+				$this->getLogger()->notice('Read from cache {method} {http_method} {url}', ['method' => __METHOD__, 'http_method' => $method, 'url' => $relativeUrl]);
+				$result = @file_get_contents($cacheFile);
+			}
+		}
+
+		if( ! $result )
+		{
+			$context = stream_context_create($opts);
+			$result = @file_get_contents($url, false, $context);
+			if ($this->_options['cacheFolder'] != null) {
+				file_put_contents( $cacheFile, $result);
+			}
+		}
+
 		if ($result === false || $result == null) {
 			$e = error_get_last();
 			if (isset($http_response_header)) {
@@ -705,16 +729,33 @@ class OSM_Api
 		];
 		$context = stream_context_create($opts);
 
-		$this->getLogger()->notice('{method} {http_method} {url}', ['method' => __METHOD__, 'http_method' => $method, 'url' => $url]);
-		$this->getLogger()->debug('{_m} opts:{opts}', ['opts' => $opts, '_m' => __METHOD__]);
-
 		$this->_stats['requestCount']++;
 
 		if ($this->_options['outputFolder'] != null) {
 			file_put_contents($this->_getOutputFilename('out', $url, $method), $qlQuery);
 		}
 
-		$result = @file_get_contents($url, false, $context);
+		$cacheFile = $this->_getCacheFilename($url, $method, $postdata);
+		$result = null ;
+
+		if ($this->_options['cacheFolder'] != null) {
+			if( file_exists($cacheFile) )
+			{
+				$this->getLogger()->notice('Read from cache {method} {http_method} {url}', ['method' => __METHOD__, 'http_method' => $method, 'url' => $url]);
+				$result = @file_get_contents($cacheFile);
+			}
+		}
+
+		if( ! $result )
+		{
+			$this->getLogger()->notice('{method} {http_method} {url}', ['method' => __METHOD__, 'http_method' => $method, 'url' => $url]);
+			$this->getLogger()->debug('{_m} opts:{opts}', ['opts' => $opts, '_m' => __METHOD__]);
+			$result = @file_get_contents($url, false, $context);	
+			if ($this->_options['cacheFolder'] != null) {
+				file_put_contents( $cacheFile, $result);
+			}
+		}
+
 		if ($result === false) {
 			$e = error_get_last();
 			if (isset($http_response_header)) {
@@ -973,7 +1014,6 @@ class OSM_Api
 	 */
 	public function saveChanges($comment)
 	{
-
 		$this->getLogger()->notice('{_m} comment:"{comment}"', ['_m' => __METHOD__, 'comment' => $comment]);
 
 		if (!$this->isAuthenticated())
@@ -1031,7 +1071,6 @@ class OSM_Api
 	 */
 	protected function _createChangeSet($comment)
 	{
-
 		$relativeUrl = '/changeset/create';
 
 		if ($this->_options['simulation']) {
@@ -1269,6 +1308,14 @@ class OSM_Api
 			DIRECTORY_SEPARATOR . __CLASS__
 			. '_' . sprintf('%04d', ++$outputWriteCount) . '-' . time()
 			. '_' . $inOrOut . '-' . $method . '-' . urlencode($relativeUrl) . '.txt';
+	}
+
+	protected function _getCacheFilename($url, $method, $data)
+	{
+		$dataId = sha1(serialize($data));
+		return $this->_options['cacheFolder'] .
+			DIRECTORY_SEPARATOR . __CLASS__
+			. '_' . 'cache' . '-' . $method . '-' . md5($url) .'-'.$dataId. '.txt';
 	}
 
 	/**

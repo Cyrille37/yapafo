@@ -138,17 +138,17 @@ class OSM_Object implements IDirty
 	/**
 	 * Retreive a tag by Key.
 	 *
-	 * A value could be provided to enforce the test.
+	 * A value can be provided for behavior like `hasTag()`.
 	 *
 	 * @param string $key
 	 * @param string $v Optional. If not provided or if an empty string or a '*' the value will not be tested.
 	 * @return OSM_Objects_Tag
 	 */
-	public function getTag($key, $v='') {
+	public function getTag($key, $v=null) {
 
 		if (array_key_exists($key, $this->_tags))
 		{
-			if (!empty($v) && $v != '*')
+			if( $v && ($v != '*') )
 			{
 				if ($this->_tags[$key]->getValue() == $v)
 					return $this->_tags[$key];
@@ -164,15 +164,23 @@ class OSM_Object implements IDirty
 		return $this->_tags ;
 	}
 
+	/**
+	 * Set a Tag value.
+	 * Failed if Tag does not exists.
+	 * @throws OSM_Exception if Tag does not exists.
+	 */
 	public function setTag($key, $value) {
 		if (!array_key_exists($key, $this->_tags))
 			throw new OSM_Exception('Tag "' . $key . '" not found');
 		$this->_tags[$key]->setValue($value);
+		$this->setDirty();
 	}
 
 	/**
+	 * Add a Tag.
 	 * @param Tag|string $tagOrKey
 	 * @param string value
+	 * @throws OSM_Exception if Tag does already exists.
 	 */
 	public function addTag($tagOrKey, $value=null) {
 
@@ -194,6 +202,18 @@ class OSM_Object implements IDirty
 		}
 		$this->_tags[$tag->getKey()] = $tag;
 		$this->setDirty();
+	}
+
+	public function addOrUpdateTag( string $key, $value=null)
+	{
+		if (array_key_exists($key, $this->_tags))
+		{
+			$this->setTag( $key, $value );
+		}
+		else
+		{
+			$this->addTag( $key, $value );
+		}
 	}
 
 	public function addTags( Array $tags )

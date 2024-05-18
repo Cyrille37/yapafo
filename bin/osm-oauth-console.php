@@ -7,6 +7,10 @@
  */
 error_reporting(-1);
 
+/**
+ * As of Composer 2.2, a new $_composer_autoload_path global variable
+ * https://getcomposer.org/doc/articles/vendor-binaries.md#finding-the-composer-autoloader-from-a-binary
+ */
 require_once( $_composer_autoload_path ?? __DIR__ . '/../vendor/autoload.php' );
 
 use Cyrille37\OSM\Yapafo\OSM_Api;
@@ -204,11 +208,21 @@ class OAuthConsole
 			'authorization_code',
 			['code' => $this->accessCode]
 		);
-		$resourceOwner = $this->osmOAuth2Provider->getResourceOwner($accessToken);
 
 		echo EOL, 'Here is the Access Token: ', ANSI_BOLD, $accessToken->getToken(), ANSI_CLOSE, "\n";
-		echo 'which authorize access as user ', ANSI_BOLD, $resourceOwner->getDisplayName(), ANSI_CLOSE, "\n";
-		echo 'with permission to ', implode(', ', $this->scopes), EOL;
+
+		try
+		{
+			// Don't fail if could not access "/api/0.6/user/details.json"
+			// like "api06.dev.openstreetmap.org" is access authentification for this endpoint
+			$resourceOwner = $this->osmOAuth2Provider->getResourceOwner($accessToken);
+			echo 'which authorize access as user ', ANSI_BOLD, $resourceOwner->getDisplayName(), ANSI_CLOSE, "\n";
+			echo 'with permission to ', implode(', ', $this->scopes), EOL;	
+		}
+		catch( \Exception $ex )
+		{
+			echo 'The instance do not permit to retrieve user details.',EOL;
+		}
 
 		return true;
 	}
