@@ -94,6 +94,9 @@ class OAuthConsole
 	protected $oauth2state;
 	protected $accessCode;
 
+	const URL_UK_PROD = 'https://www.openstreetmap.org' ;
+    const URL_UK_DEV = 'https://master.apis.dev.openstreetmap.org' ;
+
 	public function hello()
 	{
 		echo EOL, TAB, ANSI_BOLD, '*** OSM Access Token creation ***', ANSI_CLOSE, EOL, EOL;
@@ -104,19 +107,19 @@ class OAuthConsole
 	public function select_osm_instance()
 	{
 		echo EOL, 'What OSM instance do you need ?', EOL;
-		echo TAB, ANSI_BOLD, '1. OSM Production', ANSI_CLOSE, ' (', OSM_Api::URL_PROD_UK, EOL;
-		echo TAB, ANSI_BOLD, '2. OSM Developpement', ANSI_CLOSE, ' (', OSM_Api::URL_DEV_UK, EOL;
+		echo TAB, ANSI_BOLD, '1. OSM Production', ANSI_CLOSE, ' (', self::URL_UK_PROD.')', EOL;
+		echo TAB, ANSI_BOLD, '2. OSM Developpement', ANSI_CLOSE, ' (', self::URL_UK_DEV.')', EOL;
 
 		$done = false;
 		while (true) {
 			$choice = readline('Your choice: ');
 			switch (trim($choice)) {
 				case '1':
-					$this->base_url = OSM_Api::URL_PROD_UK;
+					$this->base_url = self::URL_UK_PROD;
 					$done = true;
 					break 2;
 				case '2':
-					$this->base_url = OSM_Api::URL_DEV_UK;
+					$this->base_url = self::URL_UK_DEV;
 					$done = true;
 					break 2;
 			}

@@ -141,7 +141,7 @@ class OSM_Api
 			unset($options['access_token']);
 		}
 
-		$this->_options['simulation'] = Config::get('simulation');
+		$this->_options['simulation'] = Config::get('osm_api_simulation', $this->_options['simulation']);
 		$this->_options['url'] = Config::get('osm_api_url', $this->_options['url']).OSM_Api::URL_PATH_API;
 		$this->_options['url4Write'] = Config::get('osm_api_url_4write', $this->_options['url4Write']).OSM_Api::URL_PATH_API;
 		$this->_options['oapi_url'] = Config::get('oapi_url', $this->_options['oapi_url']);
@@ -188,6 +188,11 @@ class OSM_Api
 	public function isDebug()
 	{
 		return ($this->_options['log']['level'] == LogLevel::DEBUG);
+	}
+
+	public function isSimulation()
+	{
+		return (isset($this->_options['simulation']) && $this->_options['simulation']);
 	}
 
 	public function setAccesToken($accessToken)
@@ -1019,7 +1024,7 @@ class OSM_Api
 		if (!$this->isAuthenticated())
 			throw new OSM_Exception('Must be authenticated');
 
-		if ($this->_options['simulation']) {
+		if ($this->isSimulation()) {
 			$this->getLogger()->notice(__METHOD__ . ' Simulation Mode, not saving'
 				. ($this->_options['outputFolder'] != null
 					? ' but look inside folder ' . $this->_options['outputFolder']
@@ -1030,7 +1035,7 @@ class OSM_Api
 		$dirtyObjectsCount = count($dirtyObjects);
 
 		if ($dirtyObjectsCount == 0) {
-			$this->getLogger()->notice(__METHOD__ . ' No dirty object, abort save');
+			$this->getLogger()->notice(__METHOD__ . ' No dirty object, skip save');
 			return false;
 		}
 		$this->getLogger()->notice(__METHOD__ . ' Has ' . $dirtyObjectsCount . ' dirty objects');
@@ -1073,7 +1078,7 @@ class OSM_Api
 	{
 		$relativeUrl = '/changeset/create';
 
-		if ($this->_options['simulation']) {
+		if ($this->isSimulation()) {
 			$this->getLogger()->info(__METHOD__ . ' Simulation Mode, set changeset id to 999');
 			$result = 999;
 		} else {
@@ -1091,14 +1096,15 @@ class OSM_Api
 
 		$relativeUrl = '/changeset/' . $changeSet->getId() . '/close';
 
-		if ($this->_options['simulation']) {
+		if ($this->isSimulation()) {
 		} else {
 			$result = $this->_httpApi($relativeUrl, null, 'PUT');
 		}
 	}
 
-	protected function _uploadChangeSet($changeSet)
+	protected function _uploadChangeSet(ChangeSet $changeSet)
 	{
+		$this->getLogger()->notice('{_m} uploading changeset id:"{id}"', ['_m' => __METHOD__, 'id' => $changeSet->getId() ]);
 
 		$relativeUrl = '/changeset/' . $changeSet->getId() . '/upload';
 
@@ -1108,7 +1114,7 @@ class OSM_Api
 			file_put_contents($this->_getOutputFilename('out', '_uploadChangeSet', 'POST'), $xmlStr);
 		}
 
-		if ($this->_options['simulation']) {
+		if ($this->isSimulation()) {
 			$result = 'Simulation, no call to Api';
 		} else {
 			$result = $this->_httpApi($relativeUrl, $xmlStr, 'POST');
