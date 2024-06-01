@@ -94,7 +94,7 @@ class OSM_Api
 		// simulation is set by default to avoid (protected against) unwanted write !
 		'simulation' => true,
 		'url' => OSM_Api::URL_DEV_UK,
-		'url4Write' =>  OSM_Api::URL_DEV_UK,
+		'url4Write' =>  null,
 		'oapi_url' => OSM_Api::OAPI_URL_DE,
 		'xapi_url' => OSM_Api::XAPI_URL_DE,
 		// to store every network communications (load/save) in a file.
@@ -143,7 +143,11 @@ class OSM_Api
 
 		$this->_options['simulation'] = Config::get('osm_api_simulation', $this->_options['simulation']);
 		$this->_options['url'] = Config::get('osm_api_url', $this->_options['url']).OSM_Api::URL_PATH_API;
-		$this->_options['url4Write'] = Config::get('osm_api_url_4write', $this->_options['url4Write']).OSM_Api::URL_PATH_API;
+		$this->_options['url4Write'] = Config::get('osm_api_url_4write', $this->_options['url4Write']);
+		if( empty($this->_options['url4Write']))
+			$this->_options['url4Write'] = $this->_options['url'].OSM_Api::URL_PATH_API;
+		else
+			$this->_options['url4Write'] = $this->_options['url4Write'].OSM_Api::URL_PATH_API;
 		$this->_options['oapi_url'] = Config::get('oapi_url', $this->_options['oapi_url']);
 		$this->_options['xapi_url'] = Config::get('xapi_url', $this->_options['xapi_url']);
 		$this->_options['log']['level'] = Config::get('osm_log_level', $this->_options['log']['level']);
