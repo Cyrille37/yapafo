@@ -755,7 +755,7 @@ class OSM_Api
 		{
 			$this->getLogger()->notice('{method} {http_method} {url}', ['method' => __METHOD__, 'http_method' => $method, 'url' => $url]);
 			$this->getLogger()->debug('{_m} opts:{opts}', ['opts' => $opts, '_m' => __METHOD__]);
-			$result = @file_get_contents($url, false, $context);	
+			$result = @file_get_contents($url, false, $context);
 			if ($this->_options['cacheFolder'] != null) {
 				file_put_contents( $cacheFile, $result);
 			}

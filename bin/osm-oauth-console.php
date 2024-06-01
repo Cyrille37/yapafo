@@ -14,53 +14,12 @@ error_reporting(-1);
 require_once( $_composer_autoload_path ?? __DIR__ . '/../vendor/autoload.php' );
 
 use Cyrille37\OSM\Yapafo\OSM_Api;
+use Cyrille37\OSM\Yapafo\Tools\Ansi;
 use JBelien\OAuth2\Client\Provider\OpenStreetMap as OAuth2OsmProvider;
 use  League\OAuth2\Client\Token\AccessToken;
 
-define('EOL', "\n");
-define('TAB', "\t");
-
-/**
- * Escape character
- */
-define('ESC', "\033");
-
-/**
- * ANSI colours
- */
-define('ANSI_BLACK', ESC . "[30m");
-define('ANSI_RED', ESC . "[31m");
-define('ANSI_GREEN', ESC . "[32m");
-define('ANSI_YELLOW', ESC . "[33m");
-define('ANSI_BLUE', ESC . "[34m");
-define('ANSI_MAGENTA', ESC . "[35m");
-define('ANSI_CYAN', ESC . "[36m");
-define('ANSI_WHITE', ESC . "[37m");
-
-/**
- * ANSI background colours
- */
-define('ANSI_BACKGROUND_BLACK', ESC . "[40m");
-define('ANSI_BACKGROUND_RED', ESC . "[41m");
-define('ANSI_BACKGROUND_GREEN', ESC . "[42m");
-define('ANSI_BACKGROUND_YELLOW', ESC . "[43m");
-define('ANSI_BACKGROUND_BLUE', ESC . "[44m");
-define('ANSI_BACKGROUND_MAGENTA', ESC . "[45m");
-define('ANSI_BACKGROUND_CYAN', ESC . "[46m");
-define('ANSI_BACKGROUND_WHITE', ESC . "[47m");
-
-/**
- * ANSI styles
- */
-define('ANSI_BOLD', ESC . "[1m");
-define('ANSI_ITALIC', ESC . "[3m"); // limited support.
-define('ANSI_UNDERLINE', ESC . "[4m");
-define('ANSI_STRIKETHROUGH', ESC . "[9m");
-
-/**
- * Clear all ANSI styling
- */
-define('ANSI_CLOSE', ESC . "[0m");
+define('EOL', Ansi::EOL);
+define('TAB', Ansi::TAB);
 
 $console = new OAuthConsole();
 $console->hello();
@@ -99,16 +58,16 @@ class OAuthConsole
 
 	public function hello()
 	{
-		echo EOL, TAB, ANSI_BOLD, '*** OSM Access Token creation ***', ANSI_CLOSE, EOL, EOL;
-		echo 'We’re going to create an ', ANSI_BOLD, 'Access Token', ANSI_CLOSE, ' to give you a special user access on the ', ANSI_BOLD, 'OpenStreetMap', ANSI_CLOSE, ' database.', EOL;
-		echo 'Use ', ANSI_BOLD, 'Ctrl+C', ANSI_CLOSE, ' will stop this command.', EOL;
+		echo EOL, TAB, Ansi::BOLD, '*** OSM Access Token creation ***', Ansi::CLOSE, EOL, EOL;
+		echo 'We’re going to create an ', Ansi::BOLD, 'Access Token', Ansi::CLOSE, ' to give you a special user access on the ', Ansi::BOLD, 'OpenStreetMap', Ansi::CLOSE, ' database.', EOL;
+		echo 'Use ', Ansi::BOLD, 'Ctrl+C', Ansi::CLOSE, ' will stop this command.', EOL;
 	}
 
 	public function select_osm_instance()
 	{
 		echo EOL, 'What OSM instance do you need ?', EOL;
-		echo TAB, ANSI_BOLD, '1. OSM Production', ANSI_CLOSE, ' (', self::URL_UK_PROD.')', EOL;
-		echo TAB, ANSI_BOLD, '2. OSM Developpement', ANSI_CLOSE, ' (', self::URL_UK_DEV.')', EOL;
+		echo TAB, Ansi::BOLD, '1. OSM Production', Ansi::CLOSE, ' (', self::URL_UK_PROD.')', EOL;
+		echo TAB, Ansi::BOLD, '2. OSM Developpement', Ansi::CLOSE, ' (', self::URL_UK_DEV.')', EOL;
 
 		$done = false;
 		while (true) {
@@ -132,14 +91,14 @@ class OAuthConsole
 		echo EOL, 'What permissions (scopes) do you need ? ', EOL;
 		echo 'If the application already exists, be sure to select at least less or same permissions as the application`s scopes.', EOL;
 		foreach (OSM_Api::SCOPES4HUMANS as $c => $scope) {
-			echo TAB, ANSI_BOLD, $c, '. ', $scope['value'], ANSI_CLOSE, ' - ', $scope['desc'], ';', EOL;
+			echo TAB, Ansi::BOLD, $c, '. ', $scope['value'], Ansi::CLOSE, ' - ', $scope['desc'], ';', EOL;
 		}
 		echo TAB, '0. when done to close the list.', EOL;
 
 		$scopes = ['read_prefs', 'write_prefs'];
 
 		while (true) {
-			echo ANSI_BOLD, 'Actual list', ANSI_CLOSE, ': ', implode(', ', $scopes), EOL;
+			echo Ansi::BOLD, 'Actual list', Ansi::CLOSE, ': ', implode(', ', $scopes), EOL;
 			$choice = trim(readline('Your choice: '));
 			if ($choice == '0') {
 				if (empty($scopes)) {
@@ -162,7 +121,7 @@ class OAuthConsole
 
 	public function get_app_creds()
 	{
-		echo EOL, 'We need application credentials ', ANSI_BOLD, 'app_id', ANSI_CLOSE, ' and ', ANSI_BOLD, 'app_secret', ANSI_CLOSE, '.', EOL;
+		echo EOL, 'We need application credentials ', Ansi::BOLD, 'app_id', Ansi::CLOSE, ' and ', Ansi::BOLD, 'app_secret', Ansi::CLOSE, '.', EOL;
 		echo 'If you don\'t have them, create a new application at url ', $this->base_url, '/oauth2/applications', EOL;
 		echo 'and be sure to select at least the permissions you have previously chosen.', EOL;
 
@@ -194,7 +153,7 @@ class OAuthConsole
 		$this->authorizationUrl = $this->osmOAuth2Provider->getAuthorizationUrl($options);
 		$this->oauth2state = $this->osmOAuth2Provider->getState();
 
-		echo EOL, 'Now you have to visit url ', $this->authorizationUrl, ' to agree permissions and get the ', ANSI_BOLD, 'Code', ANSI_CLOSE, ' mandatory to request an Access Token.', EOL;
+		echo EOL, 'Now you have to visit url ', $this->authorizationUrl, ' to agree permissions and get the ', Ansi::BOLD, 'Code', Ansi::CLOSE, ' mandatory to request an Access Token.', EOL;
 		$accessCode = trim(readline('The Code: '));
 		if (empty($accessCode))
 			return false;
@@ -212,15 +171,15 @@ class OAuthConsole
 			['code' => $this->accessCode]
 		);
 
-		echo EOL, 'Here is the Access Token: ', ANSI_BOLD, $accessToken->getToken(), ANSI_CLOSE, "\n";
+		echo EOL, 'Here is the Access Token: ', Ansi::BOLD, $accessToken->getToken(), Ansi::CLOSE, "\n";
 
 		try
 		{
 			// Don't fail if could not access "/api/0.6/user/details.json"
 			// like "api06.dev.openstreetmap.org" is access authentification for this endpoint
 			$resourceOwner = $this->osmOAuth2Provider->getResourceOwner($accessToken);
-			echo 'which authorize access as user ', ANSI_BOLD, $resourceOwner->getDisplayName(), ANSI_CLOSE, "\n";
-			echo 'with permission to ', implode(', ', $this->scopes), EOL;	
+			echo 'which authorize access as user ', Ansi::BOLD, $resourceOwner->getDisplayName(), Ansi::CLOSE, "\n";
+			echo 'with permission to ', implode(', ', $this->scopes), EOL;
 		}
 		catch( \Exception $ex )
 		{
