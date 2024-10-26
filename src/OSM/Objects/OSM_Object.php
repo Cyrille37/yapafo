@@ -142,7 +142,7 @@ class OSM_Object implements IDirty
 	 *
 	 * @param string $key
 	 * @param string $v Optional. If not provided or if an empty string or a '*' the value will not be tested.
-	 * @return OSM_Objects_Tag
+	 * @return Tag
 	 */
 	public function getTag($key, $v=null) {
 
