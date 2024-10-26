@@ -266,7 +266,7 @@ class Relation extends OSM_Object implements IXml
 
 	public static function isDuplicateAuthorised()
 	{
-		return boolval(Config::get('osm_relation_authorised'));
+		return boolval(Config::get('osm_relation_duplicate_authorised'));
 	}
 
 	/**

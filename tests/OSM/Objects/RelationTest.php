@@ -41,7 +41,7 @@ class RelationTest extends TestCase
     }
     public function testAddMemberDuplicateAuthorised()
     {
-        $_ENV['osm_relation_authorised'] = 1;
+        $_ENV['osm_relation_duplicate_authorised'] = 1;
         $relation = new Relation(1);
         $m1 = new Member(OSM_Object::OBJTYPE_NODE, 666);
         $m2 = new Member(OSM_Object::OBJTYPE_NODE, 666);
