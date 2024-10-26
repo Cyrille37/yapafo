@@ -267,7 +267,7 @@ class Relation extends OSM_Object implements IXml
 
 		if ($this->hasMember($member))
 		{
-			throw new OSM_Exception('duplicate member "' . $member->getRef() . '" of type "' . $member->getType() . '"');
+			throw new OSM_Exception('duplicate member "' . $member->getRef() . '" of type "' . $member->getType() . '" in relation "'.$this->getId().'"');
 		}
 		$this->_members[self::_memberKey($member)] = $member;
 		$this->setDirty();
@@ -288,7 +288,7 @@ class Relation extends OSM_Object implements IXml
 		{
 			if ($this->hasMember($member))
 			{
-				throw new OSM_Exception('duplicate member "' . $member->getRef() . '" of type "' . $member->getType() . '"');
+				throw new OSM_Exception('duplicate member "' . $member->getRef() . '" of type "' . $member->getType() . '" in relation "'.$this->getId().'"');
 			}
 		}
 		foreach ($members as $member)
@@ -306,7 +306,7 @@ class Relation extends OSM_Object implements IXml
 	public function removeMember(Member $member) {
 
 		if (!$this->hasMember($member))
-			throw new OSM_Exception('Member ' . self::_memberKey($member) . ' not found');
+			throw new OSM_Exception('Member ' . self::_memberKey($member) . ' not found in relation "'.$this->getId().'"');
 		unset($this->_members[self::_memberKey($member)]);
 		$this->setDirty();
 	}
