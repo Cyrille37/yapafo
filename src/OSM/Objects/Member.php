@@ -34,7 +34,7 @@ class Member implements IDirty, IXml {
 	/**
 	 *
 	 * @param string $type
-	 * @param string $ref
+	 * @param string $ref The Id of the object
 	 * @param string $role 
 	 */
 	public function __construct($type, $ref, $role='')

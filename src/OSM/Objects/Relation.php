@@ -1,8 +1,9 @@
 <?php
-namespace Cyrille37\OSM\Yapafo\Objects ;
+
+namespace Cyrille37\OSM\Yapafo\Objects;
 
 use Cyrille37\OSM\Yapafo\Tools\Polygon;
-use Cyrille37\OSM\Yapafo\Exceptions\Exception as OSM_Exception ;
+use Cyrille37\OSM\Yapafo\Exceptions\Exception as OSM_Exception;
 use Cyrille37\OSM\Yapafo\OSM_Api;
 use Cyrille37\OSM\Yapafo\Tools\Logger;
 
@@ -16,7 +17,8 @@ class Relation extends OSM_Object implements IXml
 	const ROLE_OUTER = 'outer';
 
 	/**
-	 * @var Member[]
+	 * A relation can have the same member several times but with a different role.
+	 * @var Member[]|Array
 	 */
 	protected $_members = array();
 
@@ -27,12 +29,10 @@ class Relation extends OSM_Object implements IXml
 		$relation->_fromXmlObj($xmlObj);
 
 		// Only processing "member" child
-		foreach ($xmlObj->children() as $child)
-		{
-			Logger::getInstance()->debug('{_m} child:{child}', ['_m'=>__METHOD__, 'child'=>$child->getName()]);
-			switch ($child->getName())
-			{
-				case self::OBJTYPE_MEMBER :
+		foreach ($xmlObj->children() as $child) {
+			Logger::getInstance()->debug('{_m} child:{child}', ['_m' => __METHOD__, 'child' => $child->getName()]);
+			switch ($child->getName()) {
+				case self::OBJTYPE_MEMBER:
 					$member = Member::fromXmlObj($child);
 					$relation->addMember($member);
 					break;
@@ -49,27 +49,25 @@ class Relation extends OSM_Object implements IXml
 	/**
 	 * @return string
 	 */
-	public function asXmlStr() {
+	public function asXmlStr()
+	{
 
 		//$xmlName = strtolower(str_replace('OSM_Objects_', '', $this->get_class()));
 		$xmlName = 'relation';
 
 		$xmlStr = '<' . $xmlName;
-		foreach ($this->_attrs as $a => $v)
-		{
-			$xmlStr.= ' ' . $a . '="' . $v . '"';
+		foreach ($this->_attrs as $a => $v) {
+			$xmlStr .= ' ' . $a . '="' . $v . '"';
 		}
-		$xmlStr.='>' . "\n";
-		foreach ($this->_tags as $k => $tag)
-		{
-			$xmlStr.= $tag->asXmlStr() . "\n";
+		$xmlStr .= '>' . "\n";
+		foreach ($this->_tags as $k => $tag) {
+			$xmlStr .= $tag->asXmlStr() . "\n";
 		}
-		foreach ($this->_members as $member)
-		{
-			$xmlStr.= $member->asXmlStr() . "\n";
+		foreach ($this->_members as $member) {
+			$xmlStr .= $member->asXmlStr() . "\n";
 		}
 
-		$xmlStr.= '</' . $xmlName . '>';
+		$xmlStr .= '</' . $xmlName . '>';
 
 		return $xmlStr;
 	}
@@ -81,10 +79,10 @@ class Relation extends OSM_Object implements IXml
 	 * @param string $ref The member's ref. Should be null if $memberOrType instanceof Member .
 	 * @return string
 	 */
-	protected static function _memberKey($memberOrType, $ref=null) {
+	protected static function _memberKey($memberOrType, $ref = null)
+	{
 
-		if ($memberOrType instanceof Member)
-		{
+		if ($memberOrType instanceof Member) {
 			if (!empty($ref))
 				throw new \InvalidArgumentException('$ref must be empty');
 			return $memberOrType->getType() . $memberOrType->getRef();
@@ -97,20 +95,20 @@ class Relation extends OSM_Object implements IXml
 		return $memberOrType . $ref;
 	}
 
-	public static function isValidMemberType($memberType) {
+	public static function isValidMemberType($memberType)
+	{
 
-		switch ($memberType)
-		{
+		switch ($memberType) {
 			case OSM_Object::OBJTYPE_RELATION:
 			case OSM_Object::OBJTYPE_WAY:
 			case OSM_Object::OBJTYPE_NODE:
-					return true;
+				return true;
 		}
 		return false;
 	}
 
-	public function isDirty() {
-
+	public function isDirty()
+	{
 		if (parent::isDirty())
 			return true;
 		foreach ($this->_members as $m)
@@ -119,10 +117,9 @@ class Relation extends OSM_Object implements IXml
 		return false;
 	}
 
-	public function hasMember(Member $member) {
-
-		if (array_key_exists(self::_memberKey($member), $this->_members))
-		{
+	public function hasMember(Member $member)
+	{
+		if (array_key_exists(self::_memberKey($member), $this->_members)) {
 			return true;
 		}
 		return false;
@@ -132,7 +129,8 @@ class Relation extends OSM_Object implements IXml
 	 *
 	 * @return array
 	 */
-	public function getMembers() {
+	public function getMembers()
+	{
 		return $this->_members;
 	}
 
@@ -142,11 +140,10 @@ class Relation extends OSM_Object implements IXml
 	 * @param string $role
 	 * @return Member[]
 	 */
-	public function &findMembersByRole($role) {
-
+	public function &findMembersByRole($role)
+	{
 		$members = array();
-		foreach ($this->_members as $member)
-		{
+		foreach ($this->_members as $member) {
 			if ($member->getRole() == $role)
 				$members[] = $member;
 		}
@@ -160,14 +157,14 @@ class Relation extends OSM_Object implements IXml
 	 * @return Member[]
 	 * @throws {@link InvalidArgumentException} if invalid type.
 	 */
-	public function &findMembersByType($type) {
+	public function &findMembersByType($type)
+	{
 
 		if (!self::isValidMemberType($type))
 			throw new \InvalidArgumentException('Unkow type "' . $type . '"');
 
 		$members = array();
-		foreach ($this->_members as $member)
-		{
+		foreach ($this->_members as $member) {
 			if ($member->getType() == $type)
 				$members[] = $member;
 		}
@@ -182,15 +179,22 @@ class Relation extends OSM_Object implements IXml
 	 * @return Member[]
 	 * @throws {@link InvalidArgumentException} if invalid type.
 	 */
-	public function &findMembersByTypeAndRole($type, $role) {
+	public function &findMembersByTypeAndRole($type, $role)
+	{
 		if (!self::isValidMemberType($type))
 			throw new \InvalidArgumentException('Invalid type "' . $type . '"');
 
 		$members = array();
-		foreach ($this->_members as $member)
-		{
-			if ($member->getType() == $type && $member->getRole() == $role)
-				$members[] = $member;
+		foreach ($this->_members as $member) {
+			if (is_array($member)) {
+				foreach ($member as $m) {
+					if ($m->getType() == $type && $m->getRole() == $role)
+						$members[] = $m;
+				}
+			} else {
+				if ($member->getType() == $type && $member->getRole() == $role)
+					$members[] = $member;
+			}
 		}
 		return $members;
 	}
@@ -199,14 +203,16 @@ class Relation extends OSM_Object implements IXml
 	 *
 	 * @param string $memberType
 	 * @param string $nodeId
-	 * @return Member
+	 * @return Member|Array
 	 */
-	public function getMember($memberType, $refId) {
-
+	public function getMember($memberType, $refId, $first = true)
+	{
 		$k = self::_memberKey($memberType, $refId);
-		if (array_key_exists($k, $this->_members))
-		{
-			return $this->_members[$k];
+		if (array_key_exists($k, $this->_members)) {
+			$m = $this->_members[$k];
+			if (is_array($m) && $first)
+				return $m[0];
+			return $m;
 		}
 		return null;
 	}
@@ -216,8 +222,8 @@ class Relation extends OSM_Object implements IXml
 	 * @param string $nodeId
 	 * @return Member
 	 */
-	public function getMemberNode($nodeId) {
-
+	public function getMemberNode($nodeId)
+	{
 		return $this->getMember(OSM_Object::OBJTYPE_NODE, $nodeId);
 	}
 
@@ -226,8 +232,8 @@ class Relation extends OSM_Object implements IXml
 	 * @param string $nodeId
 	 * @return Member
 	 */
-	public function getMemberWay($wayId) {
-
+	public function getMemberWay($wayId)
+	{
 		return $this->getMember(OSM_Object::OBJTYPE_WAY, $wayId);
 	}
 
@@ -238,8 +244,8 @@ class Relation extends OSM_Object implements IXml
 	 * @param type $role
 	 * @return Relation Fluent interface
 	 */
-	public function addNode(Node $node, $role='') {
-
+	public function addNode(Node $node, $role = '')
+	{
 		$member = new Member(OSM_Object::OBJTYPE_NODE, $node->getId(), $role);
 		$this->addMember($member);
 		return $this;
@@ -251,8 +257,8 @@ class Relation extends OSM_Object implements IXml
 	 * @param type $role
 	 * @return Relation Fluent interface
 	 */
-	public function addWay(Way $way, $role='') {
-
+	public function addWay(Way $way, $role = '')
+	{
 		$member = new Member(OSM_Object::OBJTYPE_WAY, $way->getId(), $role);
 		$this->addMember($member);
 		return $this;
@@ -263,13 +269,27 @@ class Relation extends OSM_Object implements IXml
 	 * @param Member $member
 	 * @return Relation Fluent interface
 	 */
-	public function addMember(Member $member) {
-
-		if ($this->hasMember($member))
-		{
-			throw new OSM_Exception('duplicate member "' . $member->getRef() . '" of type "' . $member->getType() . '" in relation "'.$this->getId().'"');
+	public function addMember(Member $member)
+	{
+		if ($this->hasMember($member)) {
+			$m = $this->getMember($member->getType(), $member->getRef(), false);
+			if (is_array($m)) {
+				foreach ($m as $mi) {
+					if ($mi->getRole() == $member->getRole())
+						throw new OSM_Exception('duplicate member "' . $member->getRef() . '" of type "' . $member->getType() . '" with role "' . $member->getRole() . '" in relation "' . $this->getId() . '"');
+				}
+				$this->_members[self::_memberKey($member)][] = $member;
+			} else {
+				if ($m->getRole() == $member->getRole())
+					throw new OSM_Exception('duplicate member "' . $member->getRef() . '" of type "' . $member->getType() . '" in relation "' . $this->getId() . '"');
+				$this->_members[self::_memberKey($member)] = [
+					$m,
+					$member
+				];
+			}
+		} else {
+			$this->_members[self::_memberKey($member)] = $member;
 		}
-		$this->_members[self::_memberKey($member)] = $member;
 		$this->setDirty();
 		return $this;
 	}
@@ -279,23 +299,14 @@ class Relation extends OSM_Object implements IXml
 	 * @param array $members
 	 * @return Relation Fluent interface
 	 */
-	public function addMembers(array $members) {
-
+	public function addMembers(array $members)
+	{
 		if (!is_array($members) || count($members) == 0)
 			throw new OSM_Exception('members array is empty');
 
-		foreach ($members as $member)
-		{
-			if ($this->hasMember($member))
-			{
-				throw new OSM_Exception('duplicate member "' . $member->getRef() . '" of type "' . $member->getType() . '" in relation "'.$this->getId().'"');
-			}
+		foreach ($members as $member) {
+			$this->addMember($member);
 		}
-		foreach ($members as $member)
-		{
-			$this->_members[self::_memberKey($member)] = $member;
-		}
-		$this->setDirty();
 		return $this;
 	}
 
@@ -303,10 +314,10 @@ class Relation extends OSM_Object implements IXml
 	 *
 	 * @param Member $member
 	 */
-	public function removeMember(Member $member) {
-
+	public function removeMember(Member $member)
+	{
 		if (!$this->hasMember($member))
-			throw new OSM_Exception('Member ' . self::_memberKey($member) . ' not found in relation "'.$this->getId().'"');
+			throw new OSM_Exception('Member ' . self::_memberKey($member) . ' not found in relation "' . $this->getId() . '"');
 		unset($this->_members[self::_memberKey($member)]);
 		$this->setDirty();
 	}
@@ -314,23 +325,21 @@ class Relation extends OSM_Object implements IXml
 	/**
 	 * @return Polygon
 	 */
-	public function getPolygon( OSM_Api $osmApi )
+	public function getPolygon(OSM_Api $osmApi)
 	{
 		$poly = new Polygon();
-		foreach( $this->findMembersByTypeAndRole(OSM_Object::OBJTYPE_WAY, self::ROLE_OUTER) as $key => $member )
-		{
-			$way = $osmApi->getWay($member->getRef(),true);
-			foreach( $way->getNodesRefs() as $nodeRef )
-			{
+		foreach ($this->findMembersByTypeAndRole(OSM_Object::OBJTYPE_WAY, self::ROLE_OUTER) as $key => $member) {
+			$way = $osmApi->getWay($member->getRef(), true);
+			foreach ($way->getNodesRefs() as $nodeRef) {
 				$node = $osmApi->getNode($nodeRef);
-				$poly->addv( $node->getLat(), $node->getLon() );
+				$poly->addv($node->getLat(), $node->getLon());
 			}
 		}
-		return $poly ;
+		return $poly;
 	}
 
-	public function getGravityCenter( OSM_Api $osmApi )
+	public function getGravityCenter(OSM_Api $osmApi)
 	{
-		return $this->getPolygon( $osmApi )->getGravityCenter();
+		return $this->getPolygon($osmApi)->getGravityCenter();
 	}
 }

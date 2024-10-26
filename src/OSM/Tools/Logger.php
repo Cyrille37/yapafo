@@ -40,6 +40,8 @@ class Logger extends AbstractLogger
 	 */
 	public function __construct( $logLevel )
 	{
+		if( ! $logLevel)
+			$logLevel = LogLevel::INFO;
 		$this->logLevel = $this->computeLogLevel($logLevel);
 	}
 
@@ -72,7 +74,7 @@ class Logger extends AbstractLogger
 				$level = 3 ;
 				break;
 			default:
-				throw new \Psr\Log\InvalidArgumentException('Unknow LogLevel "'.$level.'"');
+				throw new \Psr\Log\InvalidArgumentException('Unknow LogLevel "'.$logLevel.'"');
 		}
 		return $level ;
 	}

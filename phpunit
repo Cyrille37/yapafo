@@ -1,0 +1,6 @@
+#!/bin/sh
+#
+# Run the project's phpunit version
+#
+
+./vendor/phpunit/phpunit/phpunit $@
