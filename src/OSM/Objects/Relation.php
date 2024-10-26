@@ -5,6 +5,7 @@ namespace Cyrille37\OSM\Yapafo\Objects;
 use Cyrille37\OSM\Yapafo\Tools\Polygon;
 use Cyrille37\OSM\Yapafo\Exceptions\Exception as OSM_Exception;
 use Cyrille37\OSM\Yapafo\OSM_Api;
+use Cyrille37\OSM\Yapafo\Tools\Config;
 use Cyrille37\OSM\Yapafo\Tools\Logger;
 
 /**
@@ -97,7 +98,6 @@ class Relation extends OSM_Object implements IXml
 
 	public static function isValidMemberType($memberType)
 	{
-
 		switch ($memberType) {
 			case OSM_Object::OBJTYPE_RELATION:
 			case OSM_Object::OBJTYPE_WAY:
@@ -264,6 +264,11 @@ class Relation extends OSM_Object implements IXml
 		return $this;
 	}
 
+	public static function isDuplicateAuthorised()
+	{
+		return boolval(Config::get('osm_relation_authorised'));
+	}
+
 	/**
 	 *
 	 * @param Member $member
@@ -274,14 +279,17 @@ class Relation extends OSM_Object implements IXml
 		if ($this->hasMember($member)) {
 			$m = $this->getMember($member->getType(), $member->getRef(), false);
 			if (is_array($m)) {
-				foreach ($m as $mi) {
-					if ($mi->getRole() == $member->getRole())
-						throw new OSM_Exception('duplicate member "' . $member->getRef() . '" of type "' . $member->getType() . '" with role "' . $member->getRole() . '" in relation "' . $this->getId() . '"');
+				if (! self::isDuplicateAuthorised()) {
+					foreach ($m as $mi) {
+						if ($mi->getRole() == $member->getRole())
+							throw new OSM_Exception('duplicate member "' . $member->getRef() . '" of type "' . $member->getType() . '" with role "' . $member->getRole() . '" in relation "' . $this->getId() . '"');
+					}
 				}
 				$this->_members[self::_memberKey($member)][] = $member;
 			} else {
-				if ($m->getRole() == $member->getRole())
+				if (! self::isDuplicateAuthorised() && ($m->getRole() == $member->getRole()))
 					throw new OSM_Exception('duplicate member "' . $member->getRef() . '" of type "' . $member->getType() . '" in relation "' . $this->getId() . '"');
+
 				$this->_members[self::_memberKey($member)] = [
 					$m,
 					$member
