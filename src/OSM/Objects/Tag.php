@@ -10,7 +10,13 @@ use Cyrille37\OSM\Yapafo\Exceptions\Exception as OSM_Exception ;
  */
 class Tag implements IDirty, IXml
 {
+	/**
+	 * @var string
+	 */
 	protected $_key;
+	/**
+	 * @var string
+	 */
 	protected $_value;
 
 	/**

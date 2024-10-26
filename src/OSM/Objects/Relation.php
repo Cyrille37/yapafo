@@ -288,7 +288,7 @@ class Relation extends OSM_Object implements IXml
 				$this->_members[self::_memberKey($member)][] = $member;
 			} else {
 				if (! self::isDuplicateAuthorised() && ($m->getRole() == $member->getRole()))
-					throw new OSM_Exception('duplicate member "' . $member->getRef() . '" of type "' . $member->getType() . '" in relation "' . $this->getId() . '"');
+					throw new OSM_Exception('duplicate member "' . $member->getRef() . '" of type "' . $member->getType() . '" with role "' . $member->getRole() . '" in relation "' . $this->getId() . '"');
 
 				$this->_members[self::_memberKey($member)] = [
 					$m,

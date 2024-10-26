@@ -159,6 +159,10 @@ class OSM_Object implements IDirty
 		return null;
 	}
 
+	/**
+	 * 
+	 * @return array<Tag>
+	 */
 	public function getTags()
 	{
 		return $this->_tags ;
