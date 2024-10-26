@@ -44,7 +44,7 @@ Read `.env.example` to know more about configuration.
 
 ## Generate an Access Token
 
-The command-line `./bin/oauth-console.php` will drive you on getting an OAuth2 Access Token, launch it and read the instructions.
+The command-line `./vendor/bin/oauth-console.php` will drive you on getting an OAuth2 Access Token, launch it and read the instructions.
 
 The process consists of several stages:
 1. choose the OSM server instance
