@@ -30,7 +30,7 @@ class RelationTest extends TestCase
         $this->assertEquals(2, count($m));
     }
 
-    public function testAddMemberDuplicate()
+    public function testAddMemberDuplicateException()
     {
         $this->expectException(OSM_Exception::class);
         $relation = new Relation(1);
@@ -39,31 +39,18 @@ class RelationTest extends TestCase
         $relation->addMember($m1);
         $relation->addMember($m2);
     }
+
     public function testAddMemberDuplicateAuthorised()
     {
-        $_ENV['osm_relation_duplicate_authorised'] = 1;
+        $_ENV[Relation::OPTION_OSM_RELATION_DUPLICATE_AUTHORISED] = 1;
         $relation = new Relation(1);
         $m1 = new Member(OSM_Object::OBJTYPE_NODE, 666);
         $m2 = new Member(OSM_Object::OBJTYPE_NODE, 666);
         $relation->addMember($m1);
         $relation->addMember($m2);
+
         $m = $relation->getMembers();
-        /*
-        array (
-        'node666' => 
-            array (
-                0 => Cyrille37\OSM\Yapafo\Objects\Member::__set_state(array(
-                '_type' => 'node','_ref' => 666,'_role' => '','_dirty' => true,
-                )),
-                1 => Cyrille37\OSM\Yapafo\Objects\Member::__set_state(array(
-                '_type' => 'node','_ref' => 666,'_role' => '','_dirty' => true,
-                )),
-            ),
-        )
-        */
         $this->assertTrue(is_array($m));
-        $this->assertEquals(1, count($m));
-        $m = array_shift($m);
         $this->assertEquals(2, count($m));
     }
 
@@ -77,6 +64,7 @@ class RelationTest extends TestCase
 
         // Default return the first object
         $m = $relation->getMember(OSM_Object::OBJTYPE_NODE, 123);
+        $this->assertFalse(is_array($m));
         $this->assertEquals(OSM_Object::OBJTYPE_NODE, $m->getType());
 
         $m = $relation->getMember(OSM_Object::OBJTYPE_NODE, 123, false);

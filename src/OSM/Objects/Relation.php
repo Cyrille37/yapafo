@@ -17,11 +17,21 @@ class Relation extends OSM_Object implements IXml
 {
 	const ROLE_OUTER = 'outer';
 
+	const OPTION_OSM_RELATION_DUPLICATE_AUTHORISED = 'osm_relation_duplicate_authorised';
+
 	/**
-	 * A relation can have the same member several times but with a different role.
-	 * @var Member[]|Array
+	 * Member's ref are not unique !
+	 * @var array<Member>
 	 */
-	protected $_members = array();
+	protected $_members = [];
+	/**
+	 * @var array{keys: array<array<int>>, types: array<array<int>>, roles: array<array<int>>}
+	 */
+	protected $_indexes = [
+		'keys' => [],
+		'types' => [],
+		'roles' => [],
+	];
 
 	public static function fromXmlObj(\SimpleXMLElement $xmlObj)
 	{
@@ -82,7 +92,6 @@ class Relation extends OSM_Object implements IXml
 	 */
 	protected static function _memberKey($memberOrType, $ref = null)
 	{
-
 		if ($memberOrType instanceof Member) {
 			if (!empty($ref))
 				throw new \InvalidArgumentException('$ref must be empty');
@@ -119,15 +128,14 @@ class Relation extends OSM_Object implements IXml
 
 	public function hasMember(Member $member)
 	{
-		if (array_key_exists(self::_memberKey($member), $this->_members)) {
+		if (isset($this->_indexes['keys'][self::_memberKey($member)]))
 			return true;
-		}
 		return false;
 	}
 
 	/**
 	 *
-	 * @return array
+	 * @return array<Member>
 	 */
 	public function getMembers()
 	{
@@ -140,12 +148,13 @@ class Relation extends OSM_Object implements IXml
 	 * @param string $role
 	 * @return Member[]
 	 */
-	public function &findMembersByRole($role)
+	public function findMembersByRole($role, $unique = true)
 	{
-		$members = array();
-		foreach ($this->_members as $member) {
-			if ($member->getRole() == $role)
-				$members[] = $member;
+		$members = [];
+		if (isset($this->_indexes['roles'][$role])) {
+			foreach ($this->_indexes['roles'][$role] as $idx) {
+				$members[] = $this->_members[$idx];
+			}
 		}
 		return $members;
 	}
@@ -159,14 +168,14 @@ class Relation extends OSM_Object implements IXml
 	 */
 	public function &findMembersByType($type)
 	{
-
 		if (!self::isValidMemberType($type))
 			throw new \InvalidArgumentException('Unkow type "' . $type . '"');
 
-		$members = array();
-		foreach ($this->_members as $member) {
-			if ($member->getType() == $type)
-				$members[] = $member;
+		$members = [];
+		if (isset($this->_indexes['types'][$type])) {
+			foreach ($this->_indexes['types'][$type] as $idx) {
+				$members[] = $this->_members[$idx];
+			}
 		}
 		return $members;
 	}
@@ -184,16 +193,34 @@ class Relation extends OSM_Object implements IXml
 		if (!self::isValidMemberType($type))
 			throw new \InvalidArgumentException('Invalid type "' . $type . '"');
 
-		$members = array();
-		foreach ($this->_members as $member) {
-			if (is_array($member)) {
-				foreach ($member as $m) {
-					if ($m->getType() == $type && $m->getRole() == $role)
-						$members[] = $m;
+		$idxType = $this->_indexes['types'][$type];
+		$idxRole = $this->_indexes['roles'][$role];
+		$idx = array_intersect($idxType, $idxRole);
+
+		$members = [];
+		foreach ($idx as $i) {
+			$members[] = $this->_members[$i];
+		}
+		return $members;
+	}
+
+	public function &findMembersDuplicate()
+	{
+		$members = [];
+		foreach ($this->_indexes['keys'] as $key => $idx) {
+			if (count($idx) > 1)
+			{
+				$roles = [];
+				foreach( $idx as $i )
+				{
+					$r = $this->_members[$i]->getRole();
+					if( isset($roles, $r) )
+					{
+						$members[] = $this->_members[$i];
+						break;
+					}
+					$roles[$r] = 1 ;
 				}
-			} else {
-				if ($member->getType() == $type && $member->getRole() == $role)
-					$members[] = $member;
 			}
 		}
 		return $members;
@@ -203,16 +230,19 @@ class Relation extends OSM_Object implements IXml
 	 *
 	 * @param string $memberType
 	 * @param string $nodeId
-	 * @return Member|Array
+	 * @return Member|array<Member>
 	 */
 	public function getMember($memberType, $refId, $first = true)
 	{
 		$k = self::_memberKey($memberType, $refId);
-		if (array_key_exists($k, $this->_members)) {
-			$m = $this->_members[$k];
-			if (is_array($m) && $first)
-				return $m[0];
-			return $m;
+		if (isset($this->_indexes['keys'][$k])) {
+			$idx = $this->_indexes['keys'][$k];
+			if ($first)
+				return $this->_members[$idx[0]];
+			$members = [];
+			foreach ($idx as $i)
+				$members[] = $this->_members[$i];
+			return $members;
 		}
 		return null;
 	}
@@ -266,38 +296,42 @@ class Relation extends OSM_Object implements IXml
 
 	public static function isDuplicateAuthorised()
 	{
-		return boolval(Config::get('osm_relation_duplicate_authorised'));
+		return boolval(Config::get(self::OPTION_OSM_RELATION_DUPLICATE_AUTHORISED));
 	}
 
 	/**
-	 *
+	 *²
 	 * @param Member $member
 	 * @return Relation Fluent interface
 	 */
 	public function addMember(Member $member)
 	{
-		if ($this->hasMember($member)) {
-			$m = $this->getMember($member->getType(), $member->getRef(), false);
-			if (is_array($m)) {
-				if (! self::isDuplicateAuthorised()) {
-					foreach ($m as $mi) {
-						if ($mi->getRole() == $member->getRole())
-							throw new OSM_Exception('duplicate member "' . $member->getRef() . '" of type "' . $member->getType() . '" with role "' . $member->getRole() . '" in relation "' . $this->getId() . '"');
-					}
-				}
-				$this->_members[self::_memberKey($member)][] = $member;
-			} else {
-				if (! self::isDuplicateAuthorised() && ($m->getRole() == $member->getRole()))
-					throw new OSM_Exception('duplicate member "' . $member->getRef() . '" of type "' . $member->getType() . '" with role "' . $member->getRole() . '" in relation "' . $this->getId() . '"');
-
-				$this->_members[self::_memberKey($member)] = [
-					$m,
-					$member
-				];
+		$mKey = self::_memberKey($member);
+		if ((! self::isDuplicateAuthorised()) && $this->hasMember($member)) {
+			$members = $this->getMember($member->getType(), $member->getRef(), false);
+			foreach ($members as $m) {
+				if ($m->getRole() == $member->getRole())
+					throw new OSM_Exception('duplicate member "' . $member->getType() . '/' . $member->getRef() . '" with role "' . $member->getRole() . '" in relation "' . $this->getId() . '"');
 			}
-		} else {
-			$this->_members[self::_memberKey($member)] = $member;
 		}
+		$this->_members[] = $member;
+		//$idx = count($this->_members) - 1;
+		$idx = array_key_last($this->_members);
+		// Key index
+		if (! isset($this->_indexes['keys'][$mKey]))
+			$this->_indexes['keys'][$mKey] = [$idx];
+		else
+			$this->_indexes['keys'][$mKey][] = $idx;
+		// Role index
+		if (! isset($this->_indexes['roles'][$member->getRole()]))
+			$this->_indexes['roles'][$member->getRole()] = [$idx];
+		else
+			$this->_indexes['roles'][$member->getRole()][] = $idx;
+		// Type index
+		if (! isset($this->_indexes['types'][$member->getType()]))
+			$this->_indexes['types'][$member->getType()] = [$idx];
+		else
+			$this->_indexes['types'][$member->getType()][] = $idx;
 		$this->setDirty();
 		return $this;
 	}
@@ -309,7 +343,7 @@ class Relation extends OSM_Object implements IXml
 	 */
 	public function addMembers(array $members)
 	{
-		if (!is_array($members) || count($members) == 0)
+		if (empty($members))
 			throw new OSM_Exception('members array is empty');
 
 		foreach ($members as $member) {
@@ -321,12 +355,30 @@ class Relation extends OSM_Object implements IXml
 	/**
 	 *
 	 * @param Member $member
+	 * @param string|null $role
 	 */
-	public function removeMember(Member $member)
+	public function removeMember(Member $member, $role = null)
 	{
 		if (!$this->hasMember($member))
 			throw new OSM_Exception('Member ' . self::_memberKey($member) . ' not found in relation "' . $this->getId() . '"');
-		unset($this->_members[self::_memberKey($member)]);
+		//unset($this->_members[self::_memberKey($member)]);
+
+		$idx = $this->_indexes['keys'][self::_memberKey($member)];
+
+		foreach ($idx as $i) {
+			foreach ($this->_indexes['roles'] as $role => $a) {
+				foreach ($a as $j => $v) {
+					if ($v == $i)
+						unset($this->_indexes['roles'][$role][$j]);
+				}
+			}
+			foreach ($this->_indexes['types'] as $type => $a) {
+				foreach ($a as $j => $v) {
+					if ($v == $i)
+						unset($this->_indexes['types'][$type][$j]);
+				}
+			}
+		}
 		$this->setDirty();
 	}
 
