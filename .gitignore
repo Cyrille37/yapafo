@@ -7,16 +7,16 @@
 en_vrac
 tests.old
 
-# composer
+# cache
+*.cache
 
+# composer
 /vendor/
 
 # Netbeans project stuff:
-
 /nbproject/
 
 # Eclipse project stuff:
-
 /.settings/
 /.buildpath
 /.project
