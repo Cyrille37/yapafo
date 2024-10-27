@@ -193,11 +193,15 @@ class Relation extends OSM_Object implements IXml
 		if (!self::isValidMemberType($type))
 			throw new \InvalidArgumentException('Invalid type "' . $type . '"');
 
+		$members = [];
+
+		if( ! isset($this->_indexes['types'][$type]) || ! isset($this->_indexes['roles'][$role]) )
+			return $members ;
+
 		$idxType = $this->_indexes['types'][$type];
 		$idxRole = $this->_indexes['roles'][$role];
 		$idx = array_intersect($idxType, $idxRole);
 
-		$members = [];
 		foreach ($idx as $i) {
 			$members[] = $this->_members[$i];
 		}
@@ -388,10 +392,19 @@ class Relation extends OSM_Object implements IXml
 	public function getPolygon(OSM_Api $osmApi)
 	{
 		$poly = new Polygon();
-		foreach ($this->findMembersByTypeAndRole(OSM_Object::OBJTYPE_WAY, self::ROLE_OUTER) as $key => $member) {
+		$ways = $this->findMembersByTypeAndRole(OSM_Object::OBJTYPE_WAY, self::ROLE_OUTER);
+		if( empty($ways) )
+		{
+			$ways = $this->findMembersByType(OSM_Object::OBJTYPE_WAY);
+		}
+		$points = [];
+		foreach ($ways as $key => $member) {
 			$way = $osmApi->getWay($member->getRef(), true);
 			foreach ($way->getNodesRefs() as $nodeRef) {
 				$node = $osmApi->getNode($nodeRef);
+				if( isset($points[$node->getLat().$node->getLon()]))
+					continue ;
+				$points[$node->getLat().$node->getLon()] = 1 ;
 				$poly->addv($node->getLat(), $node->getLon());
 			}
 		}

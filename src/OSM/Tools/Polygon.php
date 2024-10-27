@@ -116,6 +116,11 @@ class Polygon {
 		return $this->y_max;
 	}
 
+	public function getVertexCount()
+	{
+		return $this->cnt ;
+	}
+
 	/*
 	 * * Get the first vertex
 	 */
