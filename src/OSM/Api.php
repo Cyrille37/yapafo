@@ -43,7 +43,7 @@ class OSM_Api
 	//const URL_PROD_FR = 'http://api.openstreetmap.fr/api/0.6';
 	const URL_PROD_UK = 'https://api.openstreetmap.org';
 
-	const URL_PATH_API = '/api/0.6' ;
+	const URL_PATH_API = '/api/0.6';
 
 	/**
 	 * Instances: https://wiki.openstreetmap.org/wiki/Overpass_API#Public_Overpass_API_instances
@@ -142,12 +142,10 @@ class OSM_Api
 		}
 
 		$this->_options['simulation'] = Config::get('osm_api_simulation', $this->_options['simulation']);
-		$this->_options['url'] = Config::get('osm_api_url', $this->_options['url']).OSM_Api::URL_PATH_API;
+		$this->_options['url'] = Config::get('osm_api_url', $this->_options['url']) . OSM_Api::URL_PATH_API;
 		$this->_options['url4Write'] = Config::get('osm_api_url_4write', $this->_options['url4Write']);
-		if( empty($this->_options['url4Write']))
-			$this->_options['url4Write'] = $this->_options['url'].OSM_Api::URL_PATH_API;
-		else
-			$this->_options['url4Write'] = $this->_options['url4Write'].OSM_Api::URL_PATH_API;
+		if (empty($this->_options['url4Write']))
+			$this->_options['url4Write'] = $this->_options['url'];
 		$this->_options['oapi_url'] = Config::get('oapi_url', $this->_options['oapi_url']);
 		$this->_options['xapi_url'] = Config::get('xapi_url', $this->_options['xapi_url']);
 		$this->_options['log']['level'] = Config::get('osm_log_level', $this->_options['log']['level']);
@@ -171,12 +169,12 @@ class OSM_Api
 
 		if (!empty($this->_options['outputFolder'])) {
 			if (!is_writable($this->_options['outputFolder'])) {
-				throw new OSM_Exception('Option "outputFolder" is set but the folder "'.$this->_options['outputFolder'].'" is not writable.');
+				throw new OSM_Exception('Option "outputFolder" is set but the folder "' . $this->_options['outputFolder'] . '" is not writable.');
 			}
 		}
 		if (!empty($this->_options['cacheFolder'])) {
 			if (!is_writable($this->_options['cacheFolder'])) {
-				throw new OSM_Exception('Option "cacheFolder" is set but the folder "'.$this->_options['cacheFolder'].'" is not writable.');
+				throw new OSM_Exception('Option "cacheFolder" is set but the folder "' . $this->_options['cacheFolder'] . '" is not writable.');
 			}
 		}
 	}
@@ -301,22 +299,22 @@ class OSM_Api
 			file_put_contents($this->_getOutputFilename('out', $relativeUrl, $method), $data);
 		}
 
-		$cacheFile = $this->_getCacheFilename($relativeUrl, $method, $data);
-		$result = null ;
-		if ($this->_options['cacheFolder'] != null) {
-			if( file_exists($cacheFile) )
-			{
+		$cacheFile = null;
+		$result = null;
+
+		if ($this->_options['cacheFolder'] != null && in_array($method, ['GET'])) {
+			$cacheFile = $this->_getCacheFilename($relativeUrl, $method, $data);
+			if (file_exists($cacheFile)) {
 				$this->getLogger()->notice('Read from cache {method} {http_method} {url}', ['method' => __METHOD__, 'http_method' => $method, 'url' => $relativeUrl]);
 				$result = @file_get_contents($cacheFile);
 			}
 		}
 
-		if( ! $result )
-		{
+		if (! $result) {
 			$context = stream_context_create($opts);
 			$result = @file_get_contents($url, false, $context);
-			if ($this->_options['cacheFolder'] != null) {
-				file_put_contents( $cacheFile, $result);
+			if ($cacheFile) {
+				file_put_contents($cacheFile, $result);
 			}
 		}
 
@@ -745,23 +743,21 @@ class OSM_Api
 		}
 
 		$cacheFile = $this->_getCacheFilename($url, $method, $postdata);
-		$result = null ;
+		$result = null;
 
 		if ($this->_options['cacheFolder'] != null) {
-			if( file_exists($cacheFile) )
-			{
+			if (file_exists($cacheFile)) {
 				$this->getLogger()->notice('Read from cache {method} {http_method} {url}', ['method' => __METHOD__, 'http_method' => $method, 'url' => $url]);
 				$result = @file_get_contents($cacheFile);
 			}
 		}
 
-		if( ! $result )
-		{
+		if (! $result) {
 			$this->getLogger()->notice('{method} {http_method} {url}', ['method' => __METHOD__, 'http_method' => $method, 'url' => $url]);
 			$this->getLogger()->debug('{_m} opts:{opts}', ['opts' => $opts, '_m' => __METHOD__]);
 			$result = @file_get_contents($url, false, $context);
 			if ($this->_options['cacheFolder'] != null) {
-				file_put_contents( $cacheFile, $result);
+				file_put_contents($cacheFile, $result);
 			}
 		}
 
@@ -1018,7 +1014,7 @@ class OSM_Api
 	 * Objects stay dirties after save. You have to destroy/reload them to get them up-to-date (id, version, ...)
 	 *
 	 * @param type $comment
-	 * @return bool true if has saved something, false if nothing to save.
+	 * @return ChangeSet if has saved something, null if nothing to save.
 	 * @throws OSM_Exception if not authenticated
 	 */
 	public function saveChanges($comment)
@@ -1040,7 +1036,7 @@ class OSM_Api
 
 		if ($dirtyObjectsCount == 0) {
 			$this->getLogger()->notice(__METHOD__ . ' No dirty object, skip save');
-			return false;
+			return null;
 		}
 		$this->getLogger()->notice(__METHOD__ . ' Has ' . $dirtyObjectsCount . ' dirty objects');
 
@@ -1065,7 +1061,7 @@ class OSM_Api
 		// issue #17 ??
 		$this->_clearObjects();
 
-		return true;
+		return $changeSet;
 	}
 
 	protected function _clearObjects()
@@ -1108,7 +1104,7 @@ class OSM_Api
 
 	protected function _uploadChangeSet(ChangeSet $changeSet)
 	{
-		$this->getLogger()->notice('{_m} uploading changeset id:"{id}"', ['_m' => __METHOD__, 'id' => $changeSet->getId() ]);
+		$this->getLogger()->notice('{_m} uploading changeset id:"{id}"', ['_m' => __METHOD__, 'id' => $changeSet->getId()]);
 
 		$relativeUrl = '/changeset/' . $changeSet->getId() . '/upload';
 
@@ -1325,7 +1321,7 @@ class OSM_Api
 		$dataId = sha1(serialize($data));
 		return $this->_options['cacheFolder'] .
 			DIRECTORY_SEPARATOR . __CLASS__
-			. '_' . 'cache' . '-' . $method . '-' . md5($url) .'-'.$dataId. '.txt';
+			. '_' . 'cache' . '-' . $method . '-' . md5($url) . '-' . $dataId . '.txt';
 	}
 
 	/**
