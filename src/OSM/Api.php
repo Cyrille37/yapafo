@@ -132,6 +132,8 @@ class OSM_Api
 	 */
 	protected $_logger;
 
+	protected $cacheDisabled = false;
+
 	public function __construct($options = [])
 	{
 		// Retrieve the OAuth Access Token, from Config or $options
@@ -190,6 +192,23 @@ class OSM_Api
 	public function isDebug()
 	{
 		return ($this->_options['log']['level'] == LogLevel::DEBUG);
+	}
+
+	public function isCaching()
+	{
+		if ($this->cacheDisabled)
+			return false;
+		return ! empty($this->_options['cacheFolder']);
+	}
+
+	/**
+	 * When Cache is activated, this permits to temporary disable caching.
+	 * @param bool $disable 
+	 * @return void 
+	 */
+	public function disableCache($disable = true)
+	{
+		$this->cacheDisabled = $disable;
 	}
 
 	public function isSimulation()
@@ -302,7 +321,7 @@ class OSM_Api
 		$cacheFile = null;
 		$result = null;
 
-		if ($this->_options['cacheFolder'] != null && in_array($method, ['GET'])) {
+		if ($this->_options['cacheFolder'] != null && (!$this->cacheDisabled)) {
 			$cacheFile = $this->_getCacheFilename($relativeUrl, $method, $data);
 			if (file_exists($cacheFile)) {
 				$this->getLogger()->notice('Read from cache {method} {http_method} {url}', ['method' => __METHOD__, 'http_method' => $method, 'url' => $relativeUrl]);
@@ -718,10 +737,11 @@ class OSM_Api
 	 */
 	public function queryOApiQL($qlQuery)
 	{
-		$this->getLogger()->debug('{_m} url:{url} query:{query}', ['_m' => __METHOD__, 'qlQuery' => $qlQuery]);
-
 		$url = $this->_options['oapi_url'];
 		$method = 'POST';
+
+		$this->getLogger()->debug('{_m} url:{_u} query:{_q}', ['_m' => $method, '_u' => $url, '_q' => $qlQuery]);
+
 		$postdata = http_build_query(array('data' => $qlQuery));
 
 		$opts = [
@@ -745,7 +765,7 @@ class OSM_Api
 		$cacheFile = $this->_getCacheFilename($url, $method, $postdata);
 		$result = null;
 
-		if ($this->_options['cacheFolder'] != null) {
+		if ($this->_options['cacheFolder'] != null && (!$this->cacheDisabled)) {
 			if (file_exists($cacheFile)) {
 				$this->getLogger()->notice('Read from cache {method} {http_method} {url}', ['method' => __METHOD__, 'http_method' => $method, 'url' => $url]);
 				$result = @file_get_contents($cacheFile);
@@ -756,7 +776,7 @@ class OSM_Api
 			$this->getLogger()->notice('{method} {http_method} {url}', ['method' => __METHOD__, 'http_method' => $method, 'url' => $url]);
 			$this->getLogger()->debug('{_m} opts:{opts}', ['opts' => $opts, '_m' => __METHOD__]);
 			$result = @file_get_contents($url, false, $context);
-			if ($this->_options['cacheFolder'] != null) {
+			if ($this->_options['cacheFolder'] != null && (!$this->cacheDisabled)) {
 				file_put_contents($cacheFile, $result);
 			}
 		}

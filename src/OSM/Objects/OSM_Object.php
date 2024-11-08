@@ -181,6 +181,16 @@ class OSM_Object implements IDirty
 		return null;
 	}
 
+	public function hasTags(array $tags)
+	{
+		foreach( $tags as $tagName => $tagValue )
+		{
+			if( ! $this->getTag($tagName, $tagValue) )
+				return false ;
+		}
+		return true ;
+	}
+
 	/**
 	 * 
 	 * @return array<Tag>
