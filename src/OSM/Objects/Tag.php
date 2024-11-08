@@ -40,7 +40,7 @@ class Tag implements IDirty, IXml
 	 */
 	public function asXmlStr()
 	{
-		$xmlStr = '<tag k="'.$this->_key.'" v="'.str_replace(['"','&'], ['&quot;','&amp;'], $this->_value ).'" />' ;
+		$xmlStr = '<tag k="'.$this->_key.'" v="'.str_replace(['"','&','<'], ['&quot;','&amp;','&lt;'], $this->_value ).'" />' ;
 		return $xmlStr ;
 	}
 

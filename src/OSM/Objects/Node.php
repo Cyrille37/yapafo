@@ -49,7 +49,7 @@ class Node extends OSM_Object implements IXml {
 		$xmlStr = '<' . $xmlName;
 		foreach ($this->_attrs as $a => $v)
 		{
-			$xmlStr.= ' ' . $a . '="' . str_replace(['"','&'], ['&quot;','&amp;'],$v) . '"';
+			$xmlStr.= ' ' . $a . '="' . str_replace(['"','&','<'], ['&quot;','&amp;','&lt;'], $v) . '"';
 		}
 		if (count($this->_tags) > 0)
 		{

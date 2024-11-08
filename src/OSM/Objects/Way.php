@@ -46,7 +46,7 @@ class Way extends OSM_Object implements IXml
 		$xmlStr = '<' . $xmlName;
 		foreach ($this->_attrs as $a => $v)
 		{
-			$xmlStr.= ' ' . $a . '="' . str_replace(['"','&'], ['&quot;','&amp;'],$v) . '"';
+			$xmlStr.= ' ' . $a . '="' . str_replace(['"','&','<'], ['&quot;','&amp;','&lt;'],$v) . '"';
 		}
 		$xmlStr.='>' . "\n";
 		foreach ($this->_tags as $k => $tag)
