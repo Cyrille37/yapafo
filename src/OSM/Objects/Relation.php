@@ -341,6 +341,45 @@ class Relation extends OSM_Object implements IXml
 	}
 
 	/**
+	 * Replace the whole members collection and rebuild the indexes.
+	 *
+	 * Unlike addMember() this bypasses the duplicate check (a full
+	 * replacement may legitimately contain duplicated way members,
+	 * e.g. an aller/retour route).
+	 *
+	 * @param array $members Array<Member>
+	 * @return Relation Fluent interface
+	 */
+	public function replaceMembers(array $members)
+	{
+		$this->_members = [];
+		$this->_indexes = [
+			'keys' => [],
+			'types' => [],
+			'roles' => [],
+		];
+		foreach ($members as $member) {
+			$mKey = self::_memberKey($member);
+			$idx = count($this->_members);
+			$this->_members[] = $member;
+			if (! isset($this->_indexes['keys'][$mKey]))
+				$this->_indexes['keys'][$mKey] = [$idx];
+			else
+				$this->_indexes['keys'][$mKey][] = $idx;
+			if (! isset($this->_indexes['roles'][$member->getRole()]))
+				$this->_indexes['roles'][$member->getRole()] = [$idx];
+			else
+				$this->_indexes['roles'][$member->getRole()][] = $idx;
+			if (! isset($this->_indexes['types'][$member->getType()]))
+				$this->_indexes['types'][$member->getType()] = [$idx];
+			else
+				$this->_indexes['types'][$member->getType()][] = $idx;
+		}
+		$this->setDirty();
+		return $this;
+	}
+
+	/**
 	 *
 	 * @param array $members
 	 * @return Relation Fluent interface

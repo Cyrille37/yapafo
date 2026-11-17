@@ -6,7 +6,7 @@ use Psr\Log\LogLevel ;
 
 /**
  * A simple PSR-3 Logger Interface implementation.
- * It writes message to STDERR.
+ * It writes EMERGENCY/ALERT/CRITICAL/ERROR to STDERR, others to STDOUT.
  * It can be used as a Singleton or not.
  * 
  * https://www.php-fig.org/psr/psr-3/
@@ -94,10 +94,18 @@ class Logger extends AbstractLogger
 		if( $logLevel > $this->logLevel )
 			return ;
 		$msg = $this->interpolate($message, $context);
-		if( defined('STDERR'))
-			fwrite(STDERR, '['.strtoupper($level).'] '.$msg."\n");
+		$line = '['.strtoupper($level).'] '.$msg."\n";
+		if( $logLevel === -1 )
+		{
+			if( defined('STDERR'))
+				fwrite(STDERR, $line);
+			else
+				error_log( $line );
+		}
 		else
-			error_log( '['.strtoupper($level).'] '.$msg );
+		{
+			echo $line;
+		}
 	}
 
 	protected function interpolate($message, array $context = array())

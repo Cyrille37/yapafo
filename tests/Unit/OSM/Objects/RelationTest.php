@@ -74,4 +74,5 @@ class RelationTest extends TestCase
         $this->assertTrue(is_array($m));
         $this->assertEquals(2, count($m));
     }
+
 }

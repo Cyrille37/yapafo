@@ -25,15 +25,15 @@ class Math
         );
     }
 
-    /**
-     *
-     * @param float $lat1
-     * @param float $lon1
-     * @param float $lat2
-     * @param float $lon2
-     * @return void
-     */
-    public static function distanceOnEarth( $lat1, $lon1, $lat2, $lon2 )
+     /**
+      *
+      * @param float $lat1
+      * @param float $lon1
+      * @param float $lat2
+      * @param float $lon2
+      * @return float
+      */
+     public static function distanceOnEarth( $lat1, $lon1, $lat2, $lon2 )
     {
         $rlo1 = deg2rad($lon1);
         $rla1 = deg2rad($lat1);

@@ -4,8 +4,6 @@ declare(strict_types=1);
 namespace Cyrille37\OSM\Yapafo\Exceptions;
 
 use Cyrille37\OSM\Yapafo\Exceptions\Exception as OSM_Exception;
-use Throwable;
-use Override;
 
 class SortException extends OSM_Exception
 {
@@ -14,9 +12,8 @@ class SortException extends OSM_Exception
   const ERR_DUPLICATE_WAYS = 2;
   const ERRORS = [self::ERR_MISSING_WAYS, self::ERR_DUPLICATE_WAYS];
 
-  #[Override]
-  public function __construct(string $message)
+  public function __construct(string $message, int $code = 0)
   {
-    return parent::__construct($message);
+    parent::__construct($message, $code);
   }
 }
