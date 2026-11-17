@@ -9,6 +9,8 @@
          processIsolation="true"
          stopOnFailure="false"
 	>
-
+<php>
+  <env name="osm_api_cacheFolder" value="./cache"/>
+</php>
 
 </phpunit>

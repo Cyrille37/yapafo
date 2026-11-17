@@ -1,5 +1,5 @@
 <?php
-namespace Cyrille37\OSM\Yapafo;
+namespace Cyrille37\OSM\Yapafo\Tests\Unit;
 
 use PHPUnit\Framework\TestCase as PHPUnitTestCase;
 

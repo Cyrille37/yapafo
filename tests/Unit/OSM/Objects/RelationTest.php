@@ -1,9 +1,12 @@
 <?php
 
-namespace Cyrille37\OSM\Yapafo\Objects;
+namespace Cyrille37\OSM\Yapafo\Tests\Unit\Objects;
 
-use Cyrille37\OSM\Yapafo\TestCase;
+use Cyrille37\OSM\Yapafo\Tests\Unit\TestCase;
 use Cyrille37\OSM\Yapafo\Exceptions\Exception as OSM_Exception;
+use Cyrille37\OSM\Yapafo\Objects\Member;
+use Cyrille37\OSM\Yapafo\Objects\OSM_Object;
+use Cyrille37\OSM\Yapafo\Objects\Relation;
 use PHPUnit\Framework\Exception;
 use InvalidArgumentException;
 use PHPUnit\Framework\ExpectationFailedException;

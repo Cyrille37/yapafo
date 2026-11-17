@@ -4,18 +4,20 @@
 
 .env
 
-en_vrac
-tests.old
-
 # cache
+/cache/
 *.cache
+
+# work folders
+/_work/
+/en_vrac/
 
 # composer
 /vendor/
-
+# Opencode
+.opencode
 # Netbeans project stuff:
 /nbproject/
-
 # Eclipse project stuff:
 /.settings/
 /.buildpath
